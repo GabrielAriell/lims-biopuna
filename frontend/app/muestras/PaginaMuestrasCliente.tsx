@@ -8,7 +8,6 @@ import BotonAvisos from "@/components/BotonAvisos";
 import FormularioCampana from "@/components/FormularioCampana";
 import FormularioMuestra from "@/components/FormularioMuestra";
 import PanelAvisos from "@/components/PanelAvisos";
-import { useSesion } from "@/components/ProveedorSesion";
 import { useAlertasMuestras } from "@/hooks/useAlertasMuestras";
 import { useMuestras } from "@/hooks/useMuestras";
 import type { EstadoMuestra } from "@/lib/tipos-muestras";
@@ -46,8 +45,6 @@ const TARJETAS: {
 ];
 
 export default function PaginaMuestrasCliente() {
-  const { usuario } = useSesion();
-  const soloLectura = usuario?.rol_sistema === "lectura";
   const { campanas, muestras, actualizando, error, recargar } = useMuestras();
   const { visibles: avisos, enAtencion, descartar } =
     useAlertasMuestras(muestras);
@@ -148,39 +145,21 @@ export default function PaginaMuestrasCliente() {
           )}
         </section>
 
-        {soloLectura ? (
-          <section className="rounded-lg border border-blue-200 bg-blue-50 p-5">
-            <h2 className="text-lg font-semibold text-blue-900">
-              Vista de solo lectura
-            </h2>
-            <p className="mt-1 text-sm text-blue-800">
-              Tu usuario no puede crear campañas ni muestras. Podés consultar el
-              estado operativo y revisar todos los datos en Exploración.
-            </p>
-            <Link
-              href="/exploracion"
-              className="mt-3 inline-flex rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
-            >
-              Ir a Exploración
-            </Link>
-          </section>
-        ) : (
-          <div className="grid gap-6 lg:grid-cols-2">
-            <FormularioCampana
-              sugerenciasLocalidad={sugerenciasLocalidad}
-              onCreada={async (campana) => {
-                setCampanaReciente(campana.id_campana);
-                await recargar();
-              }}
-            />
-            <FormularioMuestra
-              key={campanaReciente ?? "sin-campana"}
-              campanas={campanas}
-              idCampanaInicial={campanaReciente}
-              onCreada={recargar}
-            />
-          </div>
-        )}
+        <div className="grid gap-6 lg:grid-cols-2">
+          <FormularioCampana
+            sugerenciasLocalidad={sugerenciasLocalidad}
+            onCreada={async (campana) => {
+              setCampanaReciente(campana.id_campana);
+              await recargar();
+            }}
+          />
+          <FormularioMuestra
+            key={campanaReciente ?? "sin-campana"}
+            campanas={campanas}
+            idCampanaInicial={campanaReciente}
+            onCreada={recargar}
+          />
+        </div>
 
         <section className="rounded-lg border border-gray-200 bg-white p-5">
           <h2 className="text-lg font-semibold">Consulta y listado de muestras</h2>

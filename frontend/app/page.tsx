@@ -1,11 +1,13 @@
-﻿import { redirect } from "next/navigation";
+﻿import GuardiaSesion from "@/components/GuardiaSesion";
+import InicioCliente from "./InicioCliente";
 
-// redirect() interrumpe el render; se opta fuera de la validación instantánea.
 export const instant = false;
 
-// El análisis de tiras vive dentro de "Nuevo ensayo": así se analiza la imagen
-// y, si hay una muestra elegida, se puede guardar el resultado en el mismo
-// lugar. La antigua portada de "análisis libre" ya no existe.
+// Página de inicio: accesos principales y resumen rápido.
 export default function Pagina() {
-  redirect("/ensayos/nuevo");
+  return (
+    <GuardiaSesion>
+      <InicioCliente />
+    </GuardiaSesion>
+  );
 }

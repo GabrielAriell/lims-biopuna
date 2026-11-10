@@ -40,7 +40,7 @@ export default function PaginaLogin() {
 
   // Si ya hay una sesión válida, no tiene sentido mostrar el login.
   useEffect(() => {
-    if (!cargando && usuario) router.replace("/ensayos/nuevo");
+    if (!cargando && usuario) router.replace("/");
   }, [cargando, usuario, router]);
 
   async function enviar(evento: FormEvent) {
@@ -50,7 +50,7 @@ export default function PaginaLogin() {
     try {
       const sesion = await iniciarSesion(email, password);
       iniciar(sesion);
-      router.replace("/ensayos/nuevo");
+      router.replace("/");
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo iniciar sesión");
     } finally {

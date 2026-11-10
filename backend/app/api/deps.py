@@ -50,10 +50,9 @@ def usuario_actual(
 def exigir_escritura(
     usuario: Annotated[UsuarioActual, Depends(usuario_actual)],
 ) -> UsuarioActual:
-    """Solo admin e investigador pueden crear registros (igual que las RLS)."""
-    if usuario.rol_sistema not in ("admin", "investigador"):
-        raise HTTPException(
-            403,
-            "Tu usuario es de solo lectura: no puede crear registros",
-        )
+    """Cualquier usuario autenticado puede crear registros.
+
+    Las restricciones (por ejemplo, eliminar datos ajenos) se aplican cuando
+    existan esas operaciones; por ahora no hay borrado desde la app.
+    """
     return usuario

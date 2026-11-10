@@ -4,15 +4,14 @@ import Link from "next/link";
 
 import { useSesion } from "./ProveedorSesion";
 
-type Seccion = "muestras" | "ensayos" | "exploracion";
+type Seccion = "inicio" | "muestras" | "ensayos" | "exploracion";
 
 type Props = {
-  activa: Seccion;
+  activa?: Seccion;
 };
 
 export default function Encabezado({ activa }: Props) {
   const { usuario, salir } = useSesion();
-  const soloLectura = usuario?.rol_sistema === "lectura";
 
   const clase = (esActiva: boolean) =>
     `rounded px-3 py-1.5 text-sm font-medium ${
@@ -22,11 +21,13 @@ export default function Encabezado({ activa }: Props) {
   return (
     <header className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
       <div className="min-w-0">
-        <h1 className="text-xl font-bold sm:text-2xl">LIMS-BioPuna</h1>
+        <Link href="/" className="inline-block">
+          <h1 className="text-xl font-bold hover:text-blue-700 sm:text-2xl">
+            LIMS-BioPuna
+          </h1>
+        </Link>
         <p className="text-sm text-gray-600 sm:text-base">
-          {soloLectura
-            ? "Exploración y consulta de datos (solo lectura)"
-            : "Análisis de tiras y trazabilidad de muestras"}
+          Análisis de tiras y trazabilidad de muestras
         </p>
       </div>
 
@@ -38,11 +39,9 @@ export default function Encabezado({ activa }: Props) {
           <Link href="/muestras" className={clase(activa === "muestras")}>
             Muestras y campañas
           </Link>
-          {!soloLectura && (
-            <Link href="/ensayos/nuevo" className={clase(activa === "ensayos")}>
-              Nuevo ensayo
-            </Link>
-          )}
+          <Link href="/ensayos/nuevo" className={clase(activa === "ensayos")}>
+            Nuevo ensayo
+          </Link>
         </nav>
 
         {usuario && (
