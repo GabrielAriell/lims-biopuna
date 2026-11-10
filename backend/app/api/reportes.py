@@ -24,6 +24,17 @@ ENCABEZADO = Font(bold=True, color="FFFFFF")
 RELLENO = PatternFill("solid", fgColor="1F4E79")
 
 
+def _fmt_num(valor: Any, decimales: int = 2) -> str:
+    if valor is None or valor == "":
+        return "-"
+    try:
+        n = float(valor)
+    except (TypeError, ValueError):
+        return str(valor)
+    texto = f"{n:.{decimales}f}".rstrip("0").rstrip(".")
+    return texto if texto else "0"
+
+
 def _xlsx_respuesta(wb: Workbook, nombre: str) -> StreamingResponse:
     bio = BytesIO()
     wb.save(bio)
@@ -372,20 +383,22 @@ def exportar_muestra_pdf(
         )
         filas = [["Fracción", "%", "g/dL", "Área"]] + [
             [
-                f["nombre_fraccion"],
-                f["porcentaje_relativo"],
-                f["concentracion_g_dl"],
-                f["area_integrada"],
+                f.get("nombre_fraccion") or "-",
+                _fmt_num(f.get("porcentaje_relativo")),
+                _fmt_num(f.get("concentracion_g_dl")),
+                _fmt_num(f.get("area_integrada")),
             ]
             for f in e.get("fracciones") or []
         ]
-        t = Table(filas, colWidths=[120, 70, 70, 120])
+        t = Table(filas, colWidths=[170, 75, 75, 120], repeatRows=1)
         t.setStyle(
             TableStyle(
                 [
                     ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#D9EAF7")),
                     ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
                     ("FONTSIZE", (0, 0), (-1, -1), 8),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("ALIGN", (1, 1), (-1, -1), "RIGHT"),
                 ]
             )
         )
@@ -453,7 +466,7 @@ def exportar_analisis_libre_pdf(datos: AnalisisLibreIn):
     ]
     info = [["Campo", "Valor"],
             ["Archivo origen", datos.nombre_archivo or "-"],
-            ["Proteínas totales g/dL", str(datos.proteinas_totales_g_dl) if datos.proteinas_totales_g_dl is not None else "-"],
+            ["Proteínas totales g/dL", _fmt_num(datos.proteinas_totales_g_dl) if datos.proteinas_totales_g_dl is not None else "-"],
             ["Carriles", str(len(datos.carriles))]]
     tinfo = Table(info, colWidths=[170, 320])
     tinfo.setStyle(TableStyle([
@@ -467,21 +480,26 @@ def exportar_analisis_libre_pdf(datos: AnalisisLibreIn):
     if not datos.carriles:
         story.append(Paragraph("Sin carriles analizados.", estilos["Normal"]))
     for c in datos.carriles:
-        story.append(Paragraph(f"Carril {c.indice}" + (f" · A/G: {c.relacion_ag}" if c.relacion_ag is not None else ""), estilos["Heading3"]))
+        ag = f" · A/G: {_fmt_num(c.relacion_ag)}" if c.relacion_ag is not None else ""
+        story.append(Paragraph(f"Carril {c.indice}{ag}", estilos["Heading3"]))
         filas = [["Fracción", "%", "g/dL", "Área"]] + [
-            [f.nombre_fraccion,
-             "" if f.porcentaje_relativo is None else str(f.porcentaje_relativo),
-             "" if f.concentracion_g_dl is None else str(f.concentracion_g_dl),
-             "" if f.area_integrada is None else str(f.area_integrada)]
+            [
+                f.nombre_fraccion or "-",
+                _fmt_num(f.porcentaje_relativo),
+                _fmt_num(f.concentracion_g_dl),
+                _fmt_num(f.area_integrada),
+            ]
             for f in (c.fracciones or [])
         ]
         if len(filas) == 1:
-            filas.append(["(sin fracciones)", "", "", ""])
-        t = Table(filas, colWidths=[140, 80, 80, 120])
+            filas.append(["(sin fracciones)", "-", "-", "-"])
+        t = Table(filas, colWidths=[170, 75, 75, 120], repeatRows=1)
         t.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#D9EAF7")),
             ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
             ("FONTSIZE", (0, 0), (-1, -1), 8),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("ALIGN", (1, 1), (-1, -1), "RIGHT"),
         ]))
         story.append(t)
         for a in c.advertencias:
