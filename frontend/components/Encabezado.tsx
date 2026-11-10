@@ -24,11 +24,11 @@ export default function Encabezado({ activa }: Props) {
       <div className="min-w-0">
         <Link href="/" className="inline-flex items-center gap-2 hover:opacity-90">
           <Image
-            src="/logo-camelia.jpg"
+            src="/logo-camelia.png"
             alt="Camelia Biotech"
             width={40}
             height={40}
-            className="h-10 w-10 rounded object-contain"
+            className="h-10 w-10 object-contain"
             priority
           />
           <span className="text-xl font-bold text-gray-900 sm:text-2xl">
