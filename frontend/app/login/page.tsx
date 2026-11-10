@@ -10,27 +10,6 @@ import { iniciarSesion } from "@/lib/auth";
 const CAMPO =
   "w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-gray-900 shadow-sm outline-none placeholder:text-gray-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/40";
 
-// Cuentas creadas por backend/scripts/crear_usuarios_prueba.py.
-// Se muestran solo para probar el flujo mientras no hay registro público.
-const CLAVE_PRUEBA = "BioPuna2026!";
-const CUENTAS_PRUEBA = [
-  {
-    email: "investigador.uno@biopuna.test",
-    nombre: "Investigador Uno",
-    rol: "investigador",
-  },
-  {
-    email: "investigadora.dos@biopuna.test",
-    nombre: "Investigadora Dos",
-    rol: "investigador",
-  },
-  {
-    email: "lectura@biopuna.test",
-    nombre: "Usuario de Lectura",
-    rol: "lectura",
-  },
-];
-
 export default function PaginaLogin() {
   const router = useRouter();
   const { usuario, cargando, iniciar } = useSesion();
@@ -57,12 +36,6 @@ export default function PaginaLogin() {
     } finally {
       setEnviando(false);
     }
-  }
-
-  function usarCuenta(cuenta: (typeof CUENTAS_PRUEBA)[number]) {
-    setEmail(cuenta.email);
-    setPassword(CLAVE_PRUEBA);
-    setError(null);
   }
 
   return (
@@ -170,32 +143,6 @@ export default function PaginaLogin() {
               {enviando ? "Ingresando..." : "Ingresar"}
             </button>
           </form>
-
-          <section className="mt-6 border-t border-white/40 pt-4 text-sm text-white">
-            <p className="font-semibold text-white drop-shadow-sm">Cuentas de prueba</p>
-            <p className="mt-1 text-xs font-medium text-white/90">
-              Contraseña común: <code className="font-mono text-white">{CLAVE_PRUEBA}</code>
-            </p>
-            <ul className="mt-2 space-y-1.5">
-              {CUENTAS_PRUEBA.map((cuenta) => (
-                <li
-                  key={cuenta.email}
-                  className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2"
-                >
-                  <span className="break-all text-xs font-medium text-white/90">
-                    <span className="font-mono text-white">{cuenta.email}</span> · {cuenta.rol}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => usarCuenta(cuenta)}
-                    className="self-start rounded border border-white/50 bg-white/20 px-2 py-0.5 text-xs font-medium text-white shadow-sm hover:bg-white/30"
-                  >
-                    Usar
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
         </div>
       </div>
     </main>
