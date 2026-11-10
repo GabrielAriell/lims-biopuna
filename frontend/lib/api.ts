@@ -61,7 +61,13 @@ export async function pedirJson<T>(
   return respuesta.json() as Promise<T>;
 }
 
-function _formAnalisis(archivo: File, p: Parametros, region?: string): FormData {
+// region: "x,y,ancho,alto" sobre la imagen ya orientada. Si se omite, la API
+// detecta la tira sola.
+export async function analizarTira(
+  archivo: File,
+  p: Parametros,
+  region?: string,
+): Promise<AnalisisTira> {
   const datos = new FormData();
   datos.append("imagen", archivo);
   if (p.proteinasTotales.trim()) {
@@ -73,33 +79,11 @@ function _formAnalisis(archivo: File, p: Parametros, region?: string): FormData 
   datos.append("vertical", String(p.vertical));
   datos.append("invertir", String(p.invertir));
   if (region) datos.append("region", region);
-  return datos;
-}
 
-// region: "x,y,ancho,alto" sobre la imagen ya orientada. Si se omite, la API
-// detecta la tira sola.
-export async function analizarTira(
-  archivo: File,
-  p: Parametros,
-  region?: string,
-): Promise<AnalisisTira> {
   return pedirJson<AnalisisTira>(`${API_URL}/ensayos/analizar-tira`, {
     method: "POST",
-    body: _formAnalisis(archivo, p, region),
+    body: datos,
   });
-}
-
-// Análisis libre sin autenticación (no guarda nada).
-export async function analizarTiraLibre(
-  archivo: File,
-  p: Parametros,
-  region?: string,
-): Promise<AnalisisTira> {
-  return pedirJson<AnalisisTira>(
-    `${API_URL}/tiras/analizar-libre`,
-    { method: "POST", body: _formAnalisis(archivo, p, region) },
-    { conSesion: false },
-  );
 }
 
 // Descarga un archivo (PDF/Excel) usando la sesión autenticada.
@@ -143,11 +127,13 @@ export async function descargarArchivoAutenticado(
   URL.revokeObjectURL(href);
 }
 
-function _cuerpoRecalculo(
+// Recalcula un carril con los límites que el investigador confirmó a mano.
+// No guarda nada: solo devuelve las fracciones recalculadas.
+export async function recalcularLimites(
   perfil: number[],
   zonas: Zona[],
   proteinasTotales: string,
-): { perfil: number[]; zonas: Zona[]; proteinas_totales?: number } {
+): Promise<CalculoLimites> {
   const cuerpo: { perfil: number[]; zonas: Zona[]; proteinas_totales?: number } = {
     perfil,
     zonas,
@@ -160,70 +146,10 @@ function _cuerpoRecalculo(
     }
     cuerpo.proteinas_totales = pt;
   }
-  return cuerpo;
-}
 
-// Recalcula un carril con los límites que el investigador confirmó a mano.
-// No guarda nada: solo devuelve las fracciones recalculadas.
-export async function recalcularLimites(
-  perfil: number[],
-  zonas: Zona[],
-  proteinasTotales: string,
-): Promise<CalculoLimites> {
   return pedirJson<CalculoLimites>(`${API_URL}/ensayos/recalcular`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(_cuerpoRecalculo(perfil, zonas, proteinasTotales)),
+    body: JSON.stringify(cuerpo),
   });
-}
-
-// Recalculo libre sin autenticación.
-export async function recalcularLimitesLibre(
-  perfil: number[],
-  zonas: Zona[],
-  proteinasTotales: string,
-): Promise<CalculoLimites> {
-  return pedirJson<CalculoLimites>(
-    `${API_URL}/tiras/recalcular-libre`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(_cuerpoRecalculo(perfil, zonas, proteinasTotales)),
-    },
-    { conSesion: false },
-  );
-}
-
-// Descarga un reporte libre (POST JSON -> archivo) sin autenticación.
-export async function descargarReporteLibre(
-  ruta: "analisis-libre.xlsx" | "analisis-libre.pdf",
-  datos: unknown,
-  nombreFallback: string,
-): Promise<void> {
-  let respuesta: Response;
-  try {
-    respuesta = await fetch(`${API_URL}/reportes/${ruta}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(datos),
-    });
-  } catch {
-    throw new Error("No se pudo conectar con la API. ¿Está corriendo el backend?");
-  }
-  if (!respuesta.ok) {
-    const cuerpo = await respuesta.json().catch(() => null);
-    throw new Error(mensajeError(cuerpo) ?? `Error ${respuesta.status}`);
-  }
-  const blob = await respuesta.blob();
-  const cd = respuesta.headers.get("Content-Disposition") || "";
-  const m = cd.match(/filename=\"?([^\";]+)\"?/i);
-  const nombre = m?.[1] || nombreFallback;
-  const href = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = href;
-  a.download = nombre;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(href);
 }

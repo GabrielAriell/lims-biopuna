@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import type { PixelCrop } from "react-image-crop";
 
-import { analizarTira, analizarTiraLibre } from "@/lib/api";
+import { analizarTira } from "@/lib/api";
 import { PARAMETROS_INICIALES } from "@/lib/config";
 import { recortarArchivo } from "@/lib/recorte";
 import type { AnalisisTira, Parametros } from "@/lib/tipos";
@@ -13,7 +13,7 @@ const SIN_RECORTE: Recorte = { crop: undefined, imagen: null };
 
 // Toda la lógica de la pantalla de análisis: archivo, recorte, llamada a la
 // API, resultado y errores. La página solo muestra lo que este hook entrega.
-export function useAnalisisTira(publico = false) {
+export function useAnalisisTira() {
   const [archivo, setArchivo] = useState<File | null>(null);
   const [urlVista, setUrlVista] = useState<string | null>(null);
   const [parametros, setParametros] = useState<Parametros>(PARAMETROS_INICIALES);
@@ -40,7 +40,6 @@ export function useAnalisisTira(publico = false) {
     if (!archivo) return;
     setCargando(true);
     setError(null);
-    const fn = publico ? analizarTiraLibre : analizarTira;
     try {
       const { crop, imagen } = recorte.current;
       let nuevo: AnalisisTira;
@@ -50,9 +49,9 @@ export function useAnalisisTira(publico = false) {
         // de la imagen recortada (si la tira está parada, ancho y alto se cruzan).
         const { ancho, alto } = recortada;
         const region = parametros.vertical ? `0,0,${alto},${ancho}` : `0,0,${ancho},${alto}`;
-        nuevo = await fn(recortada.archivo, parametros, region);
+        nuevo = await analizarTira(recortada.archivo, parametros, region);
       } else {
-        nuevo = await fn(archivo, parametros);
+        nuevo = await analizarTira(archivo, parametros);
       }
       setResultado(nuevo);
       setVersion((v) => v + 1);

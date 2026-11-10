@@ -4,13 +4,7 @@ import { useRef, useState } from "react";
 
 import { recalcularLimites } from "@/lib/api";
 import { cortesDesdeFracciones, zonasDesdeCortes } from "@/lib/limites";
-import type { CalculoLimites, Carril, Zona } from "@/lib/tipos";
-
-type RecalcularFn = (
-  perfil: number[],
-  zonas: Zona[],
-  proteinasTotales: string,
-) => Promise<CalculoLimites>;
+import type { CalculoLimites, Carril } from "@/lib/tipos";
 
 // Estado de los límites de un carril. Mientras no se toque nada, usa la
 // propuesta automática; al mover un corte, recalcula con la API.
@@ -18,7 +12,6 @@ export function useAjusteLimites(
   carril: Carril,
   proteinasTotales: string,
   onAjuste?: (calculo: CalculoLimites | null) => void,
-  recalcularFn: RecalcularFn = recalcularLimites,
 ) {
   const [cortes, setCortes] = useState<number[] | null>(null);
   const [calculo, setCalculo] = useState<CalculoLimites | null>(null);
@@ -38,7 +31,7 @@ export function useAjusteLimites(
     setRecalculando(true);
     setError(null);
     try {
-      const resultado = await recalcularFn(
+      const resultado = await recalcularLimites(
         carril.perfil,
         zonasDesdeCortes(nuevos),
         proteinasTotales,

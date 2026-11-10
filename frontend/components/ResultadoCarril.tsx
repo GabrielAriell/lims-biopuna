@@ -3,23 +3,16 @@
 import EditorLimites from "./EditorLimites";
 import TablaFracciones from "./TablaFracciones";
 import { useAjusteLimites } from "@/hooks/useAjusteLimites";
-import { recalcularLimites, recalcularLimitesLibre } from "@/lib/api";
 import type { CalculoLimites, Carril } from "@/lib/tipos";
 
 type Props = {
   carril: Carril;
   proteinasTotales: string;
   onAjuste?: (calculo: CalculoLimites | null) => void;
-  publico?: boolean;
 };
 
-export default function ResultadoCarril({ carril, proteinasTotales, onAjuste, publico }: Props) {
-  const ajuste = useAjusteLimites(
-    carril,
-    proteinasTotales,
-    onAjuste,
-    publico ? recalcularLimitesLibre : recalcularLimites,
-  );
+export default function ResultadoCarril({ carril, proteinasTotales, onAjuste }: Props) {
+  const ajuste = useAjusteLimites(carril, proteinasTotales, onAjuste);
   const calculo = ajuste.calculo;
   const fracciones = calculo?.fracciones ?? carril.fracciones;
   const advertencias = calculo?.advertencias ?? carril.advertencias;

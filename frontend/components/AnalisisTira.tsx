@@ -8,7 +8,6 @@ import RecortadorImagen from "./RecortadorImagen";
 import ResultadoCarril from "./ResultadoCarril";
 import { useAnalisisTira } from "@/hooks/useAnalisisTira";
 import { aplicarAjustes, type AjustesPorCarril } from "@/lib/ajustes";
-import { descargarReporteLibre } from "@/lib/api";
 import { descargarTexto, resultadosACsv } from "@/lib/csv";
 import type { CalculoLimites } from "@/lib/tipos";
 import type { EnsayoGuardado } from "@/lib/tipos-ensayos";
@@ -19,8 +18,6 @@ type Props = {
   onGuardado?: (ensayo: EnsayoGuardado) => void;
   // Permite volver a empezar con otra tira sin recargar la página.
   onOtroEnsayo?: () => void;
-  // Modo público (sin login): usa endpoints libres y permite exportar sin guardar.
-  publico?: boolean;
 };
 
 // Toda la pantalla de análisis, sin el encabezado ni el fondo. Vive dentro de
@@ -29,11 +26,8 @@ export default function AnalisisTira({
   idMuestra,
   onGuardado,
   onOtroEnsayo,
-  publico = false,
 }: Props) {
-  const t = useAnalisisTira(publico);
-  const [descargando, setDescargando] = useState<"xlsx" | "pdf" | null>(null);
-  const [errorDescarga, setErrorDescarga] = useState<string | null>(null);
+  const t = useAnalisisTira();
   const [ajustes, setAjustes] = useState<{
     version: number;
     porCarril: AjustesPorCarril;
@@ -60,41 +54,6 @@ export default function AnalisisTira({
     const base = t.archivo.name.replace(/\.[^.]+$/, "");
     const resultado = aplicarAjustes(t.resultado, ajustesActuales);
     descargarTexto(`${base}.csv`, resultadosACsv(t.archivo.name, resultado));
-  }
-
-  async function exportarLibre(formato: "xlsx" | "pdf") {
-    if (!t.resultado) return;
-    setDescargando(formato);
-    setErrorDescarga(null);
-    try {
-      const resultado = aplicarAjustes(t.resultado, ajustesActuales);
-      const ptTxt = t.parametros.proteinasTotales.trim().replace(",", ".");
-      const pt = ptTxt ? Number(ptTxt) : null;
-      const datos = {
-        nombre_archivo: t.archivo?.name ?? null,
-        proteinas_totales_g_dl: Number.isFinite(pt) ? pt : null,
-        carriles: resultado.carriles.map((c) => ({
-          indice: c.indice,
-          relacion_ag: c.relacion_ag,
-          advertencias: c.advertencias,
-          fracciones: c.fracciones.map((f) => ({
-            nombre_fraccion: f.nombre,
-            porcentaje_relativo: f.porcentaje,
-            concentracion_g_dl: f.concentracion_g_dl,
-            area_integrada: f.area,
-          })),
-        })),
-      };
-      await descargarReporteLibre(
-        formato === "xlsx" ? "analisis-libre.xlsx" : "analisis-libre.pdf",
-        datos,
-        `analisis_libre.${formato}`,
-      );
-    } catch (e) {
-      setErrorDescarga(e instanceof Error ? e.message : "No se pudo descargar");
-    } finally {
-      setDescargando(null);
-    }
   }
 
   return (
@@ -132,41 +91,18 @@ export default function AnalisisTira({
       {t.resultado && (
         <>
           <section className="space-y-3 rounded-lg border border-gray-200 bg-white p-5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">
                 Imagen analizada ({t.resultado.carriles.length}{" "}
                 {t.resultado.carriles.length === 1 ? "carril" : "carriles"})
               </h2>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={exportar}
-                  className="rounded border border-gray-300 px-3 py-1 text-sm hover:bg-gray-50"
-                >
-                  Descargar CSV
-                </button>
-                {publico && (
-                  <>
-                    <button
-                      onClick={() => void exportarLibre("xlsx")}
-                      disabled={descargando !== null}
-                      className="rounded border border-emerald-300 bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
-                    >
-                      {descargando === "xlsx" ? "Generando..." : "Descargar Excel"}
-                    </button>
-                    <button
-                      onClick={() => void exportarLibre("pdf")}
-                      disabled={descargando !== null}
-                      className="rounded border border-emerald-300 bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
-                    >
-                      {descargando === "pdf" ? "Generando..." : "Descargar PDF"}
-                    </button>
-                  </>
-                )}
-              </div>
+              <button
+                onClick={exportar}
+                className="rounded border border-gray-300 px-3 py-1 text-sm"
+              >
+                Descargar CSV
+              </button>
             </div>
-            {errorDescarga && (
-              <p className="rounded bg-red-50 p-2 text-sm text-red-800">{errorDescarga}</p>
-            )}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={t.resultado.imagen}
@@ -194,11 +130,10 @@ export default function AnalisisTira({
               carril={carril}
               proteinasTotales={t.parametros.proteinasTotales}
               onAjuste={(calculo) => registrarAjuste(carril.indice, calculo)}
-              publico={publico}
             />
           ))}
 
-          {!publico && idMuestra !== undefined && (
+          {idMuestra !== undefined && (
             <PanelGuardarEnsayo
               key={idMuestra}
               analisis={aplicarAjustes(t.resultado, ajustesActuales)}
