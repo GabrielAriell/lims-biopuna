@@ -110,19 +110,19 @@ export default function PaginaLogin() {
                 height={40}
                 className="h-10 w-10 rounded-full bg-white/80 object-contain p-0.5"
               />
-              <span className="font-semibold text-gray-900">Camelia Biotech</span>
+              <span className="font-semibold text-white">Camelia Biotech</span>
             </div>
-            <h2 className="text-2xl font-extrabold text-gray-900 drop-shadow-sm sm:text-[1.7rem]">
+            <h2 className="text-2xl font-extrabold text-white drop-shadow sm:text-[1.7rem]">
               Iniciá sesión en tu cuenta
             </h2>
-            <p className="mt-1 text-sm font-medium text-gray-800">
+            <p className="mt-1 text-sm font-medium text-white/90 drop-shadow-sm">
               Ingresá tus datos para continuar
             </p>
           </div>
 
           <form onSubmit={enviar} className="space-y-4">
             <div>
-              <label htmlFor="email" className="mb-1 block text-sm font-semibold text-gray-900">
+              <label htmlFor="email" className="mb-1 block text-sm font-semibold text-white drop-shadow-sm">
                 Correo
               </label>
               <input
@@ -140,7 +140,7 @@ export default function PaginaLogin() {
             <div>
               <label
                 htmlFor="password"
-                className="mb-1 block text-sm font-semibold text-gray-900"
+                className="mb-1 block text-sm font-semibold text-white drop-shadow-sm"
               >
                 Contraseña
               </label>
@@ -171,10 +171,10 @@ export default function PaginaLogin() {
             </button>
           </form>
 
-          <section className="mt-6 border-t border-white/40 pt-4 text-sm text-gray-900">
-            <p className="font-semibold text-gray-900">Cuentas de prueba</p>
-            <p className="mt-1 text-xs font-medium text-gray-800">
-              Contraseña común: <code className="font-mono">{CLAVE_PRUEBA}</code>
+          <section className="mt-6 border-t border-white/40 pt-4 text-sm text-white">
+            <p className="font-semibold text-white drop-shadow-sm">Cuentas de prueba</p>
+            <p className="mt-1 text-xs font-medium text-white/90">
+              Contraseña común: <code className="font-mono text-white">{CLAVE_PRUEBA}</code>
             </p>
             <ul className="mt-2 space-y-1.5">
               {CUENTAS_PRUEBA.map((cuenta) => (
@@ -182,13 +182,13 @@ export default function PaginaLogin() {
                   key={cuenta.email}
                   className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2"
                 >
-                  <span className="break-all text-xs font-medium text-gray-800">
-                    <span className="font-mono">{cuenta.email}</span> · {cuenta.rol}
+                  <span className="break-all text-xs font-medium text-white/90">
+                    <span className="font-mono text-white">{cuenta.email}</span> · {cuenta.rol}
                   </span>
                   <button
                     type="button"
                     onClick={() => usarCuenta(cuenta)}
-                    className="self-start rounded border border-gray-300 bg-white px-2 py-0.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                    className="self-start rounded border border-white/50 bg-white/20 px-2 py-0.5 text-xs font-medium text-white shadow-sm hover:bg-white/30"
                   >
                     Usar
                   </button>
