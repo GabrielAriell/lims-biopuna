@@ -39,6 +39,7 @@ export default function PaginaLogin() {
   const [password, setPassword] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [analisisAbierto, setAnalisisAbierto] = useState(false);
 
   // Si ya hay una sesión válida, no tiene sentido mostrar el login.
   useEffect(() => {
@@ -173,18 +174,30 @@ export default function PaginaLogin() {
         </section>
         </div>
 
-        <section className="space-y-4 rounded-lg border border-emerald-200 bg-white p-5 shadow-sm">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">
-              Análisis libre de tira
-            </h2>
-            <p className="text-sm text-gray-600">
-              No requiere iniciar sesión. Podés analizar una imagen, ajustar
-              límites y descargar los resultados en CSV, Excel o PDF. Este
-              análisis no se guarda en el sistema.
-            </p>
+        <section className="rounded-lg border border-emerald-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Análisis libre de tira
+              </h2>
+              <p className="text-sm text-gray-600">
+                No requiere iniciar sesión. Analizá una imagen y descargá los
+                resultados en CSV, Excel o PDF (sin guardar en el sistema).
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAnalisisAbierto((v) => !v)}
+              className="shrink-0 rounded-md border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-100"
+            >
+              {analisisAbierto ? "Cerrar análisis libre" : "Abrir análisis libre"}
+            </button>
           </div>
-          <AnalisisTira publico />
+          {analisisAbierto && (
+            <div className="mt-4 border-t border-gray-200 pt-4">
+              <AnalisisTira publico />
+            </div>
+          )}
         </section>
       </div>
     </main>
