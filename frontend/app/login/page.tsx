@@ -69,7 +69,7 @@ export default function PaginaLogin() {
     <main className="relative min-h-screen overflow-hidden">
       {/* Fondo: imagen a pantalla completa */}
       <Image
-        src="/login-cusi.avif"
+        src="/login-fondo.jpg"
         alt="Paisaje de la Puna"
         fill
         className="object-cover"
