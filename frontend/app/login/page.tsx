@@ -100,7 +100,7 @@ export default function PaginaLogin() {
         </div>
 
         {/* Tarjeta de login */}
-        <div className="w-full max-w-md rounded-2xl border border-white/30 bg-white/20 px-7 py-9 shadow-2xl backdrop-blur-sm sm:px-9 sm:py-10">
+        <div className="w-full max-w-md rounded-2xl border border-white/20 bg-white/10 px-7 py-9 shadow-2xl backdrop-blur-sm sm:px-9 sm:py-10">
           <div className="mb-7 text-center">
             <div className="mb-3 flex items-center justify-center gap-2 lg:hidden">
               <Image
