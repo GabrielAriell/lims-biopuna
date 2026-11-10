@@ -40,6 +40,7 @@ export default function PaginaLogin() {
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loginAbierto, setLoginAbierto] = useState(true);
+  const [analisisAbierto, setAnalisisAbierto] = useState(false);
 
   // Si ya hay una sesión válida, no tiene sentido mostrar el login.
   useEffect(() => {
@@ -67,6 +68,11 @@ export default function PaginaLogin() {
     setError(null);
   }
 
+  function abrirAnalisis() {
+    setAnalisisAbierto(true);
+    setLoginAbierto(false);
+  }
+
   return (
     <main className="relative min-h-screen bg-gray-50 text-gray-900 lg:flex">
       {/* Área principal: branding + análisis libre */}
@@ -92,16 +98,32 @@ export default function PaginaLogin() {
           </div>
 
           <section className="rounded-lg border border-emerald-200 bg-white p-5 shadow-sm">
-            <div className="mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Análisis libre
-              </h2>
-              <p className="text-sm text-gray-600">
-                Este análisis no se guarda en el sistema. Si querés registrar
-                campañas, muestras y ensayos, iniciá sesión.
-              </p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Análisis libre
+                </h2>
+                <p className="text-sm text-gray-600">
+                  {analisisAbierto
+                    ? "Este análisis no se guarda en el sistema. Si querés registrar campañas, muestras y ensayos, iniciá sesión."
+                    : "Analizá una tira y descargá los resultados en CSV, Excel o PDF sin iniciar sesión (no se guarda)."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  analisisAbierto ? setAnalisisAbierto(false) : abrirAnalisis()
+                }
+                className="shrink-0 rounded-md border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-100"
+              >
+                {analisisAbierto ? "Cerrar análisis libre" : "Abrir análisis libre"}
+              </button>
             </div>
-            <AnalisisTira publico />
+            {analisisAbierto && (
+              <div className="mt-4 border-t border-gray-200 pt-4">
+                <AnalisisTira publico />
+              </div>
+            )}
           </section>
         </div>
       </section>
