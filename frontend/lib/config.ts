@@ -1,7 +1,10 @@
 ﻿import type { Modo, Parametros } from "./tipos";
 
-// Dirección de la API: se cambia en frontend/.env.local, no en el código.
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+// Dirección de la API: se puede configurar con NEXT_PUBLIC_API_URL.
+// Si no hay variable definida, se usa el backend desplegado en Render.
+export const API_URL =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
+  "https://lims-biopuna.onrender.com";
 
 export const PARAMETROS_INICIALES: Parametros = {
   proteinasTotales: "",
