@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
+from pydantic import BaseModel, Field
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
@@ -392,3 +393,100 @@ def exportar_muestra_pdf(
 
     doc.build(story)
     return _pdf_respuesta(bio, f"muestra_{id_muestra}_{datetime.now():%Y%m%d}.pdf")
+
+class FraccionLibreIn(BaseModel):
+    nombre_fraccion: str
+    porcentaje_relativo: float | None = None
+    concentracion_g_dl: float | None = None
+    area_integrada: float | None = None
+
+class CarrilLibreIn(BaseModel):
+    indice: int
+    fracciones: list[FraccionLibreIn] = Field(default_factory=list)
+    relacion_ag: float | None = None
+    advertencias: list[str] = Field(default_factory=list)
+
+class AnalisisLibreIn(BaseModel):
+    proteinas_totales_g_dl: float | None = None
+    nombre_archivo: str | None = None
+    carriles: list[CarrilLibreIn] = Field(default_factory=list)
+
+@router.post("/analisis-libre.xlsx")
+def exportar_analisis_libre_excel(datos: AnalisisLibreIn):
+    wb = Workbook()
+    ws = _hoja(
+        wb,
+        "Análisis libre",
+        ["Carril", "Fracción", "% relativo", "g/dL", "Área integrada", "Relación A/G"],
+    )
+    for c in datos.carriles:
+        fracciones = c.fracciones or [FraccionLibreIn(nombre_fraccion="(sin fracciones)")]
+        for f in fracciones:
+            ws.append([
+                c.indice,
+                f.nombre_fraccion,
+                f.porcentaje_relativo,
+                f.concentracion_g_dl,
+                f.area_integrada,
+                c.relacion_ag,
+            ])
+    _auto_ancho(ws)
+    ws2 = _hoja(wb, "Resumen", ["Campo", "Valor"])
+    ws2.append(["Tipo", "Análisis libre (sin guardar)"])
+    ws2.append(["Generado", datetime.now().strftime("%Y-%m-%d %H:%M")])
+    ws2.append(["Archivo origen", datos.nombre_archivo or ""])
+    ws2.append(["Proteínas totales g/dL", datos.proteinas_totales_g_dl])
+    ws2.append(["Cantidad de carriles", len(datos.carriles)])
+    _auto_ancho(ws2)
+    return _xlsx_respuesta(wb, f"analisis_libre_{datetime.now():%Y%m%d_%H%M}.xlsx")
+
+@router.post("/analisis-libre.pdf")
+def exportar_analisis_libre_pdf(datos: AnalisisLibreIn):
+    bio = BytesIO()
+    doc = SimpleDocTemplate(bio, pagesize=A4, leftMargin=36, rightMargin=36)
+    estilos = getSampleStyleSheet()
+    story = [
+        Paragraph("Camelia Biotech · Análisis libre de tira", estilos["Title"]),
+        Paragraph(f"Generado: {datetime.now():%Y-%m-%d %H:%M}", estilos["Normal"]),
+        Paragraph("Resultado no guardado en el sistema.", estilos["Italic"]),
+        Spacer(1, 12),
+    ]
+    info = [["Campo", "Valor"],
+            ["Archivo origen", datos.nombre_archivo or "-"],
+            ["Proteínas totales g/dL", str(datos.proteinas_totales_g_dl) if datos.proteinas_totales_g_dl is not None else "-"],
+            ["Carriles", str(len(datos.carriles))]]
+    tinfo = Table(info, colWidths=[170, 320])
+    tinfo.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1F4E79")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+    ]))
+    story += [tinfo, Spacer(1, 14)]
+
+    if not datos.carriles:
+        story.append(Paragraph("Sin carriles analizados.", estilos["Normal"]))
+    for c in datos.carriles:
+        story.append(Paragraph(f"Carril {c.indice}" + (f" · A/G: {c.relacion_ag}" if c.relacion_ag is not None else ""), estilos["Heading3"]))
+        filas = [["Fracción", "%", "g/dL", "Área"]] + [
+            [f.nombre_fraccion,
+             "" if f.porcentaje_relativo is None else str(f.porcentaje_relativo),
+             "" if f.concentracion_g_dl is None else str(f.concentracion_g_dl),
+             "" if f.area_integrada is None else str(f.area_integrada)]
+            for f in (c.fracciones or [])
+        ]
+        if len(filas) == 1:
+            filas.append(["(sin fracciones)", "", "", ""])
+        t = Table(filas, colWidths=[140, 80, 80, 120])
+        t.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#D9EAF7")),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+            ("FONTSIZE", (0, 0), (-1, -1), 8),
+        ]))
+        story.append(t)
+        for a in c.advertencias:
+            story.append(Paragraph(f"⚠ {a}", estilos["Normal"]))
+        story.append(Spacer(1, 10))
+
+    doc.build(story)
+    return _pdf_respuesta(bio, f"analisis_libre_{datetime.now():%Y%m%d_%H%M}.pdf")

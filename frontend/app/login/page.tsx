@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
+import AnalisisTira from "@/components/AnalisisTira";
 import { useSesion } from "@/components/ProveedorSesion";
 import { iniciarSesion } from "@/lib/auth";
 
@@ -66,24 +67,25 @@ export default function PaginaLogin() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-10 text-gray-900">
-      <div className="w-full max-w-md space-y-5">
-        <div className="flex flex-col items-center text-center">
-          <Image
-            src="/logo-camelia.png"
-            alt="Camelia Biotech"
-            width={80}
-            height={80}
-            className="mb-2 h-20 w-20 object-contain"
-            priority
-          />
-          <h1 className="text-2xl font-bold">Camelia Biotech</h1>
-        </div>
+    <main className="min-h-screen bg-gray-50 px-4 py-10 text-gray-900">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
+        <div className="mx-auto w-full max-w-md space-y-5">
+          <div className="flex flex-col items-center text-center">
+            <Image
+              src="/logo-camelia.png"
+              alt="Camelia Biotech"
+              width={80}
+              height={80}
+              className="mb-2 h-20 w-20 object-contain"
+              priority
+            />
+            <h1 className="text-2xl font-bold">Camelia Biotech</h1>
+          </div>
 
-        <form
-          onSubmit={enviar}
-          className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
-        >
+          <form
+            onSubmit={enviar}
+            className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
+          >
           <div>
             <h2 className="text-lg font-semibold">Iniciar sesión</h2>
             <p className="text-sm text-gray-500">
@@ -168,6 +170,21 @@ export default function PaginaLogin() {
           <p className="mt-2 text-xs text-blue-700">
             Cuentas de prueba para acceder al sistema.
           </p>
+        </section>
+        </div>
+
+        <section className="space-y-4 rounded-lg border border-emerald-200 bg-white p-5 shadow-sm">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Análisis libre de tira
+            </h2>
+            <p className="text-sm text-gray-600">
+              No requiere iniciar sesión. Podés analizar una imagen, ajustar
+              límites y descargar los resultados en CSV, Excel o PDF. Este
+              análisis no se guarda en el sistema.
+            </p>
+          </div>
+          <AnalisisTira publico />
         </section>
       </div>
     </main>

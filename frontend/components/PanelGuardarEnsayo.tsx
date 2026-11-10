@@ -39,9 +39,8 @@ export default function PanelGuardarEnsayo({
     [analisis],
   );
   const proteinas = proteinasTotalesNumero(proteinasTotales);
-  const puedeEscribir =
-    usuario?.rol_sistema === "admin" ||
-    usuario?.rol_sistema === "investigador";
+  // Cualquier usuario autenticado puede guardar (el backend valida la sesión).
+  const puedeEscribir = Boolean(usuario);
   const listo =
     carriles.length > 0 &&
     problemas.length === 0 &&
@@ -182,10 +181,9 @@ export default function PanelGuardarEnsayo({
             </p>
           )}
 
-          {usuario && !puedeEscribir && (
+          {!usuario && (
             <p className="rounded border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-900">
-              Tu usuario es de solo lectura: puede analizar imágenes, pero no
-              guardar ensayos.
+              Iniciá sesión para guardar el ensayo.
             </p>
           )}
 
