@@ -5,3 +5,18 @@ node_modules/
 .next/
 *.dump
 backend/ejemplos/
+backend/.env
+
+# Salidas locales y logs (no subir)
+backend/salida/
+backend/salida_*.png
+backend/uvicorn*.log
+backend/uvicorn*.err.log
+
+# Configuración local de ejemplo (NO guardar secretos reales acá)
+# Usar backend/.env (ignorado) o variables de entorno del servidor.
+# SUPABASE_URL=...
+# SUPABASE_SERVICE_ROLE_KEY=...
+# CLOUDINARY_CLOUD_NAME=...
+# CLOUDINARY_API_KEY=...
+# CLOUDINARY_API_SECRET=...

@@ -1,0 +1,48 @@
+:root {
+  /* Fondo general de la app (pantallas) */
+  --fondo-app: #f9fafb;
+  /* Texto principal */
+  --texto-app: #111827;
+
+  /* Superficies (tarjetas, paneles) */
+  --fondo-tarjeta: #ffffff;
+  --borde-tarjeta: #e5e7eb;
+
+  /* Color principal (botones/acciones destacadas) */
+  --color-primario: #2563eb;
+  --color-primario-hover: #1d4ed8;
+  --texto-sobre-primario: #ffffff;
+
+  /* Secundario / bordes suaves */
+  --color-secundario: #f3f4f6;
+  --borde-secundario: #d1d5db;
+
+  /* Estados */
+  --color-exito-fondo: #dcfce7;
+  --color-exito-texto: #166534;
+  --color-error-fondo: #fef2f2;
+  --color-error-texto: #991b1b;
+}
+
+/*
+  Ejemplo: fondo con imagen (descomentar y ajustar la ruta).
+  Colocá la imagen en frontend/public/ (ej: public/fondo.jpg) y usá /fondo.jpg
+*/
+/*
+body {
+  background-image: url("/fondo.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+*/
+
+/*
+  Ejemplo: fondo con degradado
+*/
+/*
+body {
+  background: linear-gradient(180deg, #eef2ff 0%, #f9fafb 100%);
+}
+*/
