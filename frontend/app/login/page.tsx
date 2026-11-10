@@ -91,22 +91,16 @@ export default function PaginaLogin() {
             />
             <span className="text-2xl font-semibold">Camelia Biotech</span>
           </div>
-          <p className="text-sm font-medium uppercase tracking-[0.25em] text-white/80">
-            Bienvenido
-          </p>
           <h1 className="mt-2 text-5xl font-extrabold leading-tight tracking-tight xl:text-6xl">
             BIENVENIDO
-            <br />
-            DE VUELTA
           </h1>
           <p className="mt-5 max-w-md text-base text-white/85">
-            Accedé al sistema para gestionar campañas, muestras y ensayos con
-            trazabilidad.
+            Accedé al sistema para gestionar campañas, muestras y ensayos.
           </p>
         </div>
 
         {/* Tarjeta de login */}
-        <div className="w-full max-w-md rounded-2xl bg-white px-7 py-9 shadow-2xl sm:px-9 sm:py-10">
+        <div className="w-full max-w-md rounded-2xl border border-white/40 bg-white/60 px-7 py-9 shadow-2xl backdrop-blur-md sm:px-9 sm:py-10">
           <div className="mb-7 text-center">
             <div className="mb-3 flex items-center justify-center gap-2 lg:hidden">
               <Image
@@ -177,9 +171,9 @@ export default function PaginaLogin() {
             </button>
           </form>
 
-          <section className="mt-6 border-t border-gray-200 pt-4 text-sm text-gray-700">
-            <p className="font-medium text-gray-800">Cuentas de prueba</p>
-            <p className="mt-1 text-xs text-gray-500">
+          <section className="mt-6 border-t border-gray-300/70 pt-4 text-sm text-gray-800">
+            <p className="font-medium text-gray-900">Cuentas de prueba</p>
+            <p className="mt-1 text-xs text-gray-700">
               Contraseña común: <code className="font-mono">{CLAVE_PRUEBA}</code>
             </p>
             <ul className="mt-2 space-y-1.5">
@@ -188,13 +182,13 @@ export default function PaginaLogin() {
                   key={cuenta.email}
                   className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2"
                 >
-                  <span className="break-all text-xs text-gray-600">
+                  <span className="break-all text-xs text-gray-700">
                     <span className="font-mono">{cuenta.email}</span> · {cuenta.rol}
                   </span>
                   <button
                     type="button"
                     onClick={() => usarCuenta(cuenta)}
-                    className="self-start rounded border border-gray-300 bg-white px-2 py-0.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                    className="self-start rounded border border-gray-300 bg-white/80 px-2 py-0.5 text-xs font-medium text-gray-700 hover:bg-white"
                   >
                     Usar
                   </button>
