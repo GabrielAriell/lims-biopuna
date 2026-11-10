@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 
 import { useSesion } from "./ProveedorSesion";
@@ -21,14 +22,19 @@ export default function Encabezado({ activa }: Props) {
   return (
     <header className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
       <div className="min-w-0">
-        <Link href="/" className="inline-block">
-          <h1 className="text-xl font-bold hover:text-blue-700 sm:text-2xl">
-            LIMS-BioPuna
-          </h1>
+        <Link href="/" className="inline-flex items-center gap-2 hover:opacity-90">
+          <Image
+            src="/logo-camelia.jpg"
+            alt="Camelia Biotech"
+            width={40}
+            height={40}
+            className="h-10 w-10 rounded object-contain"
+            priority
+          />
+          <span className="text-xl font-bold text-gray-900 sm:text-2xl">
+            Camelia Biotech
+          </span>
         </Link>
-        <p className="text-sm text-gray-600 sm:text-base">
-          Análisis de tiras y trazabilidad de muestras
-        </p>
       </div>
 
       <div className="flex flex-col gap-2 sm:items-end">

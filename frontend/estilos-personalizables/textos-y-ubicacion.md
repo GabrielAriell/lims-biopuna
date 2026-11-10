@@ -10,7 +10,7 @@ Los textos están escritos directamente en los componentes/páginas (`.tsx`). Pa
 | Texto / elemento | Archivo | Qué editar |
 |---|---|---|
 | Título de pestaña del navegador y descripción | `frontend/app/layout.tsx` | `metadata.title`, `metadata.description` |
-| Nombre principal "LIMS-BioPuna" y subtítulo del encabezado | `frontend/components/Encabezado.tsx` | `<h1>...</h1>` y `<p>...</p>` |
+| Logo y nombre principal "Camelia Biotech" del encabezado | `frontend/components/Encabezado.tsx` | `<Image ...>` y `<span>...</span>` dentro del enlace a inicio |
 | Textos del login (título, "Iniciar sesión", etiquetas, ayuda) | `frontend/app/login/page.tsx` | Strings dentro del JSX |
 | "Exploración de datos" y descripción | `frontend/app/exploracion/ExploracionCliente.tsx` | `<h1>` y `<p>` iniciales |
 | Títulos de secciones en Muestras y campañas | `frontend/app/muestras/PaginaMuestrasCliente.tsx` | "Semáforo de 48 horas", textos de aviso/enlace, etc. |

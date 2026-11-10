@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import auth, ensayos, geografia, health, investigadores, muestras, reportes, tiras
 
-app = FastAPI(title="LIMS-BioPuna API")
+app = FastAPI(title="Camelia Biotech API")
 
 
 def _origenes_cors() -> list[str]:

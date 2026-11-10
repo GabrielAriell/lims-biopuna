@@ -15,8 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LIMS-BioPuna",
-  description: "Análisis de tiras de celo-gel y trazabilidad de muestras",
+  title: "Camelia Biotech",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -1,4 +1,4 @@
-# Personalización de estilos (LIMS-BioPuna)
+# Personalización de estilos (Camelia Biotech)
 
 Esta carpeta reúne los puntos principales para cambiar colores, fondos, botones e imágenes **sin buscar en todo el proyecto**.
 

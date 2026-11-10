@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
@@ -67,11 +68,16 @@ export default function PaginaLogin() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-10 text-gray-900">
       <div className="w-full max-w-md space-y-5">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">LIMS-BioPuna</h1>
-          <p className="text-gray-600">
-            Análisis de tiras y trazabilidad de muestras
-          </p>
+        <div className="flex flex-col items-center text-center">
+          <Image
+            src="/logo-camelia.jpg"
+            alt="Camelia Biotech"
+            width={80}
+            height={80}
+            className="mb-2 h-20 w-20 rounded object-contain"
+            priority
+          />
+          <h1 className="text-2xl font-bold">Camelia Biotech</h1>
         </div>
 
         <form
@@ -160,8 +166,7 @@ export default function PaginaLogin() {
             ))}
           </ul>
           <p className="mt-2 text-xs text-blue-700">
-            Los usuarios con rol &quot;lectura&quot; pueden entrar, pero no
-            crear campañas, muestras ni ensayos.
+            Cuentas de prueba para acceder al sistema.
           </p>
         </section>
       </div>

@@ -336,7 +336,7 @@ def exportar_muestra_pdf(
     doc = SimpleDocTemplate(bio, pagesize=A4, leftMargin=36, rightMargin=36)
     estilos = getSampleStyleSheet()
     story = [
-        Paragraph("LIMS-BioPuna · Reporte de muestra", estilos["Title"]),
+        Paragraph("Camelia Biotech · Reporte de muestra", estilos["Title"]),
         Paragraph(f"Generado: {datetime.now():%Y-%m-%d %H:%M}", estilos["Normal"]),
         Spacer(1, 12),
         Paragraph("Datos de la muestra", estilos["Heading2"]),
