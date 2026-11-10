@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useMemo } from "react";
 
@@ -14,6 +15,34 @@ const ESTADOS: { clave: EstadoMuestra; titulo: string; clase: string }[] = [
   { clave: "rojo", titulo: "Fuera de plazo", clase: "border-red-300 bg-red-50 text-red-900" },
   { clave: "procesada", titulo: "Procesadas", clase: "border-gray-300 bg-gray-100 text-gray-800" },
 ];
+
+const SECCIONES = [
+  {
+    href: "/exploracion",
+    titulo: "Exploración",
+    descripcion:
+      "Consultá y buscá todos los datos: muestras, ensayos y resultados por especie, animal, localidad, investigador o fecha. Exportá a Excel o PDF.",
+    accion: "Ir a exploración",
+    imagen: "/inicio-exploracion.svg",
+  },
+  {
+    href: "/muestras",
+    titulo: "Muestras y campañas",
+    descripcion:
+      "Registrá campañas y muestras, y revisá el semáforo de 48 horas con el estado operativo de cada muestra.",
+    accion: "Ir a muestras",
+    imagen: "/inicio-muestras.svg",
+  },
+  {
+    href: "/ensayos/nuevo",
+    titulo: "Nuevo ensayo",
+    descripcion:
+      "Analizá una tira, ajustá límites, revisá fracciones y guardá el ensayo asociado a una muestra.",
+    accion: "Nuevo ensayo",
+    imagen: "/inicio-ensayo.svg",
+    destacado: true,
+  },
+] as const;
 
 export default function InicioCliente() {
   const { usuario } = useSesion();
@@ -32,39 +61,69 @@ export default function InicioCliente() {
 
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900">
-      <div className="mx-auto max-w-6xl space-y-8 px-4 py-8">
+      <div className="mx-auto max-w-6xl space-y-10 px-4 py-8">
         <Encabezado activa="inicio" />
 
-        <section className="space-y-1">
-          <h2 className="text-2xl font-bold">
-            Hola{usuario?.nombre ? `, ${usuario.nombre}` : ""}
-          </h2>
-          <p className="text-gray-600">
-            Elegí una sección para trabajar. Desde acá podés registrar campañas y
-            muestras, analizar y guardar ensayos, o explorar todos los datos.
+        <section className="rounded-2xl border border-emerald-100 bg-gradient-to-b from-white to-emerald-50/40 px-6 py-10 text-center shadow-sm">
+          <Image
+            src="/logo-camelia.png"
+            alt="Camelia Biotech"
+            width={140}
+            height={140}
+            className="mx-auto h-28 w-28 object-contain sm:h-36 sm:w-36"
+            priority
+          />
+          <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            Camelia Biotech
+          </h1>
+          <p className="mx-auto mt-3 max-w-2xl text-base text-gray-600 sm:text-lg">
+            {usuario?.nombre ? `Hola, ${usuario.nombre}. ` : ""}
+            Gestión, análisis y trazabilidad de muestras en un solo lugar.
           </p>
         </section>
 
-        <section className="grid gap-4 md:grid-cols-3">
-          <TarjetaAcceso
-            href="/exploracion"
-            titulo="Exploración"
-            descripcion="Buscar y ver todos los datos: muestras, ensayos y resultados por especie, animal, localidad, investigador o fecha. Exportar a Excel/PDF."
-            accion="Ir a exploración"
-          />
-          <TarjetaAcceso
-            href="/muestras"
-            titulo="Muestras y campañas"
-            descripcion="Registrar campañas y muestras, revisar el semáforo de 48 horas y el estado operativo."
-            accion="Ir a muestras"
-          />
-          <TarjetaAcceso
-            href="/ensayos/nuevo"
-            titulo="Nuevo ensayo"
-            descripcion="Analizar una tira, ajustar límites, revisar fracciones y guardar el ensayo asociado a una muestra."
-            accion="Nuevo ensayo"
-            destacado
-          />
+        <section>
+          <h2 className="mb-4 text-center text-xl font-semibold text-gray-800 sm:text-2xl">
+            Secciones principales
+          </h2>
+          <div className="grid gap-5 md:grid-cols-3">
+            {SECCIONES.map((s) => (
+              <Link
+                key={s.href}
+                href={s.href}
+                className={`group flex flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                  "destacado" in s && s.destacado
+                    ? "border-emerald-300 ring-1 ring-emerald-100"
+                    : "border-gray-200"
+                }`}
+              >
+                <div className="relative aspect-[16/9] w-full bg-gray-50">
+                  <Image
+                    src={s.imagen}
+                    alt={s.titulo}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                  />
+                </div>
+                <div className="flex flex-1 flex-col p-5 text-center">
+                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-emerald-700">
+                    {s.titulo}
+                  </h3>
+                  <p className="mt-2 flex-1 text-sm text-gray-600">{s.descripcion}</p>
+                  <span
+                    className={`mt-4 inline-flex justify-center rounded-md px-4 py-2 text-sm font-medium ${
+                      "destacado" in s && s.destacado
+                        ? "bg-emerald-600 text-white"
+                        : "border border-gray-300 text-gray-700 group-hover:bg-gray-50"
+                    }`}
+                  >
+                    {s.accion}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
         </section>
 
         <section className="rounded-lg border border-gray-200 bg-white p-5">
@@ -77,7 +136,7 @@ export default function InicioCliente() {
             </div>
             <Link
               href="/muestras"
-              className="text-sm font-medium text-blue-700 underline"
+              className="text-sm font-medium text-emerald-700 underline"
             >
               Ver detalle en Muestras
             </Link>
@@ -95,42 +154,5 @@ export default function InicioCliente() {
         </section>
       </div>
     </main>
-  );
-}
-
-function TarjetaAcceso({
-  href,
-  titulo,
-  descripcion,
-  accion,
-  destacado,
-}: {
-  href: string;
-  titulo: string;
-  descripcion: string;
-  accion: string;
-  destacado?: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`group flex flex-col rounded-lg border bg-white p-5 transition-shadow hover:shadow-md ${
-        destacado ? "border-blue-300" : "border-gray-200"
-      }`}
-    >
-      <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-700">
-        {titulo}
-      </h3>
-      <p className="mt-2 flex-1 text-sm text-gray-600">{descripcion}</p>
-      <span
-        className={`mt-4 inline-flex w-fit rounded px-3 py-1.5 text-sm font-medium ${
-          destacado
-            ? "bg-blue-600 text-white"
-            : "border border-gray-300 text-gray-700 group-hover:bg-gray-50"
-        }`}
-      >
-        {accion}
-      </span>
-    </Link>
   );
 }
