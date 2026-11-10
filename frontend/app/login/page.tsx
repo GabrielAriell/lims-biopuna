@@ -39,7 +39,7 @@ export default function PaginaLogin() {
   const [password, setPassword] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [analisisAbierto, setAnalisisAbierto] = useState(false);
+  const [loginAbierto, setLoginAbierto] = useState(true);
 
   // Si ya hay una sesión válida, no tiene sentido mostrar el login.
   useEffect(() => {
@@ -68,138 +68,179 @@ export default function PaginaLogin() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-10 text-gray-900">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
-        <div className="mx-auto w-full max-w-md space-y-5">
-          <div className="flex flex-col items-center text-center">
+    <main className="relative min-h-screen bg-gray-50 text-gray-900 lg:flex">
+      {/* Área principal: branding + análisis libre */}
+      <section className="flex-1 px-4 py-8 sm:px-8 lg:py-10">
+        <div className="mx-auto max-w-5xl space-y-8">
+          <div className="rounded-2xl border border-emerald-100 bg-gradient-to-b from-white to-emerald-50/40 px-6 py-10 text-center shadow-sm">
             <Image
               src="/logo-camelia.png"
               alt="Camelia Biotech"
-              width={80}
-              height={80}
-              className="mb-2 h-20 w-20 object-contain"
+              width={140}
+              height={140}
+              className="mx-auto h-28 w-28 object-contain sm:h-36 sm:w-36"
               priority
             />
-            <h1 className="text-2xl font-bold">Camelia Biotech</h1>
-          </div>
-
-          <form
-            onSubmit={enviar}
-            className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
-          >
-          <div>
-            <h2 className="text-lg font-semibold">Iniciar sesión</h2>
-            <p className="text-sm text-gray-500">
-              El usuario logueado queda registrado automáticamente como creador
-              de cada campaña, muestra y ensayo.
+            <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              Camelia Biotech
+            </h1>
+            <p className="mx-auto mt-3 max-w-2xl text-base text-gray-600 sm:text-lg">
+              Análisis libre de tiras: cargá una imagen, ajustá los límites y
+              descargá los resultados en CSV, Excel o PDF, sin necesidad de
+              iniciar sesión.
             </p>
           </div>
 
-          <div>
-            <label htmlFor="email" className="mb-1 block text-sm font-medium">
-              Correo
-            </label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="username"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={CAMPO}
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              className="mb-1 block text-sm font-medium"
-            >
-              Contraseña
-            </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={CAMPO}
-            />
-          </div>
-
-          {error && (
-            <p className="rounded border border-red-300 bg-red-50 p-2 text-sm text-red-800">
-              {error}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={enviando}
-            className="w-full rounded bg-blue-600 px-4 py-2 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {enviando ? "Ingresando..." : "Ingresar"}
-          </button>
-        </form>
-
-        <section className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
-          <p className="font-medium">Cuentas de prueba</p>
-          <p className="mt-1 text-blue-800">
-            Contraseña común: <code className="font-mono">{CLAVE_PRUEBA}</code>
-          </p>
-          <ul className="mt-2 space-y-1">
-            {CUENTAS_PRUEBA.map((cuenta) => (
-              <li
-                key={cuenta.email}
-                className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2"
-              >
-                <span className="break-all">
-                  <span className="font-mono">{cuenta.email}</span> ·{" "}
-                  {cuenta.nombre} ({cuenta.rol})
-                </span>
-                <button
-                  type="button"
-                  onClick={() => usarCuenta(cuenta)}
-                  className="self-start rounded border border-blue-300 bg-white px-2 py-0.5 text-xs font-medium text-blue-800 hover:bg-blue-100"
-                >
-                  Usar
-                </button>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-2 text-xs text-blue-700">
-            Cuentas de prueba para acceder al sistema.
-          </p>
-        </section>
-        </div>
-
-        <section className="rounded-lg border border-emerald-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
+          <section className="rounded-lg border border-emerald-200 bg-white p-5 shadow-sm">
+            <div className="mb-4">
               <h2 className="text-lg font-semibold text-gray-900">
-                Análisis libre de tira
+                Análisis libre
               </h2>
               <p className="text-sm text-gray-600">
-                No requiere iniciar sesión. Analizá una imagen y descargá los
-                resultados en CSV, Excel o PDF (sin guardar en el sistema).
+                Este análisis no se guarda en el sistema. Si querés registrar
+                campañas, muestras y ensayos, iniciá sesión.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setAnalisisAbierto((v) => !v)}
-              className="shrink-0 rounded-md border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-100"
-            >
-              {analisisAbierto ? "Cerrar análisis libre" : "Abrir análisis libre"}
-            </button>
-          </div>
-          {analisisAbierto && (
-            <div className="mt-4 border-t border-gray-200 pt-4">
-              <AnalisisTira publico />
+            <AnalisisTira publico />
+          </section>
+        </div>
+      </section>
+
+      {/* Panel de login (plegable) */}
+      <aside
+        className={`relative z-10 border-t border-gray-200 bg-white shadow-sm transition-all duration-300 lg:border-l lg:border-t-0 ${
+          loginAbierto
+            ? "w-full lg:w-[420px] lg:min-w-[420px]"
+            : "w-full lg:w-0 lg:min-w-0 lg:overflow-hidden lg:border-l-0"
+        }`}
+      >
+        <div
+          className={`h-full ${
+            loginAbierto ? "block" : "hidden lg:block lg:invisible lg:opacity-0"
+          }`}
+        >
+          <div className="flex h-full flex-col p-6 sm:p-8 lg:overflow-y-auto">
+            <div className="mb-6 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Iniciar sesión</h2>
+                <p className="text-sm text-gray-500">
+                  Accedé al sistema para gestionar campañas, muestras y ensayos.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLoginAbierto(false)}
+                className="rounded-md border border-gray-300 px-2.5 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                aria-label="Ocultar panel de inicio de sesión"
+                title="Ocultar"
+              >
+                Ocultar
+              </button>
             </div>
-          )}
-        </section>
-      </div>
+
+            <form onSubmit={enviar} className="space-y-4">
+              <div>
+                <label htmlFor="email" className="mb-1 block text-sm font-medium">
+                  Correo
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  autoComplete="username"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={CAMPO}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="password"
+                  className="mb-1 block text-sm font-medium"
+                >
+                  Contraseña
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={CAMPO}
+                />
+              </div>
+
+              {error && (
+                <p className="rounded border border-red-300 bg-red-50 p-2 text-sm text-red-800">
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={enviando}
+                className="w-full rounded bg-blue-600 px-4 py-2 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {enviando ? "Ingresando..." : "Ingresar"}
+              </button>
+            </form>
+
+            <section className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+              <p className="font-medium">Cuentas de prueba</p>
+              <p className="mt-1 text-blue-800">
+                Contraseña común: <code className="font-mono">{CLAVE_PRUEBA}</code>
+              </p>
+              <ul className="mt-2 space-y-1">
+                {CUENTAS_PRUEBA.map((cuenta) => (
+                  <li
+                    key={cuenta.email}
+                    className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2"
+                  >
+                    <span className="break-all">
+                      <span className="font-mono">{cuenta.email}</span> ·{" "}
+                      {cuenta.nombre} ({cuenta.rol})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => usarCuenta(cuenta)}
+                      className="self-start rounded border border-blue-300 bg-white px-2 py-0.5 text-xs font-medium text-blue-800 hover:bg-blue-100"
+                    >
+                      Usar
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          </div>
+        </div>
+      </aside>
+
+      {/* Pestaña para reabrir login cuando está oculto (escritorio) */}
+      {!loginAbierto && (
+        <button
+          type="button"
+          onClick={() => setLoginAbierto(true)}
+          className="fixed right-0 top-1/2 z-20 hidden -translate-y-1/2 rounded-l-md bg-blue-600 px-3 py-4 text-sm font-medium text-white shadow hover:bg-blue-700 lg:block"
+          aria-label="Mostrar panel de inicio de sesión"
+        >
+          Iniciar sesión
+        </button>
+      )}
+
+      {/* Botón para mostrar login en móvil cuando está oculto */}
+      {!loginAbierto && (
+        <div className="fixed bottom-4 right-4 z-20 lg:hidden">
+          <button
+            type="button"
+            onClick={() => setLoginAbierto(true)}
+            className="rounded-full bg-blue-600 px-4 py-3 text-sm font-medium text-white shadow-lg hover:bg-blue-700"
+          >
+            Iniciar sesión
+          </button>
+        </div>
+      )}
     </main>
   );
 }
