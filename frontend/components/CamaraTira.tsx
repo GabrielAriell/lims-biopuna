@@ -8,22 +8,32 @@ type Props = {
   onCapturar: (archivo: File) => void | Promise<void>;
 };
 
-// Guías de referencia de franjas (proporciones aproximadas dentro de la tira).
-// Sirven como ayuda visual para encuadrar antes de capturar.
-const FRANJAS_GUIA = [0.22, 0.38, 0.52, 0.68, 0.82];
+type Rect = { x: number; y: number; w: number; h: number }; // porcentaje 0-100
+
+const RECT_INICIAL: Rect = { x: 8, y: 15, w: 84, h: 70 };
+const MIN_W = 20;
+const MIN_H = 15;
+
+function clamp(v: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, v));
+}
 
 export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const contenedorRef = useRef<HTMLDivElement | null>(null);
   const pushStateRef = useRef(false);
+  const dragRef = useRef<{
+    tipo: "mover" | "nw" | "ne" | "sw" | "se";
+    startX: number;
+    startY: number;
+    rect: Rect;
+  } | null>(null);
+
   const [error, setError] = useState<string | null>(null);
   const [lista, setLista] = useState(false);
   const [capturando, setCapturando] = useState(false);
-  const [orientacion, setOrientacion] = useState<"horizontal" | "vertical">(
-    "horizontal"
-  );
-  const [mostrarFranjas, setMostrarFranjas] = useState(true);
-  const [tamanoGuia, setTamanoGuia] = useState(92); // % del área de video
+  const [rect, setRect] = useState<Rect>(RECT_INICIAL);
 
   const detener = useCallback(() => {
     const stream = streamRef.current;
@@ -60,7 +70,7 @@ export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
       detener();
       setError(null);
       setCapturando(false);
-      // Si se cerró por UI (no por "atrás"), revertir el estado de historial.
+      setRect(RECT_INICIAL);
       if (pushStateRef.current) {
         pushStateRef.current = false;
         window.history.back();
@@ -71,6 +81,7 @@ export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
     let cancelado = false;
     setError(null);
     setLista(false);
+    setRect(RECT_INICIAL);
 
     async function iniciar() {
       if (!navigator.mediaDevices?.getUserMedia) {
@@ -113,6 +124,69 @@ export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
     };
   }, [abierta, detener]);
 
+  const pxToPct = useCallback((dxPx: number, dyPx: number) => {
+    const el = contenedorRef.current;
+    if (!el) return { dx: 0, dy: 0 };
+    const b = el.getBoundingClientRect();
+    return {
+      dx: b.width ? (dxPx / b.width) * 100 : 0,
+      dy: b.height ? (dyPx / b.height) * 100 : 0,
+    };
+  }, []);
+
+  function iniciarDrag(
+    tipo: "mover" | "nw" | "ne" | "sw" | "se",
+    e: React.PointerEvent
+  ) {
+    e.preventDefault();
+    e.stopPropagation();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    dragRef.current = { tipo, startX: e.clientX, startY: e.clientY, rect: { ...rect } };
+  }
+
+  function moverDrag(e: React.PointerEvent) {
+    const d = dragRef.current;
+    if (!d) return;
+    const { dx, dy } = pxToPct(e.clientX - d.startX, e.clientY - d.startY);
+    const r = d.rect;
+    let nx = r.x;
+    let ny = r.y;
+    let nw = r.w;
+    let nh = r.h;
+
+    if (d.tipo === "mover") {
+      nx = clamp(r.x + dx, 0, 100 - r.w);
+      ny = clamp(r.y + dy, 0, 100 - r.h);
+    } else if (d.tipo === "se") {
+      nw = clamp(r.w + dx, MIN_W, 100 - r.x);
+      nh = clamp(r.h + dy, MIN_H, 100 - r.y);
+    } else if (d.tipo === "sw") {
+      nw = clamp(r.w - dx, MIN_W, r.x + r.w);
+      nx = r.x + r.w - nw;
+      nh = clamp(r.h + dy, MIN_H, 100 - r.y);
+    } else if (d.tipo === "ne") {
+      nw = clamp(r.w + dx, MIN_W, 100 - r.x);
+      nh = clamp(r.h - dy, MIN_H, r.y + r.h);
+      ny = r.y + r.h - nh;
+    } else if (d.tipo === "nw") {
+      nw = clamp(r.w - dx, MIN_W, r.x + r.w);
+      nx = r.x + r.w - nw;
+      nh = clamp(r.h - dy, MIN_H, r.y + r.h);
+      ny = r.y + r.h - nh;
+    }
+
+    setRect({ x: nx, y: ny, w: nw, h: nh });
+  }
+
+  function finDrag(e: React.PointerEvent) {
+    if (dragRef.current) {
+      try {
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      } catch {}
+      dragRef.current = null;
+    }
+  }
+
   async function capturar() {
     const video = videoRef.current;
     if (!video || !lista || video.videoWidth === 0 || video.videoHeight === 0) return;
@@ -148,17 +222,16 @@ export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
 
   if (!abierta) return null;
 
-  const guiaAncho = orientacion === "horizontal" ? tamanoGuia : Math.max(35, tamanoGuia - 30);
-  const guiaAlto = orientacion === "horizontal" ? Math.max(30, 100 - tamanoGuia + 20) : tamanoGuia;
+  const manija =
+    "absolute z-20 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-emerald-500 shadow touch-none";
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black">
-      {/* Barra superior */}
       <div className="flex items-center justify-between gap-3 border-b border-white/10 bg-black/70 px-3 py-2 text-white backdrop-blur sm:px-4">
         <div className="min-w-0">
           <h3 className="text-sm font-semibold sm:text-base">Cámara para tira</h3>
           <p className="truncate text-[11px] text-white/70 sm:text-xs">
-            Alineá la tira en el recuadro. Las franjas son guías visuales de referencia.
+            Arrastrá el recuadro o sus esquinas con los dedos para encuadrar la tira.
           </p>
         </div>
         <button
@@ -170,8 +243,7 @@ export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
         </button>
       </div>
 
-      {/* Vista de cámara (grande, ocupa el espacio disponible) */}
-      <div className="relative min-h-0 flex-1 bg-black">
+      <div ref={contenedorRef} className="relative min-h-0 flex-1 touch-none bg-black">
         <video
           ref={videoRef}
           className="absolute inset-0 h-full w-full object-cover"
@@ -180,44 +252,53 @@ export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
           autoPlay
         />
 
-        {/* Guías de encuadre y franjas */}
+        {/* Encuadre ajustable por el usuario */}
         <div className="pointer-events-none absolute inset-0 z-10">
           <div
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg border-2 border-emerald-400 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]"
-            style={{ width: `${guiaAncho}%`, height: `${guiaAlto}%` }}
+            className="pointer-events-auto absolute touch-none rounded-md border-2 border-emerald-400 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]"
+            style={{ left: `${rect.x}%`, top: `${rect.y}%`, width: `${rect.w}%`, height: `${rect.h}%` }}
+            onPointerDown={(e) => iniciarDrag("mover", e)}
+            onPointerMove={moverDrag}
+            onPointerUp={finDrag}
+            onPointerCancel={finDrag}
           >
-            {/* Ejes centrales */}
-            <div className="absolute left-1/2 top-0 h-full w-[2px] -translate-x-1/2 bg-emerald-300/50" />
-            <div className="absolute left-0 top-1/2 h-[2px] w-full -translate-y-1/2 bg-emerald-300/40" />
-
-            {/* Franjas guía (delimitación visual de zonas) */}
-            {mostrarFranjas &&
-              FRANJAS_GUIA.map((p) =>
-                orientacion === "horizontal" ? (
-                  <div
-                    key={p}
-                    className="absolute top-0 h-full w-[2px] bg-cyan-300/70"
-                    style={{ left: `${p * 100}%` }}
-                  />
-                ) : (
-                  <div
-                    key={p}
-                    className="absolute left-0 h-[2px] w-full bg-cyan-300/70"
-                    style={{ top: `${p * 100}%` }}
-                  />
-                )
-              )}
-
-            {/* Marcas de esquinas */}
-            <div className="absolute -left-[2px] -top-[2px] h-7 w-7 border-l-4 border-t-4 border-emerald-300" />
-            <div className="absolute -right-[2px] -top-[2px] h-7 w-7 border-r-4 border-t-4 border-emerald-300" />
-            <div className="absolute -bottom-[2px] -left-[2px] h-7 w-7 border-b-4 border-l-4 border-emerald-300" />
-            <div className="absolute -bottom-[2px] -right-[2px] h-7 w-7 border-b-4 border-r-4 border-emerald-300" />
+            <div
+              className={manija}
+              style={{ left: 0, top: 0 }}
+              onPointerDown={(e) => iniciarDrag("nw", e)}
+              onPointerMove={moverDrag}
+              onPointerUp={finDrag}
+              onPointerCancel={finDrag}
+            />
+            <div
+              className={manija}
+              style={{ left: "100%", top: 0 }}
+              onPointerDown={(e) => iniciarDrag("ne", e)}
+              onPointerMove={moverDrag}
+              onPointerUp={finDrag}
+              onPointerCancel={finDrag}
+            />
+            <div
+              className={manija}
+              style={{ left: 0, top: "100%" }}
+              onPointerDown={(e) => iniciarDrag("sw", e)}
+              onPointerMove={moverDrag}
+              onPointerUp={finDrag}
+              onPointerCancel={finDrag}
+            />
+            <div
+              className={manija}
+              style={{ left: "100%", top: "100%" }}
+              onPointerDown={(e) => iniciarDrag("se", e)}
+              onPointerMove={moverDrag}
+              onPointerUp={finDrag}
+              onPointerCancel={finDrag}
+            />
           </div>
+        </div>
 
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded bg-black/70 px-3 py-1.5 text-center text-xs font-medium text-white sm:text-sm">
-            Encadrá la tira en el recuadro verde · Franjas celestes: guía de zonas
-          </div>
+        <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded bg-black/70 px-3 py-1.5 text-center text-xs font-medium text-white sm:text-sm">
+          Mové el recuadro o ajustá las esquinas
         </div>
 
         {!lista && !error && (
@@ -227,54 +308,24 @@ export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
         )}
       </div>
 
-      {/* Controles */}
       <div className="space-y-3 border-t border-white/10 bg-black/80 px-3 py-3 text-white backdrop-blur sm:px-4">
         {error && (
           <p className="rounded border border-red-400/40 bg-red-500/20 p-2 text-sm text-red-100">
             {error}
           </p>
         )}
-
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-sm">
-          <label className="flex items-center gap-2">
-            <span className="text-white/80">Tira</span>
-            <select
-              value={orientacion}
-              onChange={(e) => setOrientacion(e.target.value as "horizontal" | "vertical")}
-              className="rounded border border-white/30 bg-white/10 px-2 py-1 text-white"
-            >
-              <option value="horizontal" className="text-black">Horizontal</option>
-              <option value="vertical" className="text-black">Vertical</option>
-            </select>
-          </label>
-
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={mostrarFranjas}
-              onChange={(e) => setMostrarFranjas(e.target.checked)}
-            />
-            <span>Mostrar franjas guía</span>
-          </label>
-
-          <label className="flex min-w-[180px] flex-1 items-center gap-2">
-            <span className="whitespace-nowrap text-white/80">Tamaño guía</span>
-            <input
-              type="range"
-              min={60}
-              max={98}
-              value={tamanoGuia}
-              onChange={(e) => setTamanoGuia(Number(e.target.value))}
-              className="w-full"
-            />
-          </label>
-        </div>
-
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-[11px] text-white/70 sm:text-xs">
             Usá “Cerrar” o el botón atrás del celular para volver sin capturar.
           </p>
           <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setRect(RECT_INICIAL)}
+              className="rounded border border-white/30 px-3 py-2 text-sm font-medium hover:bg-white/10"
+            >
+              Restablecer
+            </button>
             <button
               type="button"
               onClick={cerrar}
