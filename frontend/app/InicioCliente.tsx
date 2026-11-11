@@ -64,7 +64,7 @@ export default function InicioCliente() {
                 href="/prioridades"
                 title={`${criticas.length} ${criticas.length === 1 ? "muestra" : "muestras"} en riesgo crítico (ver detalles)`}
                 aria-label={`${criticas.length} ${criticas.length === 1 ? "muestra" : "muestras"} en riesgo crítico, ver detalles`}
-                className="text-red-600 hover:text-red-700"
+                className="inline-block animate-pulse text-red-600 hover:text-red-700"
               >
                 ⚠
               </Link>
