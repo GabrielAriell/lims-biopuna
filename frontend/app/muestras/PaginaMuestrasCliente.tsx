@@ -4,18 +4,12 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import Encabezado from "@/components/Encabezado";
-import BotonAvisos from "@/components/BotonAvisos";
 import FormularioCampana from "@/components/FormularioCampana";
 import FormularioMuestra from "@/components/FormularioMuestra";
-import PanelAvisos from "@/components/PanelAvisos";
-import { useAlertasMuestras } from "@/hooks/useAlertasMuestras";
 import { useMuestras } from "@/hooks/useMuestras";
 
 export default function PaginaMuestrasCliente() {
-  const { campanas, muestras, actualizando, error, recargar } = useMuestras();
-  const { visibles: avisos, enAtencion, descartar } =
-    useAlertasMuestras(muestras);
-  const [panelAbierto, setPanelAbierto] = useState(false);
+  const { campanas, error, recargar } = useMuestras();
   const [campanaReciente, setCampanaReciente] = useState<number | null>(null);
 
   const sugerenciasLocalidad = useMemo(() => {
@@ -35,31 +29,6 @@ export default function PaginaMuestrasCliente() {
             {error}
           </div>
         )}
-
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <div className="relative">
-            <BotonAvisos
-              cantidad={avisos.length}
-              abierto={panelAbierto}
-              onToggle={() => setPanelAbierto((abierto) => !abierto)}
-            />
-            {panelAbierto && (
-              <PanelAvisos
-                alertas={avisos}
-                enAtencion={enAtencion}
-                onDescartar={descartar}
-                onCerrar={() => setPanelAbierto(false)}
-              />
-            )}
-          </div>
-          <button
-            onClick={recargar}
-            disabled={actualizando}
-            className="rounded border border-gray-300 px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {actualizando ? "Actualizando..." : "Actualizar"}
-          </button>
-        </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
           <FormularioCampana
