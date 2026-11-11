@@ -8,32 +8,14 @@ type Props = {
   onCapturar: (archivo: File) => void | Promise<void>;
 };
 
-type Rect = { x: number; y: number; w: number; h: number }; // porcentaje 0-100
-
-const RECT_INICIAL: Rect = { x: 8, y: 15, w: 84, h: 70 };
-const MIN_W = 20;
-const MIN_H = 15;
-
-function clamp(v: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, v));
-}
-
 export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const contenedorRef = useRef<HTMLDivElement | null>(null);
   const pushStateRef = useRef(false);
-  const dragRef = useRef<{
-    tipo: "mover" | "nw" | "ne" | "sw" | "se";
-    startX: number;
-    startY: number;
-    rect: Rect;
-  } | null>(null);
 
   const [error, setError] = useState<string | null>(null);
   const [lista, setLista] = useState(false);
   const [capturando, setCapturando] = useState(false);
-  const [rect, setRect] = useState<Rect>(RECT_INICIAL);
 
   const detener = useCallback(() => {
     const stream = streamRef.current;
@@ -70,7 +52,6 @@ export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
       detener();
       setError(null);
       setCapturando(false);
-      setRect(RECT_INICIAL);
       if (pushStateRef.current) {
         pushStateRef.current = false;
         window.history.back();
@@ -81,7 +62,6 @@ export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
     let cancelado = false;
     setError(null);
     setLista(false);
-    setRect(RECT_INICIAL);
 
     async function iniciar() {
       if (!navigator.mediaDevices?.getUserMedia) {
@@ -124,69 +104,6 @@ export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
     };
   }, [abierta, detener]);
 
-  const pxToPct = useCallback((dxPx: number, dyPx: number) => {
-    const el = contenedorRef.current;
-    if (!el) return { dx: 0, dy: 0 };
-    const b = el.getBoundingClientRect();
-    return {
-      dx: b.width ? (dxPx / b.width) * 100 : 0,
-      dy: b.height ? (dyPx / b.height) * 100 : 0,
-    };
-  }, []);
-
-  function iniciarDrag(
-    tipo: "mover" | "nw" | "ne" | "sw" | "se",
-    e: React.PointerEvent
-  ) {
-    e.preventDefault();
-    e.stopPropagation();
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    dragRef.current = { tipo, startX: e.clientX, startY: e.clientY, rect: { ...rect } };
-  }
-
-  function moverDrag(e: React.PointerEvent) {
-    const d = dragRef.current;
-    if (!d) return;
-    const { dx, dy } = pxToPct(e.clientX - d.startX, e.clientY - d.startY);
-    const r = d.rect;
-    let nx = r.x;
-    let ny = r.y;
-    let nw = r.w;
-    let nh = r.h;
-
-    if (d.tipo === "mover") {
-      nx = clamp(r.x + dx, 0, 100 - r.w);
-      ny = clamp(r.y + dy, 0, 100 - r.h);
-    } else if (d.tipo === "se") {
-      nw = clamp(r.w + dx, MIN_W, 100 - r.x);
-      nh = clamp(r.h + dy, MIN_H, 100 - r.y);
-    } else if (d.tipo === "sw") {
-      nw = clamp(r.w - dx, MIN_W, r.x + r.w);
-      nx = r.x + r.w - nw;
-      nh = clamp(r.h + dy, MIN_H, 100 - r.y);
-    } else if (d.tipo === "ne") {
-      nw = clamp(r.w + dx, MIN_W, 100 - r.x);
-      nh = clamp(r.h - dy, MIN_H, r.y + r.h);
-      ny = r.y + r.h - nh;
-    } else if (d.tipo === "nw") {
-      nw = clamp(r.w - dx, MIN_W, r.x + r.w);
-      nx = r.x + r.w - nw;
-      nh = clamp(r.h - dy, MIN_H, r.y + r.h);
-      ny = r.y + r.h - nh;
-    }
-
-    setRect({ x: nx, y: ny, w: nw, h: nh });
-  }
-
-  function finDrag(e: React.PointerEvent) {
-    if (dragRef.current) {
-      try {
-        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-      } catch {}
-      dragRef.current = null;
-    }
-  }
-
   async function capturar() {
     const video = videoRef.current;
     if (!video || !lista || video.videoWidth === 0 || video.videoHeight === 0) return;
@@ -222,16 +139,13 @@ export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
 
   if (!abierta) return null;
 
-  const manija =
-    "absolute z-20 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-emerald-500 shadow touch-none";
-
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black">
       <div className="flex items-center justify-between gap-3 border-b border-white/10 bg-black/70 px-3 py-2 text-white backdrop-blur sm:px-4">
         <div className="min-w-0">
           <h3 className="text-sm font-semibold sm:text-base">Cámara para tira</h3>
           <p className="truncate text-[11px] text-white/70 sm:text-xs">
-            Arrastrá el recuadro o sus esquinas con los dedos para encuadrar la tira.
+            Enfocá la tira y capturá la foto.
           </p>
         </div>
         <button
@@ -243,7 +157,7 @@ export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
         </button>
       </div>
 
-      <div ref={contenedorRef} className="relative min-h-0 flex-1 touch-none bg-black">
+      <div className="relative min-h-0 flex-1 bg-black">
         <video
           ref={videoRef}
           className="absolute inset-0 h-full w-full object-cover"
@@ -251,55 +165,6 @@ export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
           muted
           autoPlay
         />
-
-        {/* Encuadre ajustable por el usuario */}
-        <div className="pointer-events-none absolute inset-0 z-10">
-          <div
-            className="pointer-events-auto absolute touch-none rounded-md border-2 border-emerald-400 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]"
-            style={{ left: `${rect.x}%`, top: `${rect.y}%`, width: `${rect.w}%`, height: `${rect.h}%` }}
-            onPointerDown={(e) => iniciarDrag("mover", e)}
-            onPointerMove={moverDrag}
-            onPointerUp={finDrag}
-            onPointerCancel={finDrag}
-          >
-            <div
-              className={manija}
-              style={{ left: 0, top: 0 }}
-              onPointerDown={(e) => iniciarDrag("nw", e)}
-              onPointerMove={moverDrag}
-              onPointerUp={finDrag}
-              onPointerCancel={finDrag}
-            />
-            <div
-              className={manija}
-              style={{ left: "100%", top: 0 }}
-              onPointerDown={(e) => iniciarDrag("ne", e)}
-              onPointerMove={moverDrag}
-              onPointerUp={finDrag}
-              onPointerCancel={finDrag}
-            />
-            <div
-              className={manija}
-              style={{ left: 0, top: "100%" }}
-              onPointerDown={(e) => iniciarDrag("sw", e)}
-              onPointerMove={moverDrag}
-              onPointerUp={finDrag}
-              onPointerCancel={finDrag}
-            />
-            <div
-              className={manija}
-              style={{ left: "100%", top: "100%" }}
-              onPointerDown={(e) => iniciarDrag("se", e)}
-              onPointerMove={moverDrag}
-              onPointerUp={finDrag}
-              onPointerCancel={finDrag}
-            />
-          </div>
-        </div>
-
-        <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded bg-black/70 px-3 py-1.5 text-center text-xs font-medium text-white sm:text-sm">
-          Mové el recuadro o ajustá las esquinas
-        </div>
 
         {!lista && !error && (
           <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 text-sm text-white">
@@ -319,13 +184,6 @@ export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
             Usá “Cerrar” o el botón atrás del celular para volver sin capturar.
           </p>
           <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setRect(RECT_INICIAL)}
-              className="rounded border border-white/30 px-3 py-2 text-sm font-medium hover:bg-white/10"
-            >
-              Restablecer
-            </button>
             <button
               type="button"
               onClick={cerrar}
