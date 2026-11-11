@@ -40,6 +40,8 @@ const PALETA = [
 ];
 
 type Punto = { nombre: string; cantidad: number };
+type FiltroConvenio = "todos" | "con" | "sin";
+type Agrupacion = "departamento" | "localidad";
 
 type Props = {
   /** Muestras ya filtradas en la vista de exploración. */
@@ -56,6 +58,12 @@ function contar(nombres: string[]): Punto[] {
   return Array.from(mapa, ([nombre, cantidad]) => ({ nombre, cantidad }));
 }
 
+function ordenar(puntos: Punto[]): Punto[] {
+  return puntos.sort(
+    (a, b) => b.cantidad - a.cantidad || a.nombre.localeCompare(b.nombre, "es"),
+  );
+}
+
 function etiquetaTorta(props: PieLabelRenderProps): string {
   const nombre = String(props.name ?? "");
   const porcentaje = Math.round((props.percent ?? 0) * 100);
@@ -63,25 +71,39 @@ function etiquetaTorta(props: PieLabelRenderProps): string {
 }
 
 export default function GraficosTerritoriales({ muestras, campanas }: Props) {
-  const [agrupacion, setAgrupacion] = useState<"departamento" | "localidad">(
-    "departamento",
-  );
+  const [agrupacion, setAgrupacion] = useState<Agrupacion>("departamento");
+  const [filtroConvenio, setFiltroConvenio] = useState<FiltroConvenio>("todos");
 
   const campanasPorId = useMemo(
     () => new Map(campanas.map((c) => [c.id_campana, c])),
     [campanas],
   );
 
-  const porEspecie = useMemo(
+  const muestrasConvenio = useMemo(
     () =>
-      contar(muestras.map((m) => m.especie)).sort(
-        (a, b) => b.cantidad - a.cantidad || a.nombre.localeCompare(b.nombre, "es"),
-      ),
-    [muestras],
+      muestras.filter((m) => {
+        if (filtroConvenio === "todos") return true;
+        const esConvenio = Boolean(campanasPorId.get(m.id_campana)?.convenio_inta);
+        return filtroConvenio === "con" ? esConvenio : !esConvenio;
+      }),
+    [muestras, campanasPorId, filtroConvenio],
+  );
+
+  const totalesConvenio = useMemo(() => {
+    let con = 0;
+    for (const m of muestras) {
+      if (campanasPorId.get(m.id_campana)?.convenio_inta) con += 1;
+    }
+    return { con, sin: muestras.length - con, todos: muestras.length };
+  }, [muestras, campanasPorId]);
+
+  const porEspecie = useMemo(
+    () => ordenar(contar(muestrasConvenio.map((m) => m.especie))),
+    [muestrasConvenio],
   );
 
   const porTerritorio = useMemo(() => {
-    const nombres = muestras.map((m) => {
+    const nombres = muestrasConvenio.map((m) => {
       const campana = campanasPorId.get(m.id_campana);
       if (agrupacion === "departamento") {
         return campana?.departamento?.trim() || "Sin departamento";
@@ -92,32 +114,52 @@ export default function GraficosTerritoriales({ muestras, campanas }: Props) {
         "Sin localidad"
       );
     });
-    return contar(nombres).sort(
-      (a, b) => b.cantidad - a.cantidad || a.nombre.localeCompare(b.nombre, "es"),
-    );
-  }, [muestras, campanasPorId, agrupacion]);
+    return ordenar(contar(nombres));
+  }, [muestrasConvenio, campanasPorId, agrupacion]);
 
-  if (muestras.length === 0) {
+  if (muestrasConvenio.length === 0) {
     return (
       <section className="rounded-lg border border-gray-200 bg-white p-4">
         <h2 className="text-lg font-semibold">Análisis territorial (Convenio INTA)</h2>
         <p className="mt-1 text-sm text-gray-500">
-          No hay muestras que coincidan con los filtros para graficar.
+          No hay muestras que coincidan con los filtros y el convenio elegido.
         </p>
+        <FiltroConvenioUI
+          valor={filtroConvenio}
+          onChange={setFiltroConvenio}
+          totales={totalesConvenio}
+        />
       </section>
     );
   }
 
   return (
     <section className="rounded-lg border border-gray-200 bg-white p-4">
-      <div className="flex flex-wrap items-start justify-between gap-2">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">Análisis territorial (Convenio INTA)</h2>
           <p className="text-sm text-gray-600">
-            Distribución de las {muestras.length} muestras que coinciden con los
-            filtros actuales.
+            Distribución de las {muestrasConvenio.length} muestras que coinciden con
+            los filtros actuales
+            {filtroConvenio === "con"
+              ? " y con convenio INTA"
+              : filtroConvenio === "sin"
+                ? " y sin convenio INTA"
+                : ""}
+            .
           </p>
         </div>
+        <FiltroConvenioUI
+          valor={filtroConvenio}
+          onChange={setFiltroConvenio}
+          totales={totalesConvenio}
+        />
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3">
+        <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
+          Agrupar territorio por
+        </span>
         <div className="flex gap-1 rounded border border-gray-200 bg-gray-50 p-0.5">
           <button
             type="button"
@@ -128,7 +170,7 @@ export default function GraficosTerritoriales({ muestras, campanas }: Props) {
                 : "text-gray-600"
             }`}
           >
-            Por departamento
+            Departamento
           </button>
           <button
             type="button"
@@ -139,7 +181,7 @@ export default function GraficosTerritoriales({ muestras, campanas }: Props) {
                 : "text-gray-600"
             }`}
           >
-            Por localidad/paraje
+            Localidad/paraje
           </button>
         </div>
       </div>
@@ -180,7 +222,8 @@ export default function GraficosTerritoriales({ muestras, campanas }: Props) {
 
         <div>
           <h3 className="text-sm font-medium text-gray-700">
-            Muestras por {agrupacion === "departamento" ? "departamento" : "localidad/paraje"}
+            Muestras por{" "}
+            {agrupacion === "departamento" ? "departamento" : "localidad/paraje"}
           </h3>
           <div
             className="w-full"
@@ -219,5 +262,44 @@ export default function GraficosTerritoriales({ muestras, campanas }: Props) {
         </div>
       </div>
     </section>
+  );
+}
+
+function FiltroConvenioUI({
+  valor,
+  onChange,
+  totales,
+}: {
+  valor: FiltroConvenio;
+  onChange: (valor: FiltroConvenio) => void;
+  totales: { con: number; sin: number; todos: number };
+}) {
+  const opciones: Array<{ valor: FiltroConvenio; texto: string }> = [
+    { valor: "todos", texto: `Todas (${totales.todos})` },
+    { valor: "con", texto: `Con convenio (${totales.con})` },
+    { valor: "sin", texto: `Sin convenio (${totales.sin})` },
+  ];
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
+        Convenio INTA
+      </span>
+      <div className="flex gap-1 rounded border border-gray-200 bg-gray-50 p-0.5">
+        {opciones.map((opcion) => (
+          <button
+            key={opcion.valor}
+            type="button"
+            onClick={() => onChange(opcion.valor)}
+            className={`rounded px-3 py-1 text-sm ${
+              valor === opcion.valor
+                ? "bg-white font-medium shadow-sm"
+                : "text-gray-600"
+            }`}
+          >
+            {opcion.texto}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-﻿"""ExportaciÃ³n de reportes estandarizados (RF-05): Excel y PDF."""
+﻿"""Exportación de reportes estandarizados (RF-05): Excel y PDF."""
 from __future__ import annotations
 
 from datetime import datetime
@@ -76,18 +76,42 @@ def _auto_ancho(ws: Any) -> None:
         ws.column_dimensions[letra].width = maximo
 
 
+def _campanas_datos() -> dict[int, dict[str, Any]]:
+    """Campañas con ubicación legible y convenio, para exportar y agregar."""
+    from app.api.muestras import (
+        _columnas_campana,
+        _mapa_geo,
+        _ubicacion_legible,
+    )
+
+    campanas = supabase_rest.seleccionar(
+        "campana_territorio", columnas=_columnas_campana()
+    )
+    departamentos, provincias = _mapa_geo()
+    salida: dict[int, dict[str, Any]] = {}
+    for c in campanas:
+        legible, detalle, _id_dep, dep, _id_prov, prov = _ubicacion_legible(
+            c, departamentos, provincias
+        )
+        salida[c["id_campana"]] = {
+            "localidad_puna": legible,
+            "departamento": dep or "Sin departamento",
+            "localidad": detalle
+            or (legible.split(" · ")[0] if legible else "Sin localidad"),
+            "provincia": prov,
+            "convenio_inta": bool(c.get("convenio_inta")),
+            "fecha_salida": c.get("fecha_salida"),
+        }
+    return salida
+
+
 def _muestras_datos() -> list[dict[str, Any]]:
     filas = supabase_rest.seleccionar(
         "muestra_con_estado",
         orden="fecha_hora_extraccion.desc",
         limite=5000,
     )
-    campanas = {
-        c["id_campana"]: c
-        for c in supabase_rest.seleccionar(
-            "campana_territorio", columnas="id_campana,localidad_puna,fecha_salida"
-        )
-    }
+    campanas = _campanas_datos()
     datos = []
     for f in filas:
         c = campanas.get(f["id_campana"], {})
@@ -97,7 +121,11 @@ def _muestras_datos() -> list[dict[str, Any]]:
                 "codigo_animal": f["codigo_animal"],
                 "especie": f["especie"],
                 "id_campana": f["id_campana"],
-                "ubicacion_campana": c.get("localidad_puna") or "Sin campaÃ±a",
+                "ubicacion_campana": c.get("localidad_puna") or "Sin campaña",
+                "departamento": c.get("departamento") or "Sin departamento",
+                "localidad": c.get("localidad") or "Sin localidad",
+                "provincia": c.get("provincia"),
+                "convenio_inta": bool(c.get("convenio_inta")),
                 "fecha_salida": c.get("fecha_salida"),
                 "fecha_hora_extraccion": f["fecha_hora_extraccion"],
                 "horas_transcurridas": f["horas_transcurridas"],
@@ -107,6 +135,30 @@ def _muestras_datos() -> list[dict[str, Any]]:
         )
     return datos
 
+
+def _bloque_resumen(
+    ws: Any, titulo: str, datos: list[dict[str, Any]], clave: str
+) -> None:
+    """Agrega un bloque de conteos por categoría y convenio INTA."""
+    conteo: dict[str, dict[str, int]] = {}
+    for d in datos:
+        nombre = str(d.get(clave) or "Sin dato")
+        fila = conteo.setdefault(nombre, {"con": 0, "sin": 0})
+        fila["con" if d.get("convenio_inta") else "sin"] += 1
+
+    ws.append([titulo])
+    ws.cell(row=ws.max_row, column=1).font = Font(bold=True)
+    total_con = 0
+    total_sin = 0
+    for nombre, c in sorted(
+        conteo.items(), key=lambda kv: (-(kv[1]["con"] + kv[1]["sin"]), kv[0])
+    ):
+        ws.append([nombre, c["con"], c["sin"], c["con"] + c["sin"]])
+        total_con += c["con"]
+        total_sin += c["sin"]
+    ws.append(["Total", total_con, total_sin, total_con + total_sin])
+    ws.cell(row=ws.max_row, column=1).font = Font(bold=True)
+    ws.append([])
 
 @router.get("/muestras.xlsx")
 def exportar_muestras(
@@ -123,12 +175,16 @@ def exportar_muestras(
         "Muestras",
         [
             "ID muestra",
-            "CÃ³digo animal",
+            "Código animal",
             "Especie",
-            "ID campaÃ±a",
-            "UbicaciÃ³n campaÃ±a",
+            "ID campaña",
+            "Ubicación campaña",
+            "Departamento",
+            "Localidad/paraje",
+            "Provincia",
+            "Convenio INTA",
             "Fecha salida",
-            "Fecha/hora extracciÃ³n",
+            "Fecha/hora extracción",
             "Horas transcurridas",
             "Estado 48 h",
             "Primera corrida",
@@ -142,6 +198,10 @@ def exportar_muestras(
                 d["especie"],
                 d["id_campana"],
                 d["ubicacion_campana"],
+                d["departamento"],
+                d["localidad"],
+                d["provincia"],
+                "Sí" if d["convenio_inta"] else "No",
                 d["fecha_salida"],
                 d["fecha_hora_extraccion"],
                 d["horas_transcurridas"],
@@ -150,6 +210,17 @@ def exportar_muestras(
             ]
         )
     _auto_ancho(ws)
+
+    ws_res = _hoja(
+        wb,
+        "Resumen territorial",
+        ["Categoría", "Con convenio INTA", "Sin convenio INTA", "Total"],
+    )
+    _bloque_resumen(ws_res, "Por especie", datos, "especie")
+    _bloque_resumen(ws_res, "Por departamento", datos, "departamento")
+    _bloque_resumen(ws_res, "Por localidad/paraje", datos, "localidad")
+    _auto_ancho(ws_res)
+
     return _xlsx_respuesta(wb, f"muestras_{datetime.now():%Y%m%d}.xlsx")
 
 
@@ -173,6 +244,8 @@ def exportar_ensayos(
             "Código animal",
             "Especie",
             "Ubicación campaña",
+            "Departamento",
+            "Convenio INTA",
             "Fecha corrida",
             "Investigador",
             "Proteínas totales g/dL",
@@ -190,6 +263,8 @@ def exportar_ensayos(
                 m.get("codigo_animal"),
                 m.get("especie"),
                 m.get("ubicacion_campana"),
+                m.get("departamento"),
+                "Sí" if m.get("convenio_inta") else "No",
                 e["fecha_corrida"],
                 e.get("investigador_nombre") or str(e["id_investigador"]),
                 e["proteinas_totales_g_dl"],
@@ -209,6 +284,8 @@ def exportar_ensayos(
             "Código animal",
             "Especie",
             "Ubicación campaña",
+            "Departamento",
+            "Convenio INTA",
             "Fecha corrida",
             "Investigador",
             "Proteínas totales g/dL",
@@ -228,6 +305,8 @@ def exportar_ensayos(
             m.get("codigo_animal"),
             m.get("especie"),
             m.get("ubicacion_campana"),
+            m.get("departamento"),
+            "Sí" if m.get("convenio_inta") else "No",
             e["fecha_corrida"],
             e.get("investigador_nombre") or str(e["id_investigador"]),
             e["proteinas_totales_g_dl"],
@@ -316,25 +395,22 @@ def _muestra_unica(id_muestra: int) -> dict[str, Any]:
     if not filas:
         raise HTTPException(404, "La muestra no existe")
     f = filas[0]
-    campanas = {
-        c["id_campana"]: c
-        for c in supabase_rest.seleccionar(
-            "campana_territorio", columnas="id_campana,localidad_puna,fecha_salida"
-        )
-    }
-    c = campanas.get(f["id_campana"], {})
+    c = _campanas_datos().get(f["id_campana"], {})
     return {
         "ID muestra": f["id_muestra"],
-        "CÃ³digo animal": f["codigo_animal"],
+        "Código animal": f["codigo_animal"],
         "Especie": f["especie"],
-        "UbicaciÃ³n campaÃ±a": c.get("localidad_puna") or "Sin campaÃ±a",
+        "Ubicación campaña": c.get("localidad_puna") or "Sin campaña",
+        "Departamento": c.get("departamento") or "Sin departamento",
+        "Localidad/paraje": c.get("localidad") or "Sin localidad",
+        "Provincia": c.get("provincia") or "Sin provincia",
+        "Convenio INTA": "Sí" if c.get("convenio_inta") else "No",
         "Fecha salida": c.get("fecha_salida"),
-        "Fecha/hora extracciÃ³n": f["fecha_hora_extraccion"],
+        "Fecha/hora extracción": f["fecha_hora_extraccion"],
         "Horas transcurridas": f["horas_transcurridas"],
         "Estado 48 h": f["estado_48h"],
         "Primera corrida": f.get("primera_corrida"),
     }
-
 
 @router.get("/muestra/{id_muestra}.pdf")
 def exportar_muestra_pdf(
@@ -353,7 +429,7 @@ def exportar_muestra_pdf(
     doc = SimpleDocTemplate(bio, pagesize=A4, leftMargin=36, rightMargin=36)
     estilos = getSampleStyleSheet()
     story = [
-        Paragraph("Camelia Biotech Â· Reporte de muestra", estilos["Title"]),
+        Paragraph("Camelia Biotech · Reporte de muestra", estilos["Title"]),
         Paragraph(f"Generado: {datetime.now():%Y-%m-%d %H:%M}", estilos["Normal"]),
         Spacer(1, 12),
         Paragraph("Datos de la muestra", estilos["Heading2"]),
