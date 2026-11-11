@@ -48,20 +48,6 @@ export default function InicioCliente() {
       <div className="mx-auto max-w-6xl space-y-10 px-4 py-8">
         <Encabezado activa="inicio" />
 
-        {criticas.length > 0 && (
-          <Link
-            href="/prioridades"
-            className="block rounded-xl border border-red-400 bg-red-600 px-4 py-3 text-white shadow-sm transition hover:bg-red-700"
-            aria-label="Ver alertas de riesgo crítico en Prioridades"
-          >
-            <p className="text-sm font-semibold sm:text-base">
-              ⚠ {criticas.length}{" "}
-              {criticas.length === 1 ? "muestra" : "muestras"} en riesgo crítico{" "}
-              <span className="font-normal underline">(ver detalles)</span>
-            </p>
-          </Link>
-        )}
-
         <section className="rounded-2xl border border-emerald-100 bg-gradient-to-b from-white to-emerald-50/40 px-6 py-10 text-center shadow-sm">
           <Image
             src="/logo-camelia.png"
@@ -71,8 +57,18 @@ export default function InicioCliente() {
             className="mx-auto h-28 w-28 object-contain sm:h-36 sm:w-36"
             priority
           />
-          <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-            Camelia Biotech
+          <h1 className="mt-4 inline-flex items-center justify-center gap-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            <span>Camelia Biotech</span>
+            {criticas.length > 0 && (
+              <Link
+                href="/prioridades"
+                title={`${criticas.length} ${criticas.length === 1 ? "muestra" : "muestras"} en riesgo crítico (ver detalles)`}
+                aria-label={`${criticas.length} ${criticas.length === 1 ? "muestra" : "muestras"} en riesgo crítico, ver detalles`}
+                className="text-red-600 hover:text-red-700"
+              >
+                ⚠
+              </Link>
+            )}
           </h1>
           <p className="mx-auto mt-3 max-w-2xl text-base text-gray-600 sm:text-lg">
             {usuario?.nombre ? `Hola, ${usuario.nombre}. ` : ""}
