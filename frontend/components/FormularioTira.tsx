@@ -33,26 +33,42 @@ export default function FormularioTira({
   return (
     <section className="space-y-4 rounded-lg border border-gray-200 bg-white p-5">
       <div>
-        <label htmlFor="tira-archivo" className="mb-1 block text-sm font-medium">
-          Foto o escaneo de la tira
-        </label>
-        <label
-          htmlFor="tira-archivo"
+        <p className="mb-1 block text-sm font-medium">Foto o escaneo de la tira</p>
+        <div
           onDragOver={(evento) => evento.preventDefault()}
           onDrop={soltar}
-          className="flex cursor-pointer flex-wrap items-center justify-between gap-3 rounded-lg border-2 border-dashed border-blue-300 bg-blue-50 px-4 py-4 text-blue-900 transition hover:border-blue-500 hover:bg-blue-100"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 border-dashed border-blue-300 bg-blue-50 px-4 py-4 text-blue-900"
         >
           <span className="min-w-0">
             <span className="block text-sm font-medium">
-              Hacé clic para elegir una imagen o arrastrala acá
+              Elegí una imagen, arrastrala acá o tomá una foto
             </span>
             <span className="block text-xs text-blue-700">
-              JPG, PNG, TIFF o BMP
+              JPG, PNG, TIFF o BMP. En celular, “Tomar foto” abre la cámara.
             </span>
           </span>
-          <span className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white">
-            Seleccionar archivo
+          <span className="flex flex-wrap gap-2">
+            <label
+              htmlFor="tira-camara"
+              className="cursor-pointer rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700"
+            >
+              Tomar foto
+            </label>
+            <label
+              htmlFor="tira-archivo"
+              className="cursor-pointer rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              Seleccionar archivo
+            </label>
           </span>
+          <input
+            id="tira-camara"
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={(e) => onArchivo(e.target.files?.[0] ?? null)}
+            className="sr-only"
+          />
           <input
             id="tira-archivo"
             type="file"
@@ -60,7 +76,7 @@ export default function FormularioTira({
             onChange={(e) => onArchivo(e.target.files?.[0] ?? null)}
             className="sr-only"
           />
-        </label>
+        </div>
         <p className="mt-2 text-sm text-gray-600">
           {nombreArchivo
             ? `Archivo elegido: ${nombreArchivo}`
