@@ -61,20 +61,47 @@ export default function InicioCliente() {
   }, [muestras]);
 
   const criticas = useMemo(() => construirAlertasCriticas(muestras), [muestras]);
+  const vistaPrevia = useMemo(() => {
+    if (criticas.length > 0) return null;
+    // Vista previa temporal para revisar diseño cuando no hay alertas reales.
+    const pendientes = muestras
+      .filter((m) => m.estado_48h !== "procesada")
+      .sort((a, b) => b.horas_transcurridas - a.horas_transcurridas)
+      .slice(0, 2)
+      .map((m) => ({
+        clave: `${m.id_muestra}:preview`,
+        muestra: { ...m, horas_transcurridas: Math.max(m.horas_transcurridas, 41.5) },
+      }));
+    if (pendientes.length === 0) {
+      return [
+        {
+          clave: "preview-ejemplo",
+          muestra: {
+            codigo_animal: "EJ-001",
+            localidad_puna: "Localidad de ejemplo",
+            horas_transcurridas: 42.0,
+          },
+        },
+      ];
+    }
+    return pendientes;
+  }, [criticas.length, muestras]);
+
+  const alertasMostradas = criticas.length > 0 ? criticas : null;
 
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900">
       <div className="mx-auto max-w-6xl space-y-10 px-4 py-8">
         <Encabezado activa="inicio" />
 
-        {criticas.length > 0 && (
+        {(alertasMostradas || vistaPrevia) && (
           <section
             aria-label="Alertas críticas de muestras"
             className="rounded-xl border border-red-300 bg-red-50 p-4 shadow-sm"
           >
             <h2 className="text-base font-semibold text-red-900 sm:text-lg">
-              ⚠ {criticas.length}{" "}
-              {criticas.length === 1
+              ⚠ {(alertasMostradas ? alertasMostradas.length : vistaPrevia!.length)}{" "}
+              {(alertasMostradas ? alertasMostradas.length : vistaPrevia!.length) === 1
                 ? "muestra en riesgo crítico"
                 : "muestras en riesgo crítico"}
               {" "}(pendientes, &gt; 40 h y ≤ 48 h)
@@ -82,8 +109,13 @@ export default function InicioCliente() {
             <p className="mt-1 text-sm text-red-800">
               Cola priorizada (FIFO biológica): procesar primero las de mayor tiempo transcurrido.
             </p>
+            {!alertasMostradas && (
+              <p className="mt-1 text-xs font-medium text-amber-800">
+                Vista previa temporal del diseño (sin alertas reales en la ventana &gt;40 h y ≤48 h).
+              </p>
+            )}
             <ul className="mt-3 space-y-2">
-              {criticas.map((alerta) => (
+              {(alertasMostradas ?? vistaPrevia!).map((alerta) => (
                 <li
                   key={alerta.clave}
                   className="rounded-md border border-red-200 bg-white px-3 py-2 text-sm text-gray-800"
