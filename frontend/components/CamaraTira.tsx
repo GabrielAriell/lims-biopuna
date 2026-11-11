@@ -11,6 +11,8 @@ type Props = {
 export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const pushStateRef = useRef(false);
+  const cerrandoPorPopRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [lista, setLista] = useState(false);
   const [capturando, setCapturando] = useState(false);
@@ -27,10 +29,36 @@ export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
     setLista(false);
   }, []);
 
+  // Cerrar con el botón "atrás" del navegador/celular sin salir de la página.
+  useEffect(() => {
+    if (!abierta) return;
+    window.history.pushState({ camaraTira: true }, "");
+    pushStateRef.current = true;
+
+    const onPopState = () => {
+      if (!pushStateRef.current) return;
+      pushStateRef.current = false;
+      cerrandoPorPopRef.current = true;
+      onCerrar();
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => {
+      window.removeEventListener("popstate", onPopState);
+    };
+  }, [abierta, onCerrar]);
+
   useEffect(() => {
     if (!abierta) {
       detener();
       setError(null);
+      setCapturando(false);
+      cerrandoPorPopRef.current = false;
+      // Si se cerró por UI (no por "atrás"), revertir el estado de historial.
+      if (pushStateRef.current) {
+        pushStateRef.current = false;
+        window.history.back();
+      }
       return;
     }
 
@@ -136,32 +164,30 @@ export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
         <div className="relative aspect-[4/3] w-full bg-black sm:aspect-video">
           <video
             ref={videoRef}
-            className="h-full w-full object-contain"
+            className="absolute inset-0 h-full w-full object-contain"
             playsInline
             muted
             autoPlay
           />
 
           {/* Guías de encuadre en vivo */}
-          <div className="pointer-events-none absolute inset-0">
-            {/* oscurecer bordes para resaltar área central */}
-            <div className="absolute inset-0 bg-black/20" />
-            <div className="absolute left-1/2 top-1/2 h-[70%] w-[82%] -translate-x-1/2 -translate-y-1/2 rounded-md border-2 border-emerald-400/90 shadow-[0_0_0_9999px_rgba(0,0,0,0.25)]" />
-            {/* línea central */}
-            <div className="absolute left-1/2 top-[15%] h-[70%] w-px -translate-x-1/2 bg-emerald-300/60" />
-            <div className="absolute left-[9%] top-1/2 h-px w-[82%] -translate-y-1/2 bg-emerald-300/40" />
+          <div className="pointer-events-none absolute inset-0 z-10">
+            <div className="absolute left-1/2 top-1/2 h-[72%] w-[84%] -translate-x-1/2 -translate-y-1/2 rounded-md border-2 border-emerald-400 shadow-[0_0_0_9999px_rgba(0,0,0,0.30)]" />
+            {/* líneas guía */}
+            <div className="absolute left-1/2 top-[14%] h-[72%] w-[2px] -translate-x-1/2 bg-emerald-300/80" />
+            <div className="absolute left-[8%] top-1/2 h-[2px] w-[84%] -translate-y-1/2 bg-emerald-300/60" />
             {/* marcas de esquinas */}
-            <div className="absolute left-[9%] top-[15%] h-5 w-5 border-l-4 border-t-4 border-emerald-300" />
-            <div className="absolute right-[9%] top-[15%] h-5 w-5 border-r-4 border-t-4 border-emerald-300" />
-            <div className="absolute bottom-[15%] left-[9%] h-5 w-5 border-b-4 border-l-4 border-emerald-300" />
-            <div className="absolute bottom-[15%] right-[9%] h-5 w-5 border-b-4 border-r-4 border-emerald-300" />
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded bg-black/60 px-3 py-1 text-xs text-white">
+            <div className="absolute left-[8%] top-[14%] h-6 w-6 border-l-4 border-t-4 border-emerald-300" />
+            <div className="absolute right-[8%] top-[14%] h-6 w-6 border-r-4 border-t-4 border-emerald-300" />
+            <div className="absolute bottom-[14%] left-[8%] h-6 w-6 border-b-4 border-l-4 border-emerald-300" />
+            <div className="absolute bottom-[14%] right-[8%] h-6 w-6 border-b-4 border-r-4 border-emerald-300" />
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded bg-black/70 px-3 py-1 text-xs font-medium text-white">
               Encadrá la tira dentro del recuadro
             </div>
           </div>
 
           {!lista && !error && (
-            <div className="absolute inset-0 flex items-center justify-center text-sm text-white">
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 text-sm text-white">
               Iniciando cámara...
             </div>
           )}
@@ -175,7 +201,7 @@ export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
           )}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-white/70">
-              La imagen se captura en el navegador y se usa para el análisis (no se guarda sola).
+              Usá “Cerrar” o el botón atrás del celular para volver sin capturar.
             </p>
             <div className="flex gap-2">
               <button
