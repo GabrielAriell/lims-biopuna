@@ -8,6 +8,7 @@ import Semaforo from "@/components/Semaforo";
 import { listarEnsayos } from "@/lib/api-ensayos";
 import { listarCampanas, listarMuestras } from "@/lib/api-muestras";
 import { exportarEnsayosExcel, exportarMuestrasExcel } from "@/lib/api-reportes";
+import { evaluarValor } from "@/lib/rangos-referencia";
 import type { EnsayoGuardado } from "@/lib/tipos-ensayos";
 import type { Campana, EstadoMuestra, Muestra } from "@/lib/tipos-muestras";
 
@@ -526,9 +527,30 @@ function TablaExploracionResultados({
               <td className="whitespace-nowrap px-3 py-2">
                 {fila.fraccion ? num(fila.fraccion.porcentaje_relativo) : "—"}
               </td>
-              <td className="whitespace-nowrap px-3 py-2">
-                {fila.fraccion ? num(fila.fraccion.concentracion_g_dl) : "—"}
-              </td>
+              {(() => {
+                const ev =
+                  fila.fraccion && fila.muestra
+                    ? evaluarValor(
+                        fila.muestra.especie,
+                        fila.fraccion.nombre_fraccion,
+                        fila.fraccion.concentracion_g_dl,
+                      )
+                    : null;
+                const clase =
+                  ev?.nivel === "critico"
+                    ? "bg-red-100 text-red-900 font-medium"
+                    : ev?.nivel === "alerta"
+                      ? "bg-yellow-100 text-yellow-900 font-medium"
+                      : "";
+                return (
+                  <td
+                    className={`whitespace-nowrap px-3 py-2 ${clase}`}
+                    title={ev && ev.nivel !== "normal" ? ev.etiqueta : undefined}
+                  >
+                    {fila.fraccion ? num(fila.fraccion.concentracion_g_dl) : "—"}
+                  </td>
+                );
+              })()}
               <td className="whitespace-nowrap px-3 py-2">
                 {fila.fraccion ? num(fila.fraccion.area_integrada, 4) : "—"}
               </td>
