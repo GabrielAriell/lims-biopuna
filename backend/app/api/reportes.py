@@ -11,6 +11,8 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
+from reportlab.graphics.charts.barcharts import HorizontalBarChart
+from reportlab.graphics.shapes import Drawing
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
@@ -136,23 +138,30 @@ def _muestras_datos() -> list[dict[str, Any]]:
     return datos
 
 
-def _bloque_resumen(
-    ws: Any, titulo: str, datos: list[dict[str, Any]], clave: str
-) -> None:
-    """Agrega un bloque de conteos por categoría y convenio INTA."""
+def _conteo_por(
+    datos: list[dict[str, Any]], clave: str
+) -> list[tuple[str, dict[str, int]]]:
+    """Cuenta cada categoría separando con/sin convenio INTA."""
     conteo: dict[str, dict[str, int]] = {}
     for d in datos:
         nombre = str(d.get(clave) or "Sin dato")
         fila = conteo.setdefault(nombre, {"con": 0, "sin": 0})
         fila["con" if d.get("convenio_inta") else "sin"] += 1
+    return sorted(
+        conteo.items(), key=lambda kv: (-(kv[1]["con"] + kv[1]["sin"]), kv[0])
+    )
 
+
+def _bloque_resumen(
+    ws: Any, titulo: str, datos: list[dict[str, Any]], clave: str
+) -> None:
+    """Agrega un bloque de conteos por categoría y convenio INTA."""
+    filas = _conteo_por(datos, clave)
     ws.append([titulo])
     ws.cell(row=ws.max_row, column=1).font = Font(bold=True)
     total_con = 0
     total_sin = 0
-    for nombre, c in sorted(
-        conteo.items(), key=lambda kv: (-(kv[1]["con"] + kv[1]["sin"]), kv[0])
-    ):
+    for nombre, c in filas:
         ws.append([nombre, c["con"], c["sin"], c["con"] + c["sin"]])
         total_con += c["con"]
         total_sin += c["sin"]
@@ -160,12 +169,202 @@ def _bloque_resumen(
     ws.cell(row=ws.max_row, column=1).font = Font(bold=True)
     ws.append([])
 
+
+def filtros_exportacion(
+    id_campana: int | None = None,
+    especie: str | None = None,
+    estado: str | None = None,
+    departamento: str | None = None,
+    convenio: str | None = None,
+    fecha_desde: str | None = None,
+    fecha_hasta: str | None = None,
+    busqueda: str | None = None,
+    investigador: str | None = None,
+) -> dict[str, Any]:
+    """Filtros opcionales compartidos por las exportaciones."""
+    return {
+        "id_campana": id_campana,
+        "especie": especie,
+        "estado": estado,
+        "departamento": departamento,
+        "convenio": convenio,
+        "fecha_desde": fecha_desde,
+        "fecha_hasta": fecha_hasta,
+        "busqueda": busqueda,
+        "investigador": investigador,
+    }
+
+
+def _resumen_filtros(filtros: dict[str, Any]) -> str:
+    """Texto legible con los filtros aplicados a la exportación."""
+    etiquetas = (
+        ("id_campana", "Campaña"),
+        ("especie", "Especie"),
+        ("estado", "Estado"),
+        ("departamento", "Departamento"),
+        ("fecha_desde", "Desde"),
+        ("fecha_hasta", "Hasta"),
+        ("busqueda", "Búsqueda"),
+        ("investigador", "Investigador"),
+    )
+    partes = []
+    for clave, etiqueta in etiquetas:
+        valor = filtros.get(clave)
+        if valor:
+            partes.append(f"{etiqueta}: {valor}")
+    convenio = (filtros.get("convenio") or "").strip().lower()
+    if convenio == "con":
+        partes.append("Convenio INTA: solo con convenio")
+    elif convenio == "sin":
+        partes.append("Convenio INTA: solo sin convenio")
+    else:
+        partes.append("Convenio INTA: todos")
+    return " · ".join(partes)
+
+
+def _investigadores_por_muestra(
+    lista: list[dict[str, Any]],
+) -> dict[int, list[str]]:
+    mapa: dict[int, list[str]] = {}
+    for e in lista:
+        nombre = e.get("investigador_nombre") or str(e.get("id_investigador") or "")
+        if not nombre:
+            continue
+        actuales = mapa.setdefault(e["id_muestra"], [])
+        if nombre not in actuales:
+            actuales.append(nombre)
+    return mapa
+
+
+def _filtrar_muestras(
+    datos: list[dict[str, Any]],
+    filtros: dict[str, Any],
+    investigadores: dict[int, list[str]] | None = None,
+) -> list[dict[str, Any]]:
+    id_campana = filtros.get("id_campana")
+    especie = (filtros.get("especie") or "").strip()
+    estado = (filtros.get("estado") or "").strip()
+    departamento = (filtros.get("departamento") or "").strip()
+    convenio = (filtros.get("convenio") or "").strip().lower()
+    fecha_desde = (filtros.get("fecha_desde") or "").strip()
+    fecha_hasta = (filtros.get("fecha_hasta") or "").strip()
+    busqueda = (filtros.get("busqueda") or "").strip().lower()
+    investigador = (filtros.get("investigador") or "").strip().lower()
+
+    salida = []
+    for d in datos:
+        if id_campana and int(d["id_campana"]) != int(id_campana):
+            continue
+        if especie and d.get("especie") != especie:
+            continue
+        if estado and d.get("estado_48h") != estado:
+            continue
+        if departamento and d.get("departamento") != departamento:
+            continue
+        if convenio == "con" and not d.get("convenio_inta"):
+            continue
+        if convenio == "sin" and d.get("convenio_inta"):
+            continue
+        dia = str(d.get("fecha_hora_extraccion") or "")[:10]
+        if fecha_desde and dia < fecha_desde:
+            continue
+        if fecha_hasta and dia > fecha_hasta:
+            continue
+        invs = (investigadores or {}).get(d["id_muestra"], [])
+        if investigador and not any(investigador in i.lower() for i in invs):
+            continue
+        if busqueda:
+            campos = [
+                d.get("codigo_animal"),
+                d.get("especie"),
+                d.get("ubicacion_campana"),
+                d.get("departamento"),
+                d.get("localidad"),
+                *invs,
+            ]
+            if not any(busqueda in str(c).lower() for c in campos if c):
+                continue
+        salida.append(d)
+    return salida
+
+
+def _tabla_territorial_pdf(
+    filas: list[tuple[str, dict[str, int]]], total: int
+) -> Table:
+    datos = [["Categoría", "Con convenio", "Sin convenio", "Total", "%"]]
+    total_con = 0
+    total_sin = 0
+    for nombre, c in filas:
+        subtotal = c["con"] + c["sin"]
+        total_con += c["con"]
+        total_sin += c["sin"]
+        porcentaje = f"{(subtotal / total * 100):.0f}%" if total else "0%"
+        datos.append([nombre, str(c["con"]), str(c["sin"]), str(subtotal), porcentaje])
+    datos.append(
+        [
+            "Total",
+            str(total_con),
+            str(total_sin),
+            str(total_con + total_sin),
+            "100%" if total else "0%",
+        ]
+    )
+    tabla = Table(datos, colWidths=[190, 70, 70, 55, 45], repeatRows=1)
+    tabla.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1F4E79")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, -1), 8),
+                ("ALIGN", (1, 1), (-1, -1), "RIGHT"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ]
+        )
+    )
+    return tabla
+
+
+def _grafico_territorial_pdf(
+    filas: list[tuple[str, dict[str, int]]], ancho: float = 480
+) -> Drawing:
+    visibles = filas[:14]
+    alto = max(120, 20 * len(visibles) + 30)
+    dibujo = Drawing(ancho, alto)
+    grafico = HorizontalBarChart()
+    grafico.x = 125
+    grafico.y = 10
+    grafico.width = ancho - 140
+    grafico.height = alto - 25
+    grafico.data = [[c["con"] + c["sin"] for _, c in visibles]]
+    grafico.categoryAxis.categoryNames = [
+        (nombre[:24] + "…") if len(nombre) > 25 else nombre
+        for nombre, _ in visibles
+    ]
+    grafico.categoryAxis.labels.fontSize = 7
+    grafico.categoryAxis.labels.dx = -3
+    grafico.valueAxis.labels.fontSize = 7
+    grafico.valueAxis.valueMin = 0
+    grafico.bars[0].fillColor = colors.HexColor("#1F4E79")
+    grafico.barWidth = 7
+    dibujo.add(grafico)
+    return dibujo
+
 @router.get("/muestras.xlsx")
 def exportar_muestras(
     _usuario: Annotated[UsuarioActual, Depends(usuario_actual)],
+    filtros: Annotated[dict[str, Any], Depends(filtros_exportacion)],
 ):
     try:
         datos = _muestras_datos()
+        necesita_ensayos = bool(filtros.get("investigador") or filtros.get("busqueda"))
+        investigadores = (
+            _investigadores_por_muestra(ensayos.listar())
+            if necesita_ensayos
+            else {}
+        )
+        datos = _filtrar_muestras(datos, filtros, investigadores)
     except (supabase_rest.SupabaseNoConfigurado, supabase_rest.SupabaseError) as e:
         raise HTTPException(getattr(e, "status", 502), str(e)) from e
 
@@ -227,10 +426,15 @@ def exportar_muestras(
 @router.get("/ensayos.xlsx")
 def exportar_ensayos(
     _usuario: Annotated[UsuarioActual, Depends(usuario_actual)],
+    filtros: Annotated[dict[str, Any], Depends(filtros_exportacion)],
 ):
     try:
         lista = ensayos.listar()
-        muestras = {m["id_muestra"]: m for m in _muestras_datos()}
+        investigadores = _investigadores_por_muestra(lista)
+        datos = _filtrar_muestras(_muestras_datos(), filtros, investigadores)
+        ids = {d["id_muestra"] for d in datos}
+        lista = [e for e in lista if e["id_muestra"] in ids]
+        muestras = {m["id_muestra"]: m for m in datos}
     except (supabase_rest.SupabaseNoConfigurado, supabase_rest.SupabaseError) as e:
         raise HTTPException(getattr(e, "status", 502), str(e)) from e
 
@@ -328,6 +532,74 @@ def exportar_ensayos(
             )
     _auto_ancho(ws)
     return _xlsx_respuesta(wb, f"ensayos_{datetime.now():%Y%m%d}.xlsx")
+
+
+@router.get("/territorial.pdf")
+def exportar_territorial_pdf(
+    _usuario: Annotated[UsuarioActual, Depends(usuario_actual)],
+    filtros: Annotated[dict[str, Any], Depends(filtros_exportacion)],
+):
+    try:
+        datos = _muestras_datos()
+        necesita_ensayos = bool(filtros.get("investigador") or filtros.get("busqueda"))
+        investigadores = (
+            _investigadores_por_muestra(ensayos.listar())
+            if necesita_ensayos
+            else {}
+        )
+        datos = _filtrar_muestras(datos, filtros, investigadores)
+    except (supabase_rest.SupabaseNoConfigurado, supabase_rest.SupabaseError) as e:
+        raise HTTPException(getattr(e, "status", 502), str(e)) from e
+
+    bio = BytesIO()
+    doc = SimpleDocTemplate(bio, pagesize=A4, leftMargin=36, rightMargin=36)
+    estilos = getSampleStyleSheet()
+    total = len(datos)
+    con_convenio = sum(1 for d in datos if d.get("convenio_inta"))
+    story = [
+        Paragraph("Camelia Biotech · Análisis territorial", estilos["Title"]),
+        Paragraph(
+            f"Convenio INTA · Generado: {datetime.now():%Y-%m-%d %H:%M}",
+            estilos["Normal"],
+        ),
+        Paragraph(
+            f"Muestras incluidas: {total} · Con convenio INTA: {con_convenio} "
+            f"· Sin convenio INTA: {total - con_convenio}",
+            estilos["Normal"],
+        ),
+        Paragraph(f"Filtros aplicados: {_resumen_filtros(filtros)}", estilos["Normal"]),
+        Spacer(1, 12),
+    ]
+
+    if not datos:
+        story.append(
+            Paragraph("No hay muestras que coincidan con los filtros.", estilos["Normal"])
+        )
+    else:
+        secciones = (
+            ("Muestras por especie", "especie"),
+            ("Muestras por departamento", "departamento"),
+            ("Muestras por localidad/paraje", "localidad"),
+        )
+        for titulo, clave in secciones:
+            filas = _conteo_por(datos, clave)
+            if not filas:
+                continue
+            story.append(Paragraph(titulo, estilos["Heading2"]))
+            story.append(_tabla_territorial_pdf(filas, total))
+            story.append(Spacer(1, 6))
+            story.append(_grafico_territorial_pdf(filas))
+            if len(filas) > 14:
+                story.append(
+                    Paragraph(
+                        "El gráfico muestra las 14 categorías con más muestras.",
+                        estilos["Normal"],
+                    )
+                )
+            story.append(Spacer(1, 14))
+
+    doc.build(story)
+    return _pdf_respuesta(bio, f"analisis_territorial_{datetime.now():%Y%m%d}.pdf")
 
 
 @router.get("/muestra/{id_muestra}.xlsx")

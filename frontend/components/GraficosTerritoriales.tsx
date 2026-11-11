@@ -39,14 +39,21 @@ const PALETA = [
   "#ea580c",
 ];
 
+export type FiltroConvenio = "todos" | "con" | "sin";
+export type ExportacionTerritorial = "excel" | "pdf";
+
 type Punto = { nombre: string; cantidad: number };
-type FiltroConvenio = "todos" | "con" | "sin";
 type Agrupacion = "departamento" | "localidad";
 
 type Props = {
-  /** Muestras ya filtradas en la vista de exploración. */
+  /** Muestras ya filtradas por los filtros de la vista de exploración. */
   muestras: Muestra[];
   campanas: Campana[];
+  filtroConvenio: FiltroConvenio;
+  onCambiarConvenio: (valor: FiltroConvenio) => void;
+  onExportarExcel: () => void;
+  onExportarPdf: () => void;
+  exportando: ExportacionTerritorial | null;
 };
 
 function contar(nombres: string[]): Punto[] {
@@ -70,9 +77,16 @@ function etiquetaTorta(props: PieLabelRenderProps): string {
   return `${nombre} ${porcentaje}%`;
 }
 
-export default function GraficosTerritoriales({ muestras, campanas }: Props) {
+export default function GraficosTerritoriales({
+  muestras,
+  campanas,
+  filtroConvenio,
+  onCambiarConvenio,
+  onExportarExcel,
+  onExportarPdf,
+  exportando,
+}: Props) {
   const [agrupacion, setAgrupacion] = useState<Agrupacion>("departamento");
-  const [filtroConvenio, setFiltroConvenio] = useState<FiltroConvenio>("todos");
 
   const campanasPorId = useMemo(
     () => new Map(campanas.map((c) => [c.id_campana, c])),
@@ -117,21 +131,12 @@ export default function GraficosTerritoriales({ muestras, campanas }: Props) {
     return ordenar(contar(nombres));
   }, [muestrasConvenio, campanasPorId, agrupacion]);
 
-  if (muestrasConvenio.length === 0) {
-    return (
-      <section className="rounded-lg border border-gray-200 bg-white p-4">
-        <h2 className="text-lg font-semibold">Análisis territorial (Convenio INTA)</h2>
-        <p className="mt-1 text-sm text-gray-500">
-          No hay muestras que coincidan con los filtros y el convenio elegido.
-        </p>
-        <FiltroConvenioUI
-          valor={filtroConvenio}
-          onChange={setFiltroConvenio}
-          totales={totalesConvenio}
-        />
-      </section>
-    );
-  }
+  const descripcionConvenio =
+    filtroConvenio === "con"
+      ? " y con convenio INTA"
+      : filtroConvenio === "sin"
+        ? " y sin convenio INTA"
+        : "";
 
   return (
     <section className="rounded-lg border border-gray-200 bg-white p-4">
@@ -140,127 +145,153 @@ export default function GraficosTerritoriales({ muestras, campanas }: Props) {
           <h2 className="text-lg font-semibold">Análisis territorial (Convenio INTA)</h2>
           <p className="text-sm text-gray-600">
             Distribución de las {muestrasConvenio.length} muestras que coinciden con
-            los filtros actuales
-            {filtroConvenio === "con"
-              ? " y con convenio INTA"
-              : filtroConvenio === "sin"
-                ? " y sin convenio INTA"
-                : ""}
-            .
+            los filtros actuales{descripcionConvenio}.
           </p>
         </div>
-        <FiltroConvenioUI
-          valor={filtroConvenio}
-          onChange={setFiltroConvenio}
-          totales={totalesConvenio}
-        />
-      </div>
-
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3">
-        <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
-          Agrupar territorio por
-        </span>
-        <div className="flex gap-1 rounded border border-gray-200 bg-gray-50 p-0.5">
-          <button
-            type="button"
-            onClick={() => setAgrupacion("departamento")}
-            className={`rounded px-3 py-1 text-sm ${
-              agrupacion === "departamento"
-                ? "bg-white font-medium shadow-sm"
-                : "text-gray-600"
-            }`}
-          >
-            Departamento
-          </button>
-          <button
-            type="button"
-            onClick={() => setAgrupacion("localidad")}
-            className={`rounded px-3 py-1 text-sm ${
-              agrupacion === "localidad"
-                ? "bg-white font-medium shadow-sm"
-                : "text-gray-600"
-            }`}
-          >
-            Localidad/paraje
-          </button>
-        </div>
-      </div>
-
-      <div className="mt-4 grid gap-6 lg:grid-cols-2">
-        <div>
-          <h3 className="text-sm font-medium text-gray-700">Muestras por especie</h3>
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={porEspecie}
-                  dataKey="cantidad"
-                  nameKey="nombre"
-                  name="Muestras"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius="75%"
-                  label={etiquetaTorta}
-                  labelLine={false}
-                >
-                  {porEspecie.map((punto, indice) => (
-                    <Cell
-                      key={punto.nombre}
-                      fill={
-                        COLORES_ESPECIE[punto.nombre] ??
-                        PALETA[indice % PALETA.length]
-                      }
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+        <div className="flex flex-col items-end gap-2">
+          <FiltroConvenioUI
+            valor={filtroConvenio}
+            onChange={onCambiarConvenio}
+            totales={totalesConvenio}
+          />
+          <div className="flex flex-wrap justify-end gap-2">
+            <button
+              type="button"
+              onClick={onExportarExcel}
+              disabled={exportando !== null}
+              className="rounded border border-green-300 bg-green-50 px-3 py-1.5 text-sm font-medium text-green-800 hover:bg-green-100 disabled:opacity-50"
+            >
+              {exportando === "excel" ? "Generando..." : "Exportar Excel"}
+            </button>
+            <button
+              type="button"
+              onClick={onExportarPdf}
+              disabled={exportando !== null}
+              className="rounded border border-red-300 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-800 hover:bg-red-100 disabled:opacity-50"
+            >
+              {exportando === "pdf" ? "Generando..." : "Descargar PDF"}
+            </button>
           </div>
         </div>
+      </div>
 
-        <div>
-          <h3 className="text-sm font-medium text-gray-700">
-            Muestras por{" "}
-            {agrupacion === "departamento" ? "departamento" : "localidad/paraje"}
-          </h3>
-          <div
-            className="w-full"
-            style={{ height: Math.max(288, porTerritorio.length * 34) }}
-          >
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={porTerritorio}
-                layout="vertical"
-                margin={{ top: 8, right: 24, bottom: 8, left: 8 }}
+      {muestrasConvenio.length === 0 ? (
+        <p className="mt-4 rounded border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500">
+          No hay muestras que coincidan con los filtros y el convenio elegido.
+        </p>
+      ) : (
+        <>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3">
+            <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
+              Agrupar territorio por
+            </span>
+            <div className="flex gap-1 rounded border border-gray-200 bg-gray-50 p-0.5">
+              <button
+                type="button"
+                onClick={() => setAgrupacion("departamento")}
+                className={`rounded px-3 py-1 text-sm ${
+                  agrupacion === "departamento"
+                    ? "bg-white font-medium shadow-sm"
+                    : "text-gray-600"
+                }`}
               >
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                <XAxis
-                  type="number"
-                  allowDecimals={false}
-                  tick={{ fontSize: 12 }}
-                />
-                <YAxis
-                  type="category"
-                  dataKey="nombre"
-                  width={140}
-                  tick={{ fontSize: 12 }}
-                />
-                <Tooltip />
-                <Bar dataKey="cantidad" name="Muestras" radius={[0, 4, 4, 0]}>
-                  {porTerritorio.map((punto, indice) => (
-                    <Cell
-                      key={punto.nombre}
-                      fill={PALETA[indice % PALETA.length]}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+                Departamento
+              </button>
+              <button
+                type="button"
+                onClick={() => setAgrupacion("localidad")}
+                className={`rounded px-3 py-1 text-sm ${
+                  agrupacion === "localidad"
+                    ? "bg-white font-medium shadow-sm"
+                    : "text-gray-600"
+                }`}
+              >
+                Localidad/paraje
+              </button>
+            </div>
           </div>
-        </div>
-      </div>
+
+          <div className="mt-4 grid gap-6 lg:grid-cols-2">
+            <div>
+              <h3 className="text-sm font-medium text-gray-700">
+                Muestras por especie
+              </h3>
+              <div className="h-72 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={porEspecie}
+                      dataKey="cantidad"
+                      nameKey="nombre"
+                      name="Muestras"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius="75%"
+                      label={etiquetaTorta}
+                      labelLine={false}
+                    >
+                      {porEspecie.map((punto, indice) => (
+                        <Cell
+                          key={punto.nombre}
+                          fill={
+                            COLORES_ESPECIE[punto.nombre] ??
+                            PALETA[indice % PALETA.length]
+                          }
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-medium text-gray-700">
+                Muestras por{" "}
+                {agrupacion === "departamento"
+                  ? "departamento"
+                  : "localidad/paraje"}
+              </h3>
+              <div
+                className="w-full"
+                style={{ height: Math.max(288, porTerritorio.length * 34) }}
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={porTerritorio}
+                    layout="vertical"
+                    margin={{ top: 8, right: 24, bottom: 8, left: 8 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                    <XAxis
+                      type="number"
+                      allowDecimals={false}
+                      tick={{ fontSize: 12 }}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="nombre"
+                      width={140}
+                      tick={{ fontSize: 12 }}
+                    />
+                    <Tooltip />
+                    <Bar dataKey="cantidad" name="Muestras" radius={[0, 4, 4, 0]}>
+                      {porTerritorio.map((punto, indice) => (
+                        <Cell
+                          key={punto.nombre}
+                          fill={PALETA[indice % PALETA.length]}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </section>
   );
 }

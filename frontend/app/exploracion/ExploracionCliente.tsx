@@ -5,10 +5,19 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import Encabezado from "@/components/Encabezado";
 import GraficosTerritoriales from "@/components/GraficosTerritoriales";
+import type {
+  ExportacionTerritorial,
+  FiltroConvenio,
+} from "@/components/GraficosTerritoriales";
 import Semaforo from "@/components/Semaforo";
 import { listarEnsayos } from "@/lib/api-ensayos";
 import { listarCampanas, listarMuestras } from "@/lib/api-muestras";
-import { exportarEnsayosExcel, exportarMuestrasExcel } from "@/lib/api-reportes";
+import {
+  exportarEnsayosExcel,
+  exportarMuestrasExcel,
+  exportarTerritorialPdf,
+} from "@/lib/api-reportes";
+import type { FiltrosReporte } from "@/lib/api-reportes";
 import { calcularRelacionAG, evaluarValor } from "@/lib/rangos-referencia";
 import type { EnsayoGuardado } from "@/lib/tipos-ensayos";
 import type { Campana, EstadoMuestra, Muestra } from "@/lib/tipos-muestras";
@@ -63,6 +72,7 @@ export default function ExploracionCliente() {
   const [filtroInvestigador, setFiltroInvestigador] = useState("");
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
+  const [filtroConvenio, setFiltroConvenio] = useState<FiltroConvenio>("todos");
   const [exportando, setExportando] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
@@ -198,11 +208,40 @@ export default function ExploracionCliente() {
     };
   }, [muestras, ensayos, especies.length, investigadores.length]);
 
-  async function descargar(tipo: "muestras" | "ensayos") {
+  const filtrosReporte = useMemo<FiltrosReporte>(() => {
+    return {
+      idCampana: filtroCampana || undefined,
+      especie: filtroEspecie || undefined,
+      estado: filtroEstado || undefined,
+      convenio: filtroConvenio === "todos" ? undefined : filtroConvenio,
+      fechaDesde: fechaDesde || undefined,
+      fechaHasta: fechaHasta || undefined,
+      busqueda: busqueda.trim() || undefined,
+      investigador: filtroInvestigador || undefined,
+    };
+  }, [
+    filtroCampana,
+    filtroEspecie,
+    filtroEstado,
+    filtroConvenio,
+    fechaDesde,
+    fechaHasta,
+    busqueda,
+    filtroInvestigador,
+  ]);
+
+  async function descargar(
+    tipo: "ensayos" | "territorial-excel" | "territorial-pdf",
+  ) {
     setExportando(tipo);
     try {
-      if (tipo === "muestras") await exportarMuestrasExcel();
-      else await exportarEnsayosExcel();
+      if (tipo === "ensayos") {
+        await exportarEnsayosExcel({ ...filtrosReporte, convenio: undefined });
+      } else if (tipo === "territorial-excel") {
+        await exportarMuestrasExcel(filtrosReporte);
+      } else {
+        await exportarTerritorialPdf(filtrosReporte);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo exportar");
     } finally {
@@ -353,14 +392,6 @@ export default function ExploracionCliente() {
               </button>
               <button
                 type="button"
-                onClick={() => void descargar("muestras")}
-                disabled={Boolean(exportando)}
-                className="rounded border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-50"
-              >
-                {exportando === "muestras" ? "..." : "Excel muestras"}
-              </button>
-              <button
-                type="button"
                 onClick={() => void descargar("ensayos")}
                 disabled={Boolean(exportando)}
                 className="rounded border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-50"
@@ -372,7 +403,21 @@ export default function ExploracionCliente() {
         </section>
 
         {!cargando && (
-          <GraficosTerritoriales muestras={muestrasFiltradas} campanas={campanas} />
+          <GraficosTerritoriales
+            muestras={muestrasFiltradas}
+            campanas={campanas}
+            filtroConvenio={filtroConvenio}
+            onCambiarConvenio={setFiltroConvenio}
+            onExportarExcel={() => void descargar("territorial-excel")}
+            onExportarPdf={() => void descargar("territorial-pdf")}
+            exportando={
+              exportando === "territorial-excel"
+                ? ("excel" as ExportacionTerritorial)
+                : exportando === "territorial-pdf"
+                  ? ("pdf" as ExportacionTerritorial)
+                  : null
+            }
+          />
         )}
 
         {cargando ? (
