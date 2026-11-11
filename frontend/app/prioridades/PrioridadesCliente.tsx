@@ -45,9 +45,6 @@ export default function PrioridadesCliente() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 className="text-xl font-semibold">Prioridades y semáforo (48 h)</h1>
-              <p className="mt-1 text-sm text-gray-500">
-                El semáforo se mantiene según lo implementado: Verde &lt; 24 h, Amarillo 24–40 h, Rojo &gt; 40 h. Las muestras procesadas (con ensayo) no cuentan.
-              </p>
             </div>
             <button
               onClick={recargar}
@@ -74,10 +71,10 @@ export default function PrioridadesCliente() {
           className="rounded-xl border border-red-300 bg-red-50 p-5 shadow-sm"
         >
           <h2 className="text-lg font-semibold text-red-900">
-            Riesgo crítico (cola priorizada)
+            Riesgo crítico (priorizar)
           </h2>
           <p className="mt-1 text-sm text-red-800">
-            Muestras pendientes (sin ensayo) con más de 40 h y hasta 48 h desde la extracción. Al superar 48 h la notificación desaparece. Orden FIFO biológica: primero las de mayor tiempo transcurrido.
+            Muestras pendientes (sin ensayo) con más de 40 h y hasta 48 h desde la extracción. Al superar 48 h la notificación desaparece.
           </p>
 
           {cargando ? (
