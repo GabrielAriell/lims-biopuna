@@ -4,6 +4,7 @@ Se usa mientras no hay pantalla de registro: los usuarios se crean con la
 Admin API usando la secret key del backend (nunca se ejecuta en el navegador).
 
 Uso:
+    # Definí CLAVE_PRUEBA en backend/.env o como variable de entorno.
     python -m scripts.crear_usuarios_prueba
 
 Los usuarios y contraseñas son de prueba. Se pueden borrar desde el panel de
@@ -12,6 +13,7 @@ Supabase o con ``python -m scripts.crear_usuarios_prueba --borrar``.
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -20,9 +22,7 @@ from dotenv import dotenv_values
 
 RUTA_ENV = Path(__file__).resolve().parents[1] / ".env"
 TIEMPO_LIMITE = 20.0
-
-# Contraseña común para todas las cuentas de prueba.
-CLAVE_PRUEBA = "BioPuna2026!"
+MINIMO_CLAVE = 8
 
 USUARIOS = [
     {
@@ -56,6 +56,18 @@ def _entorno() -> tuple[str, str]:
     return url, clave
 
 
+def _clave_prueba() -> str:
+    """Lee la contraseña de prueba sin guardarla en el repositorio."""
+    valores = dotenv_values(RUTA_ENV) if RUTA_ENV.exists() else {}
+    clave = (os.getenv("CLAVE_PRUEBA") or valores.get("CLAVE_PRUEBA") or "").strip()
+    if len(clave) < MINIMO_CLAVE:
+        raise SystemExit(
+            f"Definí CLAVE_PRUEBA (mínimo {MINIMO_CLAVE} caracteres) en "
+            "backend/.env o como variable de entorno antes de crear las cuentas."
+        )
+    return clave
+
+
 def _cabeceras(clave: str) -> dict[str, str]:
     return {
         "apikey": clave,
@@ -77,13 +89,13 @@ def _listar(url: str, clave: str) -> dict[str, dict]:
     return {u["email"].lower(): u for u in usuarios if u.get("email")}
 
 
-def _crear(url: str, clave: str, usuario: dict) -> dict:
+def _crear(url: str, clave: str, usuario: dict, clave_prueba: str) -> dict:
     respuesta = httpx.post(
         f"{url}/auth/v1/admin/users",
         headers=_cabeceras(clave),
         json={
             "email": usuario["email"],
-            "password": CLAVE_PRUEBA,
+            "password": clave_prueba,
             "email_confirm": True,
             "user_metadata": {"nombre": usuario["nombre"]},
         },
@@ -149,6 +161,7 @@ def main() -> int:
     args = parser.parse_args()
 
     url, clave = _entorno()
+    clave_prueba = "" if args.borrar else _clave_prueba()
     existentes = _listar(url, clave)
 
     for usuario in USUARIOS:
@@ -163,7 +176,7 @@ def main() -> int:
             continue
 
         if actual is None:
-            creado = _crear(url, clave, usuario)
+            creado = _crear(url, clave, usuario, clave_prueba)
             id_usuario = creado["id"]
             print(f"+ {usuario['email']}: creado ({usuario['rol']})")
         else:
@@ -174,7 +187,7 @@ def main() -> int:
 
     if not args.borrar:
         print()
-        print("Cuentas de prueba (contraseña común):", CLAVE_PRUEBA)
+        print("Cuentas de prueba (contraseña común):", clave_prueba)
         for usuario in USUARIOS:
             print(f"  {usuario['email']} · {usuario['rol']} · {usuario['nombre']}")
     return 0
