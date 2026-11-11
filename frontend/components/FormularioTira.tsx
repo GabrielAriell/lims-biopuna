@@ -24,7 +24,7 @@ export default function FormularioTira({
   const cambiar = <K extends keyof Parametros>(clave: K, valor: Parametros[K]) =>
     onParametros({ ...parametros, [clave]: valor });
 
-  function soltar(evento: DragEvent<HTMLLabelElement>) {
+  function soltar(evento: DragEvent<HTMLDivElement>) {
     evento.preventDefault();
     const archivo = evento.dataTransfer.files?.[0];
     if (archivo) onArchivo(archivo);
