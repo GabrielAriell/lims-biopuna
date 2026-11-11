@@ -43,6 +43,7 @@ class EnsayoOut(BaseModel):
     investigador_nombre: str | None = None
     fecha_corrida: datetime
     proteinas_totales_g_dl: float
+    relacion_ag: float | None = None
     url_imagen_tira: str | None
     metodo_lectura: str
     creado_por: UUID | None = None

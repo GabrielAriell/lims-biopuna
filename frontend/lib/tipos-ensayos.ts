@@ -28,6 +28,7 @@ export type EnsayoGuardado = {
   investigador_nombre?: string | null;
   fecha_corrida: string;
   proteinas_totales_g_dl: number;
+  relacion_ag?: number | null;
   url_imagen_tira: string | null;
   metodo_lectura: string;
   creado_por?: string | null;

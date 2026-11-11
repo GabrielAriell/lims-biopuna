@@ -249,7 +249,7 @@ export default function DetalleMuestraCliente({
                       </tbody>
                     </table>
                     {(() => {
-                      const ag = calcularRelacionAG(ensayo.fracciones, ensayo.proteinas_totales_g_dl);
+                      const ag = ensayo.relacion_ag ?? calcularRelacionAG(ensayo.fracciones, ensayo.proteinas_totales_g_dl);
                       const evAg = evaluarValor(muestra.especie, "A/G", ag);
                       const claseAg =
                         evAg?.nivel === "critico"

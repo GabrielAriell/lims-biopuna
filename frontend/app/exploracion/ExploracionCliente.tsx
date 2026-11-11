@@ -523,7 +523,7 @@ function TablaExploracionResultados({
               </td>
               <td className="whitespace-nowrap px-3 py-2">{num(fila.ensayo.proteinas_totales_g_dl)}</td>
               {(() => {
-                const ag = calcularRelacionAG(fila.ensayo.fracciones, fila.ensayo.proteinas_totales_g_dl);
+                const ag = fila.ensayo.relacion_ag ?? calcularRelacionAG(fila.ensayo.fracciones, fila.ensayo.proteinas_totales_g_dl);
                 const evAg = fila.muestra ? evaluarValor(fila.muestra.especie, "A/G", ag) : null;
                 const claseAg =
                   evAg?.nivel === "critico"
@@ -536,7 +536,7 @@ function TablaExploracionResultados({
                     className={`whitespace-nowrap px-3 py-2 ${claseAg}`}
                     title={evAg && evAg.nivel !== "normal" ? evAg.etiqueta : undefined}
                   >
-                    {ag !== null ? num(ag) : "—"}
+                    {ag != null ? num(ag) : "—"}
                   </td>
                 );
               })()}

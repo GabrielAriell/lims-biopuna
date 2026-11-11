@@ -41,6 +41,60 @@ def _calcular_fracciones(datos: EnsayoIn) -> list[Any]:
     return calculos
 
 
+def _relacion_ag_desde_calculos(calculos: list[Any]) -> float | None:
+    """A/G del primer carril con relación válida."""
+    for calculo in calculos:
+        valor = getattr(calculo, "relacion_ag", None)
+        if valor is None:
+            continue
+        try:
+            n = float(valor)
+        except (TypeError, ValueError):
+            continue
+        if n > 0:
+            return round(n, 4)
+    return None
+
+
+def _relacion_ag_desde_fracciones(
+    fracciones: list[dict[str, Any]], proteinas_totales_g_dl: float | None = None
+) -> float | None:
+    """Calcula A/G desde fracciones guardadas (compatibilidad con ensayos viejos)."""
+    if not fracciones:
+        return None
+    albumina = None
+    for f in fracciones:
+        nombre = str(f.get("nombre_fraccion") or "").lower()
+        if "album" in nombre:
+            try:
+                albumina = float(f.get("concentracion_g_dl") or 0)
+            except (TypeError, ValueError):
+                albumina = None
+            break
+    if albumina is None or albumina <= 0:
+        return None
+    globulinas = None
+    try:
+        if proteinas_totales_g_dl is not None:
+            globulinas = float(proteinas_totales_g_dl) - albumina
+    except (TypeError, ValueError):
+        globulinas = None
+    if globulinas is None or globulinas <= 0:
+        suma = 0.0
+        for f in fracciones:
+            nombre = str(f.get("nombre_fraccion") or "").lower()
+            if "album" in nombre:
+                continue
+            try:
+                suma += float(f.get("concentracion_g_dl") or 0)
+            except (TypeError, ValueError):
+                pass
+        globulinas = suma if suma > 0 else None
+    if globulinas is None or globulinas <= 0:
+        return None
+    return round(albumina / globulinas, 4)
+
+
 def _filas_fracciones(id_ensayo: int, calculos: list[Any]) -> list[dict[str, Any]]:
     filas = []
     for calculo in calculos:
@@ -65,6 +119,14 @@ def _salida(
     investigadores: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     inv = str(ensayo["id_investigador"])
+    pt = float(ensayo["proteinas_totales_g_dl"]) if ensayo.get("proteinas_totales_g_dl") is not None else None
+    relacion_ag = ensayo.get("relacion_ag")
+    try:
+        relacion_ag = float(relacion_ag) if relacion_ag is not None else None
+    except (TypeError, ValueError):
+        relacion_ag = None
+    if relacion_ag is None:
+        relacion_ag = _relacion_ag_desde_fracciones(fracciones, pt)
     return {
         "id_ensayo": ensayo["id_ensayo"],
         "id_muestra": ensayo["id_muestra"],
@@ -72,6 +134,7 @@ def _salida(
         "investigador_nombre": (investigadores or {}).get(inv),
         "fecha_corrida": ensayo["fecha_corrida"],
         "proteinas_totales_g_dl": float(ensayo["proteinas_totales_g_dl"]),
+        "relacion_ag": relacion_ag,
         "url_imagen_tira": ensayo.get("url_imagen_tira"),
         "metodo_lectura": ensayo.get("metodo_lectura", "digital_opencv"),
         "creado_por": ensayo.get("creado_por"),
@@ -106,6 +169,7 @@ def guardar(
             contenido, tipo_contenido=tipo, nombre=nombre
         )
 
+    relacion_ag = _relacion_ag_desde_calculos(calculos)
     fila: dict[str, Any] = {
         "id_muestra": datos.id_muestra,
         "id_investigador": id_investigador,
@@ -113,6 +177,8 @@ def guardar(
         "metodo_lectura": datos.metodo_lectura,
         "url_imagen_tira": subida["url"] if subida else None,
     }
+    if relacion_ag is not None:
+        fila["relacion_ag"] = relacion_ag
     supabase_rest.con_auditoria(
         "ensayo_electroforetico", fila, id_investigador
     )
@@ -132,6 +198,9 @@ def guardar(
         )
 
     ensayo = creados[0]
+    # Si la migración 006 no se aplicó aún, la columna relacion_ag no se devuelve.
+    if relacion_ag is not None and ensayo.get("relacion_ag") is None:
+        ensayo["relacion_ag"] = relacion_ag
     id_ensayo = ensayo["id_ensayo"]
     filas = _filas_fracciones(id_ensayo, calculos)
 

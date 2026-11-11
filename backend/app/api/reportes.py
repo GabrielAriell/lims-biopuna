@@ -170,13 +170,14 @@ def exportar_ensayos(
         [
             "ID ensayo",
             "ID muestra",
-            "CÃ³digo animal",
+            "Código animal",
             "Especie",
-            "UbicaciÃ³n campaÃ±a",
+            "Ubicación campaña",
             "Fecha corrida",
             "Investigador",
-            "ProteÃ­nas totales g/dL",
-            "NÂ° fracciones",
+            "Proteínas totales g/dL",
+            "A/G",
+            "N° fracciones",
             "URL imagen tira",
         ],
     )
@@ -192,6 +193,7 @@ def exportar_ensayos(
                 e["fecha_corrida"],
                 e.get("investigador_nombre") or str(e["id_investigador"]),
                 e["proteinas_totales_g_dl"],
+                e.get("relacion_ag"),
                 len(e.get("fracciones") or []),
                 e.get("url_imagen_tira"),
             ]
@@ -204,16 +206,17 @@ def exportar_ensayos(
         [
             "ID ensayo",
             "ID muestra",
-            "CÃ³digo animal",
+            "Código animal",
             "Especie",
-            "UbicaciÃ³n campaÃ±a",
+            "Ubicación campaña",
             "Fecha corrida",
             "Investigador",
-            "ProteÃ­nas totales g/dL",
-            "FracciÃ³n",
+            "Proteínas totales g/dL",
+            "A/G",
+            "Fracción",
             "% relativo",
             "g/dL",
-            "Ãrea integrada",
+            "Área integrada",
             "URL imagen tira",
         ],
     )
@@ -228,9 +231,10 @@ def exportar_ensayos(
             e["fecha_corrida"],
             e.get("investigador_nombre") or str(e["id_investigador"]),
             e["proteinas_totales_g_dl"],
+            e.get("relacion_ag"),
         ]
-        # Una fila por fracciÃ³n: repite el contexto del ensayo/muestra para
-        # poder filtrar y hacer tablas dinÃ¡micas en Excel.
+        # Una fila por fracción: repite el contexto del ensayo/muestra para
+        # poder filtrar y hacer tablas dinámicas en Excel.
         fracciones = e.get("fracciones") or [{}]
         for f in fracciones:
             ws.append(
@@ -277,10 +281,11 @@ def exportar_muestra_excel(
             "Fecha corrida",
             "Investigador",
             "PT g/dL",
-            "FracciÃ³n",
+            "A/G",
+            "Fracción",
             "%",
             "g/dL",
-            "Ãrea",
+            "Área",
         ],
     )
     for e in lista:
@@ -291,6 +296,7 @@ def exportar_muestra_excel(
                     e["fecha_corrida"],
                     e.get("investigador_nombre") or str(e["id_investigador"]),
                     e["proteinas_totales_g_dl"],
+                    e.get("relacion_ag"),
                     f.get("nombre_fraccion"),
                     f.get("porcentaje_relativo"),
                     f.get("concentracion_g_dl"),
@@ -372,15 +378,17 @@ def exportar_muestra_pdf(
     if not lista:
         story.append(Paragraph("Sin ensayos guardados.", estilos["Normal"]))
     for e in lista:
+        ag = e.get("relacion_ag")
+        ag_txt = f" · A/G {_fmt_num(ag, 3)}" if ag is not None else ""
         story.append(
             Paragraph(
-                f"Ensayo #{e['id_ensayo']} Â· {e['fecha_corrida']} Â· "
-                f"PT {e['proteinas_totales_g_dl']} g/dL Â· "
+                f"Ensayo #{e['id_ensayo']} · {e['fecha_corrida']} · "
+                f"PT {e['proteinas_totales_g_dl']} g/dL{ag_txt} · "
                 f"{e.get('investigador_nombre') or e['id_investigador']}",
                 estilos["Heading3"],
             )
         )
-        filas = [["FracciÃ³n", "%", "g/dL", "Ãrea"]] + [
+        filas = [["Fracción", "%", "g/dL", "Área"]] + [
             [
                 f.get("nombre_fraccion") or "-",
                 _fmt_num(f.get("porcentaje_relativo")),
@@ -389,7 +397,6 @@ def exportar_muestra_pdf(
             ]
             for f in e.get("fracciones") or []
         ]
-        t = Table(filas, colWidths=[170, 75, 75, 120], repeatRows=1)
         t = Table(filas, colWidths=[170, 75, 75, 120], repeatRows=1)
         t.setStyle(
             TableStyle(
