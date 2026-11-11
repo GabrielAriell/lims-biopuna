@@ -5,7 +5,7 @@ import Link from "next/link";
 
 import { useSesion } from "./ProveedorSesion";
 
-type Seccion = "inicio" | "muestras" | "ensayos" | "exploracion";
+type Seccion = "inicio" | "muestras" | "ensayos" | "exploracion" | "prioridades";
 
 type Props = {
   activa?: Seccion;
@@ -44,6 +44,9 @@ export default function Encabezado({ activa }: Props) {
           </Link>
           <Link href="/muestras" className={clase(activa === "muestras")}>
             Muestras y campañas
+          </Link>
+          <Link href="/prioridades" className={clase(activa === "prioridades")}>
+            Prioridades
           </Link>
           <Link href="/ensayos/nuevo" className={clase(activa === "ensayos")}>
             Nuevo ensayo

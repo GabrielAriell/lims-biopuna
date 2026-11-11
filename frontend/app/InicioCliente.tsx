@@ -8,14 +8,6 @@ import Encabezado from "@/components/Encabezado";
 import { useSesion } from "@/components/ProveedorSesion";
 import { construirAlertasCriticas } from "@/lib/alertas";
 import { useMuestras } from "@/hooks/useMuestras";
-import type { EstadoMuestra } from "@/lib/tipos-muestras";
-
-const ESTADOS: { clave: EstadoMuestra; titulo: string; clase: string }[] = [
-  { clave: "verde", titulo: "En plazo", clase: "border-green-300 bg-green-50 text-green-900" },
-  { clave: "amarillo", titulo: "Atención", clase: "border-yellow-300 bg-yellow-50 text-yellow-900" },
-  { clave: "rojo", titulo: "Fuera de plazo", clase: "border-red-300 bg-red-50 text-red-900" },
-  { clave: "procesada", titulo: "Procesadas", clase: "border-gray-300 bg-gray-100 text-gray-800" },
-];
 
 const SECCIONES = [
   {
@@ -47,90 +39,32 @@ const SECCIONES = [
 
 export default function InicioCliente() {
   const { usuario } = useSesion();
-  const { muestras, cargando } = useMuestras();
-
-  const resumen = useMemo(() => {
-    const cuenta: Record<EstadoMuestra, number> = {
-      verde: 0,
-      amarillo: 0,
-      rojo: 0,
-      procesada: 0,
-    };
-    for (const m of muestras) cuenta[m.estado_48h] += 1;
-    return cuenta;
-  }, [muestras]);
+  const { muestras } = useMuestras();
 
   const criticas = useMemo(() => construirAlertasCriticas(muestras), [muestras]);
-  const vistaPrevia = useMemo(() => {
-    if (criticas.length > 0) return null;
-    // Vista previa temporal para revisar diseño cuando no hay alertas reales.
-    const pendientes = muestras
-      .filter((m) => m.estado_48h !== "procesada")
-      .sort((a, b) => b.horas_transcurridas - a.horas_transcurridas)
-      .slice(0, 2)
-      .map((m) => ({
-        clave: `${m.id_muestra}:preview`,
-        muestra: { ...m, horas_transcurridas: Math.max(m.horas_transcurridas, 41.5) },
-      }));
-    if (pendientes.length === 0) {
-      return [
-        {
-          clave: "preview-ejemplo",
-          muestra: {
-            codigo_animal: "EJ-001",
-            localidad_puna: "Localidad de ejemplo",
-            horas_transcurridas: 42.0,
-          },
-        },
-      ];
-    }
-    return pendientes;
-  }, [criticas.length, muestras]);
-
-  const alertasMostradas = criticas.length > 0 ? criticas : null;
 
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900">
       <div className="mx-auto max-w-6xl space-y-10 px-4 py-8">
         <Encabezado activa="inicio" />
 
-        {(alertasMostradas || vistaPrevia) && (
-          <section
-            aria-label="Alertas críticas de muestras"
-            className="rounded-xl border border-red-300 bg-red-50 p-4 shadow-sm"
+        {criticas.length > 0 && (
+          <Link
+            href="/prioridades"
+            className="block rounded-xl border border-red-400 bg-red-600 px-4 py-3 text-white shadow-sm transition hover:bg-red-700"
+            aria-label="Ver alertas de riesgo crítico en Prioridades"
           >
-            <h2 className="text-base font-semibold text-red-900 sm:text-lg">
-              ⚠ {(alertasMostradas ? alertasMostradas.length : vistaPrevia!.length)}{" "}
-              {(alertasMostradas ? alertasMostradas.length : vistaPrevia!.length) === 1
+            <p className="text-sm font-semibold sm:text-base">
+              ⚠ {criticas.length}{" "}
+              {criticas.length === 1
                 ? "muestra en riesgo crítico"
                 : "muestras en riesgo crítico"}
               {" "}(pendientes, &gt; 40 h y ≤ 48 h)
-            </h2>
-            <p className="mt-1 text-sm text-red-800">
-              Cola priorizada (FIFO biológica): procesar primero las de mayor tiempo transcurrido.
             </p>
-            {!alertasMostradas && (
-              <p className="mt-1 text-xs font-medium text-amber-800">
-                Vista previa temporal del diseño (sin alertas reales en la ventana &gt;40 h y ≤48 h).
-              </p>
-            )}
-            <ul className="mt-3 space-y-2">
-              {(alertasMostradas ?? vistaPrevia!).map((alerta) => (
-                <li
-                  key={alerta.clave}
-                  className="rounded-md border border-red-200 bg-white px-3 py-2 text-sm text-gray-800"
-                >
-                  <p className="font-medium text-red-900">
-                    [{alerta.muestra.codigo_animal}] · {alerta.muestra.localidad_puna} · cumple{" "}
-                    {alerta.muestra.horas_transcurridas.toFixed(1)} h desde la extracción.
-                  </p>
-                  <p className="text-red-800">
-                    Priorizar corrida electroforética inmediatamente.
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </section>
+            <p className="mt-0.5 text-xs text-red-100 sm:text-sm">
+              Ver detalle, semáforo y cola priorizada en Prioridades.
+            </p>
+          </Link>
         )}
 
         <section className="rounded-2xl border border-emerald-100 bg-gradient-to-b from-white to-emerald-50/40 px-6 py-10 text-center shadow-sm">
@@ -191,33 +125,6 @@ export default function InicioCliente() {
                   </span>
                 </div>
               </Link>
-            ))}
-          </div>
-        </section>
-
-        <section className="rounded-lg border border-gray-200 bg-white p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 className="text-lg font-semibold">Estado de muestras (48 h)</h3>
-              <p className="text-sm text-gray-500">
-                Resumen rápido del semáforo. Verde &lt; 24 h, amarillo 24–40 h, rojo &gt; 40 h.
-              </p>
-            </div>
-            <Link
-              href="/muestras"
-              className="text-sm font-medium text-emerald-700 underline"
-            >
-              Ver detalle en Muestras
-            </Link>
-          </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {ESTADOS.map((e) => (
-              <div key={e.clave} className={`rounded-lg border p-4 ${e.clase}`}>
-                <p className="text-sm font-medium">{e.titulo}</p>
-                <p className="text-2xl font-bold">
-                  {cargando ? "…" : resumen[e.clave]}
-                </p>
-              </div>
             ))}
           </div>
         </section>
