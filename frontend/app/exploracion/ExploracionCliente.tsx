@@ -8,7 +8,7 @@ import Semaforo from "@/components/Semaforo";
 import { listarEnsayos } from "@/lib/api-ensayos";
 import { listarCampanas, listarMuestras } from "@/lib/api-muestras";
 import { exportarEnsayosExcel, exportarMuestrasExcel } from "@/lib/api-reportes";
-import { evaluarValor } from "@/lib/rangos-referencia";
+import { calcularRelacionAG, evaluarValor } from "@/lib/rangos-referencia";
 import type { EnsayoGuardado } from "@/lib/tipos-ensayos";
 import type { Campana, EstadoMuestra, Muestra } from "@/lib/tipos-muestras";
 
@@ -492,6 +492,7 @@ function TablaExploracionResultados({
             <th className="whitespace-nowrap px-3 py-2">Corrida</th>
             <th className="whitespace-nowrap px-3 py-2">Investigador</th>
             <th className="whitespace-nowrap px-3 py-2">PT g/dL</th>
+            <th className="whitespace-nowrap px-3 py-2">A/G</th>
             <th className="whitespace-nowrap px-3 py-2">Fracción</th>
             <th className="whitespace-nowrap px-3 py-2">%</th>
             <th className="whitespace-nowrap px-3 py-2">g/dL</th>
@@ -521,6 +522,24 @@ function TablaExploracionResultados({
                 {investigadorEnsayo(fila.ensayo)}
               </td>
               <td className="whitespace-nowrap px-3 py-2">{num(fila.ensayo.proteinas_totales_g_dl)}</td>
+              {(() => {
+                const ag = calcularRelacionAG(fila.ensayo.fracciones, fila.ensayo.proteinas_totales_g_dl);
+                const evAg = fila.muestra ? evaluarValor(fila.muestra.especie, "A/G", ag) : null;
+                const claseAg =
+                  evAg?.nivel === "critico"
+                    ? "bg-red-100 text-red-900 font-medium"
+                    : evAg?.nivel === "alerta"
+                      ? "bg-yellow-100 text-yellow-900 font-medium"
+                      : "";
+                return (
+                  <td
+                    className={`whitespace-nowrap px-3 py-2 ${claseAg}`}
+                    title={evAg && evAg.nivel !== "normal" ? evAg.etiqueta : undefined}
+                  >
+                    {ag !== null ? num(ag) : "—"}
+                  </td>
+                );
+              })()}
               <td className="whitespace-nowrap px-3 py-2 font-medium">
                 {fila.fraccion?.nombre_fraccion ?? "—"}
               </td>

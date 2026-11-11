@@ -7,7 +7,7 @@ import Semaforo from "@/components/Semaforo";
 import { listarEnsayos } from "@/lib/api-ensayos";
 import { obtenerMuestra } from "@/lib/api-muestras";
 import { exportarMuestraExcel, exportarMuestraPdf } from "@/lib/api-reportes";
-import { evaluarValor } from "@/lib/rangos-referencia";
+import { calcularRelacionAG, evaluarValor } from "@/lib/rangos-referencia";
 import type { EnsayoGuardado } from "@/lib/tipos-ensayos";
 import type { Muestra } from "@/lib/tipos-muestras";
 
@@ -249,27 +249,50 @@ export default function DetalleMuestraCliente({
                       </tbody>
                     </table>
                     {(() => {
+                      const ag = calcularRelacionAG(ensayo.fracciones, ensayo.proteinas_totales_g_dl);
+                      const evAg = evaluarValor(muestra.especie, "A/G", ag);
+                      const claseAg =
+                        evAg?.nivel === "critico"
+                          ? "bg-red-100 text-red-900"
+                          : evAg?.nivel === "alerta"
+                            ? "bg-yellow-100 text-yellow-900"
+                            : "";
                       const etiquetas = Array.from(
                         new Set(
-                          ensayo.fracciones
-                            .map((f) => {
-                              const ev = evaluarValor(muestra.especie, f.nombre_fraccion, f.concentracion_g_dl);
-                              return ev && ev.nivel !== "normal" && ev.etiqueta
-                                ? `${f.nombre_fraccion}: ${ev.etiqueta}`
-                                : null;
-                            })
-                            .filter((x): x is string => Boolean(x)),
+                          [
+                            ...ensayo.fracciones
+                              .map((f) => {
+                                const ev = evaluarValor(muestra.especie, f.nombre_fraccion, f.concentracion_g_dl);
+                                return ev && ev.nivel !== "normal" && ev.etiqueta
+                                  ? `${f.nombre_fraccion}: ${ev.etiqueta}`
+                                  : null;
+                              })
+                              .filter((x): x is string => Boolean(x)),
+                            evAg && evAg.nivel !== "normal" && evAg.etiqueta ? `A/G: ${evAg.etiqueta}` : null,
+                          ].filter((x): x is string => Boolean(x)),
                         ),
                       );
-                      return etiquetas.length > 0 ? (
-                        <div className="mt-2 space-y-1">
-                          {etiquetas.map((e) => (
-                            <p key={e} className="rounded border border-yellow-200 bg-yellow-50 px-2 py-1 text-xs text-yellow-900">
-                              {e}
+                      return (
+                        <>
+                          {ag !== null && (
+                            <p
+                              className={`mt-2 inline-block rounded px-2 py-1 text-sm font-medium ${claseAg}`}
+                              title={evAg && evAg.nivel !== "normal" ? evAg.etiqueta : undefined}
+                            >
+                              Relación A/G: {num(ag)}
                             </p>
-                          ))}
-                        </div>
-                      ) : null;
+                          )}
+                          {etiquetas.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                              {etiquetas.map((e) => (
+                                <p key={e} className="rounded border border-yellow-200 bg-yellow-50 px-2 py-1 text-xs text-yellow-900">
+                                  {e}
+                                </p>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      );
                     })()}
                   </div>
                 </article>

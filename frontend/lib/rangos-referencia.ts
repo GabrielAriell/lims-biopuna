@@ -27,6 +27,29 @@ export type EvaluacionRango = {
   etiqueta?: string;
 };
 
+// Calcula A/G a partir de fracciones (g/dL). Globulinas = proteínas totales - albúmina.
+export function calcularRelacionAG(
+  fracciones: Array<{ nombre_fraccion: string; concentracion_g_dl: number }>,
+  proteinasTotalesGdl?: number | null,
+): number | null {
+  const albumina = fracciones.find((f) =>
+    f.nombre_fraccion.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes("album"),
+  );
+  if (!albumina || !Number.isFinite(albumina.concentracion_g_dl)) return null;
+  const alb = albumina.concentracion_g_dl;
+  let globulinas: number | null = null;
+  if (proteinasTotalesGdl != null && Number.isFinite(proteinasTotalesGdl)) {
+    globulinas = proteinasTotalesGdl - alb;
+  } else {
+    const sumaOtras = fracciones
+      .filter((f) => f !== albumina)
+      .reduce((acc, f) => acc + (Number.isFinite(f.concentracion_g_dl) ? f.concentracion_g_dl : 0), 0);
+    globulinas = sumaOtras > 0 ? sumaOtras : null;
+  }
+  if (globulinas == null || globulinas <= 0) return null;
+  return alb / globulinas;
+}
+
 // RANGOS BIOLÓGICOS DE REFERENCIA (editar con datos del laboratorio/investigadora).
 // Ejemplo inicial solicitado: Llama con Albúmina < 2.8 g/dL o A/G < 0.6 fuera de rango.
 // Completar/ajustar mañana con los valores validados por especie y parámetro.
