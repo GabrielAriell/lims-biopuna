@@ -2,7 +2,7 @@
 //
 // No consultan la base: se calculan con las horas que ya devuelve la vista
 // `muestra_con_estado`. La vista marca "rojo" desde las 40 h, pero el límite
-// real de la muestra son las 48 h; acá distinguimos esos dos momentos.
+// real de la muestra son las 48 h; acá distinguimos esos momentos.
 
 import type { Muestra } from "./tipos-muestras";
 
@@ -43,6 +43,26 @@ export function construirAlertas(muestras: Muestra[]): AlertaMuestra[] {
         horas_restantes: LIMITE_HORAS - horas,
       };
     })
+    .sort((a, b) => a.horas_restantes - b.horas_restantes);
+}
+
+// Cola proactiva del dashboard: solo pendientes (sin ensayo/procesada) en
+// riesgo crítico dentro del plazo (>40 h y <=48 h). Al superar 48 h la
+// notificación desaparece. Orden: más urgente primero (menos horas restantes).
+export function construirAlertasCriticas(muestras: Muestra[]): AlertaMuestra[] {
+  return muestras
+    .filter(
+      (muestra) =>
+        muestra.estado_48h !== "procesada" &&
+        muestra.horas_transcurridas > UMBRAL_AVISO_HORAS &&
+        muestra.horas_transcurridas <= LIMITE_HORAS,
+    )
+    .map((muestra) => ({
+      clave: `${muestra.id_muestra}:critica`,
+      nivel: "por_vencer" as NivelAlerta,
+      muestra,
+      horas_restantes: LIMITE_HORAS - muestra.horas_transcurridas,
+    }))
     .sort((a, b) => a.horas_restantes - b.horas_restantes);
 }
 

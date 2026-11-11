@@ -6,6 +6,7 @@ import { useMemo } from "react";
 
 import Encabezado from "@/components/Encabezado";
 import { useSesion } from "@/components/ProveedorSesion";
+import { construirAlertasCriticas } from "@/lib/alertas";
 import { useMuestras } from "@/hooks/useMuestras";
 import type { EstadoMuestra } from "@/lib/tipos-muestras";
 
@@ -59,10 +60,46 @@ export default function InicioCliente() {
     return cuenta;
   }, [muestras]);
 
+  const criticas = useMemo(() => construirAlertasCriticas(muestras), [muestras]);
+
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900">
       <div className="mx-auto max-w-6xl space-y-10 px-4 py-8">
         <Encabezado activa="inicio" />
+
+        {criticas.length > 0 && (
+          <section
+            aria-label="Alertas críticas de muestras"
+            className="rounded-xl border border-red-300 bg-red-50 p-4 shadow-sm"
+          >
+            <h2 className="text-base font-semibold text-red-900 sm:text-lg">
+              ⚠ {criticas.length}{" "}
+              {criticas.length === 1
+                ? "muestra en riesgo crítico"
+                : "muestras en riesgo crítico"}
+              {" "}(pendientes, &gt; 40 h y ≤ 48 h)
+            </h2>
+            <p className="mt-1 text-sm text-red-800">
+              Cola priorizada (FIFO biológica): procesar primero las de mayor tiempo transcurrido.
+            </p>
+            <ul className="mt-3 space-y-2">
+              {criticas.map((alerta) => (
+                <li
+                  key={alerta.clave}
+                  className="rounded-md border border-red-200 bg-white px-3 py-2 text-sm text-gray-800"
+                >
+                  <p className="font-medium text-red-900">
+                    [{alerta.muestra.codigo_animal}] · {alerta.muestra.localidad_puna} · cumple{" "}
+                    {alerta.muestra.horas_transcurridas.toFixed(1)} h desde la extracción.
+                  </p>
+                  <p className="text-red-800">
+                    Priorizar corrida electroforética inmediatamente.
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <section className="rounded-2xl border border-emerald-100 bg-gradient-to-b from-white to-emerald-50/40 px-6 py-10 text-center shadow-sm">
           <Image
