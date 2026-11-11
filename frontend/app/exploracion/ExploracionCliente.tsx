@@ -236,7 +236,7 @@ export default function ExploracionCliente() {
     setExportando(tipo);
     try {
       if (tipo === "ensayos") {
-        await exportarEnsayosExcel({ ...filtrosReporte, convenio: undefined });
+        await exportarEnsayosExcel(filtrosReporte);
       } else if (tipo === "territorial-excel") {
         await exportarMuestrasExcel(filtrosReporte);
       } else {
