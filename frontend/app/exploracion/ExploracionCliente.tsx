@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import Encabezado from "@/components/Encabezado";
+import GraficosTerritoriales from "@/components/GraficosTerritoriales";
 import Semaforo from "@/components/Semaforo";
 import { listarEnsayos } from "@/lib/api-ensayos";
 import { listarCampanas, listarMuestras } from "@/lib/api-muestras";
@@ -369,6 +370,10 @@ export default function ExploracionCliente() {
             </div>
           </div>
         </section>
+
+        {!cargando && (
+          <GraficosTerritoriales muestras={muestrasFiltradas} campanas={campanas} />
+        )}
 
         {cargando ? (
           <p className="text-sm text-gray-500">Cargando datos...</p>
