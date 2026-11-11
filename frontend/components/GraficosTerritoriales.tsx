@@ -172,6 +172,9 @@ export default function GraficosTerritoriales({
               {exportando === "pdf" ? "Generando..." : "Descargar PDF"}
             </button>
           </div>
+          <p className="max-w-xs text-right text-xs text-gray-500">
+            El Excel y el PDF incluyen solo las muestras filtradas y sus gráficos.
+          </p>
         </div>
       </div>
 

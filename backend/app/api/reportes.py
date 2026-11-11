@@ -8,6 +8,8 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from openpyxl import Workbook
+from openpyxl.chart import BarChart, PieChart, Reference
+from openpyxl.chart.label import DataLabelList
 from openpyxl.styles import Alignment, Font, PatternFill
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -154,20 +156,76 @@ def _conteo_por(
 
 def _bloque_resumen(
     ws: Any, titulo: str, datos: list[dict[str, Any]], clave: str
-) -> None:
-    """Agrega un bloque de conteos por categoría y convenio INTA."""
+) -> tuple[int, int]:
+    """Agrega un bloque de conteos y devuelve el rango de filas de datos."""
     filas = _conteo_por(datos, clave)
     ws.append([titulo])
     ws.cell(row=ws.max_row, column=1).font = Font(bold=True)
     total_con = 0
     total_sin = 0
+    primera = ws.max_row + 1
     for nombre, c in filas:
         ws.append([nombre, c["con"], c["sin"], c["con"] + c["sin"]])
         total_con += c["con"]
         total_sin += c["sin"]
+    ultima = ws.max_row
     ws.append(["Total", total_con, total_sin, total_con + total_sin])
     ws.cell(row=ws.max_row, column=1).font = Font(bold=True)
     ws.append([])
+    return primera, ultima
+
+
+def _grafico_barras(
+    ws_origen: Any,
+    ws_destino: Any,
+    rango: tuple[int, int],
+    titulo: str,
+    ancla: str,
+) -> None:
+    """Agrega un gráfico de barras horizontales con el total por categoría."""
+    primera, ultima = rango
+    if ultima < primera:
+        return
+    categorias = Reference(ws_origen, min_col=1, min_row=primera, max_row=ultima)
+    valores = Reference(ws_origen, min_col=4, min_row=primera, max_row=ultima)
+    grafico = BarChart()
+    grafico.type = "bar"
+    grafico.style = 10
+    grafico.title = titulo
+    grafico.x_axis.title = "Categoría"
+    grafico.y_axis.title = "Muestras"
+    grafico.add_data(valores, titles_from_data=False)
+    grafico.set_categories(categorias)
+    grafico.legend = None
+    grafico.dataLabels = DataLabelList()
+    grafico.dataLabels.showVal = True
+    grafico.height = max(8, 0.5 * (ultima - primera + 1) + 3)
+    grafico.width = 18
+    ws_destino.add_chart(grafico, ancla)
+
+
+def _grafico_torta(
+    ws_origen: Any,
+    ws_destino: Any,
+    rango: tuple[int, int],
+    titulo: str,
+    ancla: str,
+) -> None:
+    """Agrega un gráfico de torta con el total por categoría."""
+    primera, ultima = rango
+    if ultima < primera:
+        return
+    categorias = Reference(ws_origen, min_col=1, min_row=primera, max_row=ultima)
+    valores = Reference(ws_origen, min_col=4, min_row=primera, max_row=ultima)
+    grafico = PieChart()
+    grafico.title = titulo
+    grafico.add_data(valores, titles_from_data=False)
+    grafico.set_categories(categorias)
+    grafico.dataLabels = DataLabelList()
+    grafico.dataLabels.showVal = True
+    grafico.height = 9
+    grafico.width = 18
+    ws_destino.add_chart(grafico, ancla)
 
 
 def filtros_exportacion(
@@ -415,10 +473,40 @@ def exportar_muestras(
         "Resumen territorial",
         ["Categoría", "Con convenio INTA", "Sin convenio INTA", "Total"],
     )
-    _bloque_resumen(ws_res, "Por especie", datos, "especie")
-    _bloque_resumen(ws_res, "Por departamento", datos, "departamento")
-    _bloque_resumen(ws_res, "Por localidad/paraje", datos, "localidad")
+    rango_especie = _bloque_resumen(ws_res, "Por especie", datos, "especie")
+    rango_departamento = _bloque_resumen(
+        ws_res, "Por departamento", datos, "departamento"
+    )
+    rango_localidad = _bloque_resumen(
+        ws_res, "Por localidad/paraje", datos, "localidad"
+    )
     _auto_ancho(ws_res)
+
+    # Hoja de gráficos: refleja exactamente los datos filtrados del export.
+    ws_graf = wb.create_sheet("Gráficos")
+    ws_graf["A1"] = "Camelia Biotech · Análisis territorial"
+    ws_graf["A1"].font = Font(bold=True, size=14)
+    ws_graf["A2"] = f"Filtros aplicados: {_resumen_filtros(filtros)}"
+    ws_graf["A3"] = (
+        f"Muestras incluidas: {len(datos)} · Con convenio INTA: "
+        f"{sum(1 for d in datos if d['convenio_inta'])} · Sin convenio INTA: "
+        f"{sum(1 for d in datos if not d['convenio_inta'])}"
+    )
+    _grafico_torta(ws_res, ws_graf, rango_especie, "Muestras por especie", "B5")
+    _grafico_barras(
+        ws_res,
+        ws_graf,
+        rango_departamento,
+        "Muestras por departamento",
+        "B24",
+    )
+    _grafico_barras(
+        ws_res,
+        ws_graf,
+        rango_localidad,
+        "Muestras por localidad/paraje",
+        "B44",
+    )
 
     return _xlsx_respuesta(wb, f"muestras_{datetime.now():%Y%m%d}.xlsx")
 
