@@ -27,6 +27,14 @@ const SECCIONES = [
     imagen: "/inicio-muestras.svg",
   },
   {
+    href: "/prioridades",
+    titulo: "Prioridades",
+    descripcion:
+      "Revisá las muestras sin ensayo en riesgo crítico (más de 40 h y hasta 48 h) y el semáforo general de 48 horas.",
+    accion: "Ver prioridades",
+    imagen: "/inicio-prioridades.svg",
+  },
+  {
     href: "/ensayos/nuevo",
     titulo: "Nuevo ensayo",
     descripcion:
@@ -80,43 +88,56 @@ export default function InicioCliente() {
           <h2 className="mb-4 text-center text-xl font-semibold text-gray-800 sm:text-2xl">
             Secciones principales
           </h2>
-          <div className="grid gap-5 md:grid-cols-3">
-            {SECCIONES.map((s) => (
-              <Link
-                key={s.href}
-                href={s.href}
-                className={`group flex flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
-                  "destacado" in s && s.destacado
-                    ? "border-emerald-300 ring-1 ring-emerald-100"
-                    : "border-gray-200"
-                }`}
-              >
-                <div className="relative aspect-[16/9] w-full bg-gray-50">
-                  <Image
-                    src={s.imagen}
-                    alt={s.titulo}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                  />
-                </div>
-                <div className="flex flex-1 flex-col p-5 text-center">
-                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-emerald-700">
-                    {s.titulo}
-                  </h3>
-                  <p className="mt-2 flex-1 text-sm text-gray-600">{s.descripcion}</p>
-                  <span
-                    className={`mt-4 inline-flex justify-center rounded-md px-4 py-2 text-sm font-medium ${
-                      "destacado" in s && s.destacado
-                        ? "bg-emerald-600 text-white"
-                        : "border border-gray-300 text-gray-700 group-hover:bg-gray-50"
-                    }`}
-                  >
-                    {s.accion}
-                  </span>
-                </div>
-              </Link>
-            ))}
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            {SECCIONES.map((s) => {
+              const alerta = s.href === "/prioridades" && criticas.length > 0;
+              const destacado = "destacado" in s && s.destacado;
+              return (
+                <Link
+                  key={s.href}
+                  href={s.href}
+                  className={`group flex flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                    alerta
+                      ? "border-red-300 ring-1 ring-red-100"
+                      : destacado
+                        ? "border-emerald-300 ring-1 ring-emerald-100"
+                        : "border-gray-200"
+                  }`}
+                >
+                  <div className="relative aspect-[16/9] w-full bg-gray-50">
+                    <Image
+                      src={s.imagen}
+                      alt={s.titulo}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
+                    />
+                    {alerta && (
+                      <span className="absolute right-2 top-2 rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-bold text-white shadow">
+                        {criticas.length}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-1 flex-col p-5 text-center">
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-emerald-700">
+                      {s.titulo}
+                    </h3>
+                    <p className="mt-2 flex-1 text-sm text-gray-600">{s.descripcion}</p>
+                    <span
+                      className={`mt-4 inline-flex justify-center rounded-md px-4 py-2 text-sm font-medium ${
+                        alerta
+                          ? "bg-red-600 text-white"
+                          : destacado
+                            ? "bg-emerald-600 text-white"
+                            : "border border-gray-300 text-gray-700 group-hover:bg-gray-50"
+                      }`}
+                    >
+                      {s.accion}
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </section>
       </div>
