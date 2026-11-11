@@ -178,7 +178,14 @@ def guardar(
         "url_imagen_tira": subida["url"] if subida else None,
     }
     if relacion_ag is not None:
-        fila["relacion_ag"] = relacion_ag
+        try:
+            cols = supabase_rest.columnas("ensayo_electroforetico")
+        except supabase_rest.SupabaseError:
+            cols = set()
+        # Guardar A/G solo si la migración 006 ya fue aplicada (columna existente).
+        # Si no existe, se omite para no romper el guardado y se calcula al mostrar.
+        if not cols or "relacion_ag" in cols:
+            fila["relacion_ag"] = relacion_ag
     supabase_rest.con_auditoria(
         "ensayo_electroforetico", fila, id_investigador
     )
