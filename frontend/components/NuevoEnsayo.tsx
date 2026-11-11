@@ -216,6 +216,14 @@ export default function NuevoEnsayo({ idMuestraInicial }: Props) {
               </button>
             </div>
           </div>
+          {muestra.estado_48h !== "procesada" && muestra.horas_transcurridas > 48 && (
+            <p className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-800">
+              <strong>Muestra fuera de plazo:</strong> superó las 48 h (
+              {muestra.horas_transcurridas.toFixed(1)} h desde la extracción). Podés
+              registrar el ensayo para mantener la trazabilidad, pero quedará fuera del
+              tiempo recomendado. Se pedirá confirmación antes de guardar.
+            </p>
+          )}
           <p className="text-sm text-gray-500">
             Al guardar se crea un ensayo asociado a esta muestra. Si es la
             primera corrida, la muestra pasa a &quot;procesada&quot;. Podés
@@ -249,6 +257,9 @@ export default function NuevoEnsayo({ idMuestraInicial }: Props) {
         <AnalisisTira
           key={reinicio}
           idMuestra={muestra?.id_muestra}
+          muestraFueraDePlazo={
+            Boolean(muestra && muestra.estado_48h !== "procesada" && muestra.horas_transcurridas > 48)
+          }
           onGuardado={alGuardar}
         />
       </section>

@@ -18,6 +18,7 @@ type Props = {
   proteinasTotales: string;
   idMuestra: number;
   imagenDataUrl: string;
+  muestraFueraDePlazo?: boolean;
   onGuardado?: (ensayo: EnsayoGuardado) => void;
   onOtroEnsayo?: () => void;
 };
@@ -27,6 +28,7 @@ export default function PanelGuardarEnsayo({
   proteinasTotales,
   idMuestra,
   imagenDataUrl,
+  muestraFueraDePlazo,
   onGuardado,
   onOtroEnsayo,
 }: Props) {
@@ -49,6 +51,12 @@ export default function PanelGuardarEnsayo({
 
   async function enviar() {
     if (!listo || proteinas === null) return;
+    if (muestraFueraDePlazo) {
+      const confirmar = window.confirm(
+        "Esta muestra está fuera de plazo (superó las 48 h). ¿Deseás guardar el ensayo igualmente para mantener la trazabilidad?"
+      );
+      if (!confirmar) return;
+    }
     setErrorImagen(null);
     try {
       const imagen = await dataUrlABlob(imagenDataUrl);
@@ -79,6 +87,13 @@ export default function PanelGuardarEnsayo({
           guardado termina bien.
         </p>
       </div>
+
+      {muestraFueraDePlazo && !guardado && (
+        <p className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-800">
+          <strong>Aviso:</strong> esta muestra está fuera de plazo (superó las 48 h).
+          Al guardar se pedirá confirmación para registrar el ensayo igualmente.
+        </p>
+      )}
 
       {guardado ? (
         <div className="space-y-3 rounded border border-green-300 bg-green-50 p-4">

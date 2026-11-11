@@ -15,6 +15,7 @@ import type { EnsayoGuardado } from "@/lib/tipos-ensayos";
 type Props = {
   // Si viene una muestra, al final aparece el panel para guardar el ensayo.
   idMuestra?: number;
+  muestraFueraDePlazo?: boolean;
   onGuardado?: (ensayo: EnsayoGuardado) => void;
   // Permite volver a empezar con otra tira sin recargar la página.
   onOtroEnsayo?: () => void;
@@ -24,6 +25,7 @@ type Props = {
 // "Nuevo ensayo": se puede analizar la imagen y, si hay muestra, guardar.
 export default function AnalisisTira({
   idMuestra,
+  muestraFueraDePlazo,
   onGuardado,
   onOtroEnsayo,
 }: Props) {
@@ -146,6 +148,7 @@ export default function AnalisisTira({
               proteinasTotales={t.parametros.proteinasTotales}
               idMuestra={idMuestra}
               imagenDataUrl={t.resultado.imagen}
+              muestraFueraDePlazo={muestraFueraDePlazo}
               onGuardado={onGuardado}
               onOtroEnsayo={onOtroEnsayo}
             />
