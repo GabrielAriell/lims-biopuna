@@ -56,13 +56,8 @@ export default function InicioCliente() {
           >
             <p className="text-sm font-semibold sm:text-base">
               ⚠ {criticas.length}{" "}
-              {criticas.length === 1
-                ? "muestra en riesgo crítico"
-                : "muestras en riesgo crítico"}
-              {" "}(pendientes, &gt; 40 h y ≤ 48 h)
-            </p>
-            <p className="mt-0.5 text-xs text-red-100 sm:text-sm">
-              Ver detalle, semáforo y cola priorizada en Prioridades.
+              {criticas.length === 1 ? "muestra" : "muestras"} en riesgo crítico{" "}
+              <span className="font-normal underline">(ver detalles)</span>
             </p>
           </Link>
         )}
