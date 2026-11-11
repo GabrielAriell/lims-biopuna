@@ -9,8 +9,7 @@ app = FastAPI(title="Camelia Biotech API")
 
 
 def _origenes_cors() -> list[str]:
-    # Desarrollo local + orígenes extra para despliegue (separados por coma).
-    # Ej.: CORS_ORIGINS=https://miapp.vercel.app,https://midominio.com
+    
     base = ["http://localhost:3000", "http://127.0.0.1:3000"]
     extra = os.getenv("CORS_ORIGINS", "")
     for origen in extra.split(","):
@@ -20,7 +19,7 @@ def _origenes_cors() -> list[str]:
     return base
 
 
-# El frontend (Next.js) corre en otro origen: hay que permitirlo.
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_origenes_cors(),

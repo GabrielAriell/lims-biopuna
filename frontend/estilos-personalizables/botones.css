@@ -1,9 +1,4 @@
-/*
-  Clases de botón reutilizables.
-  Para usarlas, agregá la clase en el componente, por ejemplo:
-    className="btn-primario ..."
-  y podés combinar con utilidades Tailwind (padding, texto, etc.).
-*/
+
 
 .btn-primario {
   background: var(--color-primario);
@@ -42,12 +37,3 @@
   background: #b91c1c;
 }
 
-/* Ejemplo de botón personalizado: cambiá colores/tamaño/borde a gusto */
-/*
-.btn-mi-estilo {
-  background: #0f766e;
-  color: white;
-  border-radius: 9999px;
-  padding: 0.5rem 1rem;
-}
-*/

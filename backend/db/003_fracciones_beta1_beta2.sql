@@ -1,14 +1,3 @@
--- LIMS-BioPuna · Migración 003
--- Permite guardar ensayos con 5 o 6 fracciones.
---
--- El esquema inicial (001) solo aceptaba el esquema clásico de 5 fracciones:
---   Albumina, Alfa1, Alfa2, Beta, Gamma
--- El análisis también puede devolver 6 fracciones, que separa la beta en:
---   Albumina, Alfa1, Alfa2, Beta1, Beta2, Gamma
--- Sin este cambio, insertar un ensayo de 6 fracciones falla contra el CHECK.
---
--- No modifica datos: solo reemplaza la regla de validación del nombre.
--- Ejecutar una sola vez, después de 001 y 002.
 
 begin;
 

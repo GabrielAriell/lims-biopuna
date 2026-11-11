@@ -1,15 +1,4 @@
--- LIMS-BioPuna · Migración 005
--- Geografía normalizada para campañas en la Puna (provincias/departamentos)
--- + localidad/paraje como texto libre.
---
--- Recomendación aplicada: catálogo acotado a provincias con sectores de Puna
--- y detalle puntual libre (puesto, paraje, referencia). "Región" no se modela
--- como tabla por ahora.
---
--- Compatibilidad: se conserva `localidad_puna` y se completa automáticamente
--- con una ubicación legible para no romper consultas/código existente.
---
--- Ejecutar una sola vez, después de 001-004.
+
 
 begin;
 

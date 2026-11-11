@@ -1,14 +1,4 @@
--- LIMS-BioPuna · Migración 004
--- Registra automáticamente quién creó cada registro y cuándo.
---
--- El backend toma el usuario del token de Supabase Auth y lo escribe en
--- creado_por. El valor por defecto auth.uid() sirve además si en el futuro
--- el frontend escribe directo contra PostgREST con RLS.
---
--- Las filas que ya existían no tienen creador conocido: quedan con
--- creado_por = null. creado_en se completa con la fecha de la migración.
---
--- Ejecutar una sola vez, después de 001, 002 y 003.
+
 
 begin;
 
