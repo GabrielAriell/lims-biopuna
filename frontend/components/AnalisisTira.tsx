@@ -11,10 +11,12 @@ import { aplicarAjustes, type AjustesPorCarril } from "@/lib/ajustes";
 import { descargarTexto, resultadosACsv } from "@/lib/csv";
 import type { CalculoLimites } from "@/lib/tipos";
 import type { EnsayoGuardado } from "@/lib/tipos-ensayos";
+import type { Especie } from "@/lib/tipos-muestras";
 
 type Props = {
   // Si viene una muestra, al final aparece el panel para guardar el ensayo.
   idMuestra?: number;
+  especie?: Especie | null;
   muestraFueraDePlazo?: boolean;
   onGuardado?: (ensayo: EnsayoGuardado) => void;
   // Permite volver a empezar con otra tira sin recargar la página.
@@ -25,6 +27,7 @@ type Props = {
 // "Nuevo ensayo": se puede analizar la imagen y, si hay muestra, guardar.
 export default function AnalisisTira({
   idMuestra,
+  especie,
   muestraFueraDePlazo,
   onGuardado,
   onOtroEnsayo,
@@ -137,6 +140,7 @@ export default function AnalisisTira({
               key={`${t.version}-${carril.indice}`}
               carril={carril}
               proteinasTotales={t.parametros.proteinasTotales}
+              especie={especie}
               onAjuste={(calculo) => registrarAjuste(carril.indice, calculo)}
             />
           ))}

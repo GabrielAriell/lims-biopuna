@@ -257,6 +257,7 @@ export default function NuevoEnsayo({ idMuestraInicial }: Props) {
         <AnalisisTira
           key={reinicio}
           idMuestra={muestra?.id_muestra}
+          especie={muestra?.especie}
           muestraFueraDePlazo={
             Boolean(muestra && muestra.estado_48h !== "procesada" && muestra.horas_transcurridas > 48)
           }

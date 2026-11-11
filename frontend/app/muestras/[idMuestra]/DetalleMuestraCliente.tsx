@@ -7,6 +7,7 @@ import Semaforo from "@/components/Semaforo";
 import { listarEnsayos } from "@/lib/api-ensayos";
 import { obtenerMuestra } from "@/lib/api-muestras";
 import { exportarMuestraExcel, exportarMuestraPdf } from "@/lib/api-reportes";
+import { evaluarValor } from "@/lib/rangos-referencia";
 import type { EnsayoGuardado } from "@/lib/tipos-ensayos";
 import type { Muestra } from "@/lib/tipos-muestras";
 
@@ -223,16 +224,53 @@ export default function DetalleMuestraCliente({
                         </tr>
                       </thead>
                       <tbody>
-                        {ensayo.fracciones.map((f) => (
-                          <tr key={f.nombre_fraccion} className="border-t border-gray-100">
-                            <td className="whitespace-nowrap px-3 py-2 font-medium">{f.nombre_fraccion}</td>
-                            <td className="whitespace-nowrap px-3 py-2">{num(f.porcentaje_relativo)}</td>
-                            <td className="whitespace-nowrap px-3 py-2">{num(f.concentracion_g_dl)}</td>
-                            <td className="whitespace-nowrap px-3 py-2">{num(f.area_integrada, 4)}</td>
-                          </tr>
-                        ))}
+                        {ensayo.fracciones.map((f) => {
+                          const ev = evaluarValor(muestra.especie, f.nombre_fraccion, f.concentracion_g_dl);
+                          const clase =
+                            ev?.nivel === "critico"
+                              ? "bg-red-100 text-red-900 font-medium"
+                              : ev?.nivel === "alerta"
+                                ? "bg-yellow-100 text-yellow-900 font-medium"
+                                : "";
+                          return (
+                            <tr key={f.nombre_fraccion} className="border-t border-gray-100">
+                              <td className="whitespace-nowrap px-3 py-2 font-medium">{f.nombre_fraccion}</td>
+                              <td className="whitespace-nowrap px-3 py-2">{num(f.porcentaje_relativo)}</td>
+                              <td
+                                className={`whitespace-nowrap px-3 py-2 ${clase}`}
+                                title={ev && ev.nivel !== "normal" ? ev.etiqueta : undefined}
+                              >
+                                {num(f.concentracion_g_dl)}
+                              </td>
+                              <td className="whitespace-nowrap px-3 py-2">{num(f.area_integrada, 4)}</td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
+                    {(() => {
+                      const etiquetas = Array.from(
+                        new Set(
+                          ensayo.fracciones
+                            .map((f) => {
+                              const ev = evaluarValor(muestra.especie, f.nombre_fraccion, f.concentracion_g_dl);
+                              return ev && ev.nivel !== "normal" && ev.etiqueta
+                                ? `${f.nombre_fraccion}: ${ev.etiqueta}`
+                                : null;
+                            })
+                            .filter((x): x is string => Boolean(x)),
+                        ),
+                      );
+                      return etiquetas.length > 0 ? (
+                        <div className="mt-2 space-y-1">
+                          {etiquetas.map((e) => (
+                            <p key={e} className="rounded border border-yellow-200 bg-yellow-50 px-2 py-1 text-xs text-yellow-900">
+                              {e}
+                            </p>
+                          ))}
+                        </div>
+                      ) : null;
+                    })()}
                   </div>
                 </article>
               ))

@@ -4,14 +4,16 @@ import EditorLimites from "./EditorLimites";
 import TablaFracciones from "./TablaFracciones";
 import { useAjusteLimites } from "@/hooks/useAjusteLimites";
 import type { CalculoLimites, Carril } from "@/lib/tipos";
+import type { Especie } from "@/lib/tipos-muestras";
 
 type Props = {
   carril: Carril;
   proteinasTotales: string;
+  especie?: Especie | null;
   onAjuste?: (calculo: CalculoLimites | null) => void;
 };
 
-export default function ResultadoCarril({ carril, proteinasTotales, onAjuste }: Props) {
+export default function ResultadoCarril({ carril, proteinasTotales, especie, onAjuste }: Props) {
   const ajuste = useAjusteLimites(carril, proteinasTotales, onAjuste);
   const calculo = ajuste.calculo;
   const fracciones = calculo?.fracciones ?? carril.fracciones;
@@ -42,7 +44,7 @@ export default function ResultadoCarril({ carril, proteinasTotales, onAjuste }: 
           {ajuste.error && (
             <p className="rounded bg-red-50 p-2 text-sm text-red-800">{ajuste.error}</p>
           )}
-          <TablaFracciones fracciones={fracciones} relacionAg={relacionAg} />
+          <TablaFracciones fracciones={fracciones} relacionAg={relacionAg} especie={especie} />
         </>
       )}
 
