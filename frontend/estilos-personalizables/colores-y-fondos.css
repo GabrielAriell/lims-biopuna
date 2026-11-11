@@ -24,25 +24,3 @@
   --color-error-texto: #991b1b;
 }
 
-/*
-  Ejemplo: fondo con imagen (descomentar y ajustar la ruta).
-  Colocá la imagen en frontend/public/ (ej: public/fondo.jpg) y usá /fondo.jpg
-*/
-/*
-body {
-  background-image: url("/fondo.jpg");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-}
-*/
-
-/*
-  Ejemplo: fondo con degradado
-*/
-/*
-body {
-  background: linear-gradient(180deg, #eef2ff 0%, #f9fafb 100%);
-}
-*/
