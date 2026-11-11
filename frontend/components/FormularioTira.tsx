@@ -7,7 +7,7 @@ import type { Modo, Parametros } from "@/lib/tipos";
 
 type Props = {
   parametros: Parametros;
-  onArchivo: (archivo: File | null) => void;
+  onArchivo: (archivo: File | null) => void | Promise<void>;
   onParametros: (parametros: Parametros) => void;
   // Nombre del archivo ya elegido, para mostrarlo debajo del selector.
   nombreArchivo?: string | null;
@@ -27,7 +27,7 @@ export default function FormularioTira({
   function soltar(evento: DragEvent<HTMLDivElement>) {
     evento.preventDefault();
     const archivo = evento.dataTransfer.files?.[0];
-    if (archivo) onArchivo(archivo);
+    if (archivo) void onArchivo(archivo);
   }
 
   return (
@@ -66,14 +66,20 @@ export default function FormularioTira({
             type="file"
             accept="image/*"
             capture="environment"
-            onChange={(e) => onArchivo(e.target.files?.[0] ?? null)}
+            onChange={(e) => {
+              void onArchivo(e.target.files?.[0] ?? null);
+              e.currentTarget.value = "";
+            }}
             className="sr-only"
           />
           <input
             id="tira-archivo"
             type="file"
             accept={TIPOS_IMAGEN}
-            onChange={(e) => onArchivo(e.target.files?.[0] ?? null)}
+            onChange={(e) => {
+              void onArchivo(e.target.files?.[0] ?? null);
+              e.currentTarget.value = "";
+            }}
             className="sr-only"
           />
         </div>

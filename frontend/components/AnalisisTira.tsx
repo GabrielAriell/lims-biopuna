@@ -65,6 +65,12 @@ export default function AnalisisTira({
         nombreArchivo={t.archivo?.name ?? null}
       />
 
+      {t.preparando && (
+        <div className="rounded border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+          Preparando la imagen...
+        </div>
+      )}
+
       {t.archivo && t.urlVista && (
         <section className="space-y-4 rounded-lg border border-gray-200 bg-white p-5">
           <RecortadorImagen
@@ -74,7 +80,7 @@ export default function AnalisisTira({
           />
           <button
             onClick={t.analizar}
-            disabled={t.cargando}
+            disabled={t.cargando || t.preparando}
             className="rounded bg-blue-600 px-5 py-2 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {t.cargando ? "Analizando..." : "Analizar"}

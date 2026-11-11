@@ -5,7 +5,7 @@ import type { PixelCrop } from "react-image-crop";
 
 import { analizarTira } from "@/lib/api";
 import { PARAMETROS_INICIALES } from "@/lib/config";
-import { recortarArchivo } from "@/lib/recorte";
+import { prepararImagenParaAnalisis, recortarArchivo } from "@/lib/recorte";
 import type { AnalisisTira, Parametros } from "@/lib/tipos";
 
 type Recorte = { crop: PixelCrop | undefined; imagen: HTMLImageElement | null };
@@ -20,16 +20,30 @@ export function useAnalisisTira() {
   const [resultado, setResultado] = useState<AnalisisTira | null>(null);
   const [version, setVersion] = useState(0);
   const [cargando, setCargando] = useState(false);
+  const [preparando, setPreparando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const recorte = useRef<Recorte>(SIN_RECORTE);
 
-  function elegirArchivo(nuevo: File | null) {
+  async function elegirArchivo(nuevo: File | null) {
     if (urlVista) URL.revokeObjectURL(urlVista);
-    setUrlVista(nuevo ? URL.createObjectURL(nuevo) : null);
-    setArchivo(nuevo);
+    setArchivo(null);
+    setUrlVista(null);
     setResultado(null);
     setError(null);
     recorte.current = SIN_RECORTE;
+    if (!nuevo) return;
+    setPreparando(true);
+    try {
+      // Reducir imágenes grandes (p. ej. fotos de celular) para evitar problemas
+      // de memoria al mostrar/recortar/analizar.
+      const preparado = await prepararImagenParaAnalisis(nuevo);
+      setArchivo(preparado);
+      setUrlVista(URL.createObjectURL(preparado));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo preparar la imagen");
+    } finally {
+      setPreparando(false);
+    }
   }
 
   function fijarRecorte(crop: PixelCrop | undefined, imagen: HTMLImageElement | null) {
@@ -70,6 +84,7 @@ export function useAnalisisTira() {
     resultado,
     version,
     cargando,
+    preparando,
     error,
     elegirArchivo,
     fijarRecorte,

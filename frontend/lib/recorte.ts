@@ -4,8 +4,53 @@ import { MAX_BYTES_PNG } from "./config";
 
 export type ImagenRecortada = { archivo: File; ancho: number; alto: number };
 
+const MAX_DIMENSION_ANALISIS = 2400;
+const CALIDAD_JPEG = 0.9;
+
 function aBlob(lienzo: HTMLCanvasElement, tipo: string, calidad?: number) {
   return new Promise<Blob | null>((resolver) => lienzo.toBlob(resolver, tipo, calidad));
+}
+
+function cargarImagen(archivo: File): Promise<HTMLImageElement> {
+  return new Promise((resolver, rechazar) => {
+    const url = URL.createObjectURL(archivo);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolver(img);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      rechazar(new Error("No se pudo leer la imagen"));
+    };
+    img.src = url;
+  });
+}
+
+// Reduce imágenes muy grandes antes de mostrarlas/analizarlas para evitar
+// problemas de memoria en celulares y en el servidor.
+export async function prepararImagenParaAnalisis(archivo: File): Promise<File> {
+  const imagen = await cargarImagen(archivo);
+  const { naturalWidth: ancho, naturalHeight: alto } = imagen;
+  const escala = Math.min(1, MAX_DIMENSION_ANALISIS / Math.max(ancho, alto));
+  const destinoAncho = Math.max(1, Math.round(ancho * escala));
+  const destinoAlto = Math.max(1, Math.round(alto * escala));
+
+  // Si ya es pequeña, conservar el archivo original.
+  if (escala === 1) return archivo;
+
+  const lienzo = document.createElement("canvas");
+  lienzo.width = destinoAncho;
+  lienzo.height = destinoAlto;
+  const contexto = lienzo.getContext("2d");
+  if (!contexto) throw new Error("El navegador no permite procesar imágenes");
+  contexto.drawImage(imagen, 0, 0, destinoAncho, destinoAlto);
+
+  const blob = await aBlob(lienzo, "image/jpeg", CALIDAD_JPEG);
+  if (!blob) throw new Error("No se pudo preparar la imagen");
+
+  const base = archivo.name.replace(/\.[^.]+$/, "") || "imagen";
+  return new File([blob], `${base}.jpg`, { type: "image/jpeg" });
 }
 
 // Recorta la imagen mostrada en pantalla. El recuadro (crop) viene en píxeles
