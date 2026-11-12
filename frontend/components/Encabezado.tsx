@@ -20,10 +20,10 @@ export default function Encabezado({ activa }: Props) {
   const criticas = useMemo(() => construirAlertasCriticas(muestras).length, [muestras]);
 
   const baseItem =
-    "inline-flex items-center border-b-2 px-3 py-2 text-sm font-medium transition-colors";
+    "inline-flex items-center border-b-[3px] px-4 py-3 text-base font-medium transition-colors";
   const inactivo =
-    "border-transparent text-gray-600 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800";
-  const activo = "border-emerald-600 bg-emerald-50 text-emerald-800";
+    "border-transparent text-gray-700 hover:border-emerald-400 hover:bg-emerald-100/70 hover:text-emerald-800";
+  const activo = "border-emerald-600 bg-emerald-100 font-semibold text-emerald-900";
 
   const clase = (esActiva: boolean) => `${baseItem} ${esActiva ? activo : inactivo}`;
 
@@ -40,8 +40,8 @@ export default function Encabezado({ activa }: Props) {
   };
 
   return (
-    <header className="flex flex-col gap-3 border-b border-emerald-100 pb-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-      <div className="min-w-0">
+    <header className="flex flex-col gap-3 border-b-2 border-emerald-200 bg-emerald-50/40 px-1 pb-0 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+      <div className="min-w-0 pb-2">
         <Link href="/" className="inline-flex items-center gap-2 hover:opacity-90">
           <Image
             src="/logo-camelia.png"
@@ -58,7 +58,7 @@ export default function Encabezado({ activa }: Props) {
       </div>
 
       <div className="flex flex-col gap-2 sm:items-end">
-        <nav className="flex flex-wrap gap-x-1 gap-y-1">
+        <nav className="flex flex-wrap gap-x-1 gap-y-0">
           <Link href="/exploracion" className={clase(activa === "exploracion")}>
             Exploración
           </Link>
