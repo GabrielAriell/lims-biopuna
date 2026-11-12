@@ -52,38 +52,45 @@ export default function PaginaLogin() {
       <div className="absolute inset-0 bg-black/45" />
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-10 sm:px-8 lg:justify-between lg:px-16 xl:px-24">
-        {/* Texto de bienvenida sobre el fondo (estilo referencia) */}
+        {/* Texto de bienvenida sobre el fondo */}
         <div className="hidden max-w-xl text-white lg:block">
           <div className="mb-6 flex items-center gap-3">
             <Image
               src="/logo-camelia.png"
-              alt="Camelia Biotech"
+              alt="LIMS-BioPuna"
               width={56}
               height={56}
-              className="h-14 w-14 rounded-full bg-white/90 object-contain p-1"
+              className="h-14 w-14 rounded-2xl bg-white/95 object-contain p-1.5 shadow-lg"
             />
-            <span className="text-2xl font-semibold">Camelia Biotech</span>
+            <div className="flex flex-col">
+              <span className="text-2xl font-black tracking-tight">
+                LIMS<span className="text-emerald-400">-BioPuna</span>
+              </span>
+              <span className="text-xs font-semibold text-emerald-200">
+                FCA · Universidad Nacional de Jujuy
+              </span>
+            </div>
           </div>
           <h1 className="mt-2 text-5xl font-extrabold leading-tight tracking-tight xl:text-6xl">
-            BIENVENIDO
+            SISTEMA LIMS
           </h1>
-          <p className="mt-5 max-w-md text-base text-white/85">
-            Accedé al sistema para gestionar campañas, muestras y ensayos.
+          <p className="mt-4 max-w-md text-base text-white/90 leading-relaxed">
+            Plataforma digital para la trazabilidad y densitometría óptica de perfiles metabólicos en camélidos y ovinos de la Puna.
           </p>
         </div>
 
         {/* Tarjeta de login */}
-        <div className="w-full max-w-md rounded-2xl border border-white/20 bg-white/10 px-7 py-9 shadow-2xl backdrop-blur-sm sm:px-9 sm:py-10">
+        <div className="w-full max-w-md rounded-3xl border border-white/20 bg-slate-900/60 px-7 py-9 shadow-2xl backdrop-blur-md sm:px-9 sm:py-10">
           <div className="mb-7 text-center">
-            <div className="mb-3 flex items-center justify-center gap-2 lg:hidden">
+            <div className="mb-4 flex items-center justify-center gap-2 lg:hidden">
               <Image
                 src="/logo-camelia.png"
-                alt="Camelia Biotech"
+                alt="LIMS-BioPuna"
                 width={40}
                 height={40}
-                className="h-10 w-10 rounded-full bg-white/80 object-contain p-0.5"
+                className="h-10 w-10 rounded-xl bg-white/95 object-contain p-1 shadow"
               />
-              <span className="font-semibold text-white">Camelia Biotech</span>
+              <span className="text-xl font-bold text-white">LIMS-BioPuna</span>
             </div>
             <h2 className="text-2xl font-extrabold text-white drop-shadow sm:text-[1.7rem]">
               Iniciá sesión en tu cuenta

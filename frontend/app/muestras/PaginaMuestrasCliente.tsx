@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-import Encabezado from "@/components/Encabezado";
+import MarcoDashboard from "@/components/MarcoDashboard";
 import FormularioCampana from "@/components/FormularioCampana";
 import FormularioMuestra from "@/components/FormularioMuestra";
 import { useMuestras } from "@/hooks/useMuestras";
@@ -20,12 +20,14 @@ export default function PaginaMuestrasCliente() {
   }, [campanas]);
 
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900">
-      <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
-        <Encabezado activa="muestras" />
-
+    <MarcoDashboard
+      activa="muestras"
+      titulo="Muestras y Campañas en Territorio"
+      subtitulo="Alta de expediciones en la Puna jujeña, registro de camélidos/ovinos y control de viabilidad de 48 hs."
+    >
+      <div className="space-y-6 max-w-7xl">
         {error && (
-          <div className="rounded border border-red-300 bg-red-50 p-3 text-red-800">
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800 shadow-xs">
             {error}
           </div>
         )}
@@ -46,20 +48,21 @@ export default function PaginaMuestrasCliente() {
           />
         </div>
 
-        <section className="rounded-lg border border-gray-200 bg-white p-5">
-          <h2 className="text-lg font-semibold">Consulta y listado de muestras</h2>
-          <p className="mt-1 text-sm text-gray-600">
-            Para buscar, filtrar, revisar resultados por especie/animal/investigador
-            y exportar datos, usá la pestaña de exploración.
-          </p>
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-base font-bold text-slate-900">Consulta y Analítica de Muestras</h2>
+            <p className="mt-1 text-xs sm:text-sm text-slate-600">
+              Para buscar por animal, ver curvas densitométricas históricas y exportar planillas al INTA, visitá la sección de Exploración.
+            </p>
+          </div>
           <Link
             href="/exploracion"
-            className="mt-3 inline-flex rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+            className="inline-flex shrink-0 items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-2xs hover:bg-emerald-700 transition"
           >
-            Ir a Exploración
+            Ir a Exploración →
           </Link>
         </section>
       </div>
-    </main>
+    </MarcoDashboard>
   );
 }

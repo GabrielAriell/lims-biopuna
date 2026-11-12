@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import MarcoDashboard from "@/components/MarcoDashboard";
 import Semaforo from "@/components/Semaforo";
 import { listarEnsayos } from "@/lib/api-ensayos";
 import { obtenerMuestra } from "@/lib/api-muestras";
@@ -78,8 +79,12 @@ export default function DetalleMuestraCliente({
   }, [idMuestra]);
 
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900">
-      <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
+    <MarcoDashboard
+      activa="muestras"
+      titulo={`Detalle de Muestra #${idMuestra}`}
+      subtitulo="Ficha técnica, trazabilidad biológica e historial de corridas electroforéticas."
+    >
+      <div className="space-y-6 max-w-6xl">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold">Detalle de muestra #{idMuestra}</h1>
@@ -301,6 +306,6 @@ export default function DetalleMuestraCliente({
           </section>
         )}
       </div>
-    </main>
+    </MarcoDashboard>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 
-import Encabezado from "@/components/Encabezado";
+import MarcoDashboard from "@/components/MarcoDashboard";
 import { construirAlertasCriticas } from "@/lib/alertas";
 import { useMuestras } from "@/hooks/useMuestras";
 import type { EstadoMuestra } from "@/lib/tipos-muestras";
@@ -31,12 +31,14 @@ export default function PrioridadesCliente() {
   const criticas = useMemo(() => construirAlertasCriticas(muestras), [muestras]);
 
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900">
-      <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
-        <Encabezado activa="prioridades" />
-
+    <MarcoDashboard
+      activa="prioridades"
+      titulo="Prioridades y Semáforo Biológico (48 Horas)"
+      subtitulo="Monitoreo de viabilidad celular y cola de prioridades Lean FIFO para la corrida electroforética."
+    >
+      <div className="space-y-6 max-w-7xl">
         {error && (
-          <div className="rounded border border-red-300 bg-red-50 p-3 text-red-800">
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800 shadow-xs">
             {error}
           </div>
         )}
@@ -109,6 +111,6 @@ export default function PrioridadesCliente() {
           )}
         </section>
       </div>
-    </main>
+    </MarcoDashboard>
   );
 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import Encabezado from "@/components/Encabezado";
+import MarcoDashboard from "@/components/MarcoDashboard";
 import GraficosTerritoriales from "@/components/GraficosTerritoriales";
 import type {
   ExportacionTerritorial,
@@ -128,9 +128,9 @@ export default function ExploracionCliente() {
       const ultima =
         es.length > 0
           ? es
-              .map((e) => e.fecha_corrida)
-              .sort()
-              .at(-1) ?? null
+            .map((e) => e.fecha_corrida)
+            .sort()
+            .at(-1) ?? null
           : null;
       return { ...m, ensayos: es, investigadores: inv, ultimaCorrida: ultima };
     });
@@ -250,17 +250,12 @@ export default function ExploracionCliente() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900">
-      <div className="mx-auto max-w-7xl space-y-6 px-4 py-8">
-        <Encabezado activa="exploracion" />
-
-        <div>
-          <h1 className="text-2xl font-bold">Exploración de datos</h1>
-          <p className="text-sm text-gray-600">
-            Vista de consulta (solo lectura): buscá por especie, animal, localidad,
-            investigador o fecha; hacé clic en una muestra para ver toda su información.
-          </p>
-        </div>
+    <MarcoDashboard
+      activa="exploracion"
+      titulo="Exploración y Reportes de Datos"
+      subtitulo="Consultá y filtrá por especie, animal, localidad o investigador. Analizá métricas y exportá los resultados validados para el convenio con INTA."
+    >
+      <div className="space-y-6 max-w-7xl">
 
         {error && (
           <div className="rounded border border-red-300 bg-red-50 p-3 text-red-800">
@@ -366,18 +361,16 @@ export default function ExploracionCliente() {
               <button
                 type="button"
                 onClick={() => setVista("muestras")}
-                className={`rounded px-3 py-1 text-sm ${
-                  vista === "muestras" ? "bg-white font-medium shadow-sm" : "text-gray-600"
-                }`}
+                className={`rounded px-3 py-1 text-sm ${vista === "muestras" ? "bg-white font-medium shadow-sm" : "text-gray-600"
+                  }`}
               >
                 Muestras ({muestrasFiltradas.length})
               </button>
               <button
                 type="button"
                 onClick={() => setVista("resultados")}
-                className={`rounded px-3 py-1 text-sm ${
-                  vista === "resultados" ? "bg-white font-medium shadow-sm" : "text-gray-600"
-                }`}
+                className={`rounded px-3 py-1 text-sm ${vista === "resultados" ? "bg-white font-medium shadow-sm" : "text-gray-600"
+                  }`}
               >
                 Resultados/fracciones ({resultadosFiltrados.length})
               </button>
@@ -428,7 +421,7 @@ export default function ExploracionCliente() {
           <TablaExploracionResultados filas={resultadosFiltrados} />
         )}
       </div>
-    </main>
+    </MarcoDashboard>
   );
 }
 
@@ -600,10 +593,10 @@ function TablaExploracionResultados({
                 const ev =
                   fila.fraccion && fila.muestra
                     ? evaluarValor(
-                        fila.muestra.especie,
-                        fila.fraccion.nombre_fraccion,
-                        fila.fraccion.concentracion_g_dl,
-                      )
+                      fila.muestra.especie,
+                      fila.fraccion.nombre_fraccion,
+                      fila.fraccion.concentracion_g_dl,
+                    )
                     : null;
                 const clase =
                   ev?.nivel === "critico"
