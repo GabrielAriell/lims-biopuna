@@ -42,15 +42,15 @@ export default function Encabezado({ activa }: Props) {
   const baseEnlace =
     "inline-flex items-center border-b-2 px-3 py-3 text-base font-medium transition-colors";
   const enlaceInactivo =
-    "border-transparent text-emerald-50/90 hover:border-emerald-300 hover:bg-emerald-700/40 hover:text-white";
+    "border-transparent text-emerald-50 hover:border-emerald-200 hover:bg-emerald-500/40 hover:text-white";
   const enlaceActivo =
-    "border-emerald-300 bg-emerald-700/40 text-white";
+    "border-white bg-emerald-500/40 text-white";
 
   const claseEnlace = (esActiva: boolean) =>
     `${baseEnlace} ${esActiva ? enlaceActivo : enlaceInactivo}`;
 
   return (
-    <header className="flex w-full flex-row items-center gap-4 border-b border-emerald-900/30 bg-emerald-800 px-4 py-2 text-white">
+    <header className="flex w-full flex-row items-center gap-4 border-b border-emerald-700/30 bg-emerald-600 px-4 py-2 text-white">
       {/* Izquierda: marca */}
       <Link href="/" className="flex shrink-0 items-center gap-3 hover:opacity-95">
         <Image
@@ -58,7 +58,7 @@ export default function Encabezado({ activa }: Props) {
           alt="Camelia Biotech"
           width={40}
           height={40}
-          className="h-10 w-10 rounded bg-white/90 object-contain p-0.5"
+          className="h-10 w-10 object-contain"
           priority
         />
         <span className="whitespace-nowrap text-xl font-bold text-white sm:text-2xl">
@@ -90,7 +90,7 @@ export default function Encabezado({ activa }: Props) {
       {/* Derecha: perfil y cierre de sesión */}
       <div className="shrink-0">
         {usuario ? (
-          <div className="flex items-center gap-2 rounded-full bg-emerald-700/50 px-2 py-1.5 pl-1.5">
+          <div className="flex items-center gap-2 rounded-full bg-emerald-500/40 px-2 py-1.5 pl-1.5">
             <IconoPerfil />
             <span className="max-w-[10rem] truncate text-sm font-medium text-white sm:max-w-[14rem] sm:text-base">
               {usuario.nombre}
