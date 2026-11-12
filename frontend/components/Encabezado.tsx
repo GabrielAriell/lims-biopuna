@@ -40,7 +40,7 @@ export default function Encabezado({ activa }: Props) {
   const criticas = useMemo(() => construirAlertasCriticas(muestras).length, [muestras]);
 
   const baseEnlace =
-    "inline-flex items-center border-b-2 px-3 py-3 text-base font-medium transition-colors";
+    "inline-flex items-center whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition-colors sm:py-3 sm:text-base";
   const enlaceInactivo =
     "border-transparent text-emerald-50 hover:border-emerald-200 hover:bg-emerald-500/40 hover:text-white";
   const enlaceActivo =
@@ -50,24 +50,45 @@ export default function Encabezado({ activa }: Props) {
     `${baseEnlace} ${esActiva ? enlaceActivo : enlaceInactivo}`;
 
   return (
-    <header className="flex w-full flex-row items-center gap-4 border-b border-emerald-700/30 bg-emerald-600 px-4 py-2 text-white">
+    <header className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 border-b border-emerald-700/30 bg-emerald-600 px-3 py-2 text-white sm:px-4 md:flex-nowrap md:gap-4">
       {/* Izquierda: marca */}
-      <Link href="/" className="flex shrink-0 items-center gap-3 hover:opacity-95">
+      <Link href="/" className="order-1 flex shrink-0 items-center gap-2 hover:opacity-95 sm:gap-3">
         <Image
           src="/logo-camelia.png"
           alt="Camelia Biotech"
           width={40}
           height={40}
-          className="h-10 w-10 object-contain"
+          className="h-9 w-9 object-contain sm:h-10 sm:w-10"
           priority
         />
-        <span className="whitespace-nowrap text-xl font-bold text-white sm:text-2xl">
+        <span className="whitespace-nowrap text-lg font-bold text-white sm:text-2xl">
           Camelia Biotech
         </span>
       </Link>
 
+      {/* Derecha: perfil y cierre de sesión */}
+      <div className="order-2 ml-auto shrink-0 md:order-3 md:ml-0">
+        {usuario ? (
+          <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/40 px-1.5 py-1 sm:gap-2 sm:px-2 sm:py-1.5 sm:pl-1.5">
+            <IconoPerfil />
+            <span className="max-w-[5rem] truncate text-sm font-medium text-white sm:max-w-[10rem] sm:text-base md:max-w-[14rem]">
+              {usuario.nombre}
+            </span>
+            <button
+              type="button"
+              onClick={() => void salir()}
+              className="rounded-full bg-rose-300 px-2.5 py-1 text-xs font-medium text-rose-950 transition-colors hover:bg-rose-200 sm:px-3 sm:text-sm"
+            >
+              Salir
+            </button>
+          </div>
+        ) : (
+          <div className="h-10" />
+        )}
+      </div>
+
       {/* Centro: navegación */}
-      <nav className="flex flex-1 items-center justify-center gap-1">
+      <nav className="order-3 flex w-full items-center gap-1 overflow-x-auto pb-1 md:order-2 md:w-auto md:flex-1 md:justify-center md:overflow-visible md:pb-0">
         <Link href="/exploracion" className={claseEnlace(activa === "exploracion")}>
           Exploración
         </Link>
@@ -86,27 +107,6 @@ export default function Encabezado({ activa }: Props) {
           Nuevo ensayo
         </Link>
       </nav>
-
-      {/* Derecha: perfil y cierre de sesión */}
-      <div className="shrink-0">
-        {usuario ? (
-          <div className="flex items-center gap-2 rounded-full bg-emerald-500/40 px-2 py-1.5 pl-1.5">
-            <IconoPerfil />
-            <span className="max-w-[10rem] truncate text-sm font-medium text-white sm:max-w-[14rem] sm:text-base">
-              {usuario.nombre}
-            </span>
-            <button
-              type="button"
-              onClick={() => void salir()}
-              className="rounded-full bg-rose-300 px-3 py-1 text-sm font-medium text-rose-950 transition-colors hover:bg-rose-200"
-            >
-              Salir
-            </button>
-          </div>
-        ) : (
-          <div className="h-10" />
-        )}
-      </div>
     </header>
   );
 }
