@@ -15,7 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Camelia Biotech",
+  title: "LIMS-BioPuna - Laboratorio Biofísico-Químico (FCA-UNJu)",
+  description: "Sistema de Información Web y Densitometría Óptica Digital para perfiles metabólicos de camélidos y ovinos de la Puna.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
