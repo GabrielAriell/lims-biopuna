@@ -14,84 +14,97 @@ type Props = {
   activa?: Seccion;
 };
 
+function IconoPerfil() {
+  return (
+    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-300 text-gray-600">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        className="h-5 w-5"
+        aria-hidden="true"
+      >
+        <path
+          fillRule="evenodd"
+          d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z"
+          clipRule="evenodd"
+        />
+      </svg>
+    </span>
+  );
+}
+
 export default function Encabezado({ activa }: Props) {
   const { usuario, salir } = useSesion();
   const { muestras } = useMuestras();
   const criticas = useMemo(() => construirAlertasCriticas(muestras).length, [muestras]);
 
-  const baseItem =
-    "inline-flex items-center border-b-[3px] px-4 py-3 text-base font-medium transition-colors";
-  const inactivo =
-    "border-transparent text-gray-700 hover:border-emerald-400 hover:bg-emerald-100/70 hover:text-emerald-800";
-  const activo = "border-emerald-600 bg-emerald-100 font-semibold text-emerald-900";
+  const baseEnlace =
+    "inline-flex items-center border-b-2 px-3 py-3 text-base font-medium transition-colors";
+  const enlaceInactivo =
+    "border-transparent text-emerald-50/90 hover:border-emerald-300 hover:bg-emerald-700/40 hover:text-white";
+  const enlaceActivo =
+    "border-emerald-300 bg-emerald-700/40 text-white";
 
-  const clase = (esActiva: boolean) => `${baseItem} ${esActiva ? activo : inactivo}`;
-
-  const clasePrioridades = () => {
-    if (activa === "prioridades") {
-      return criticas > 0
-        ? `${baseItem} border-red-600 bg-red-50 text-red-800`
-        : `${baseItem} ${activo}`;
-    }
-    if (criticas > 0) {
-      return `${baseItem} border-transparent text-red-700 hover:border-red-300 hover:bg-red-50 hover:text-red-800`;
-    }
-    return `${baseItem} ${inactivo}`;
-  };
+  const claseEnlace = (esActiva: boolean) =>
+    `${baseEnlace} ${esActiva ? enlaceActivo : enlaceInactivo}`;
 
   return (
-    <header className="flex flex-col gap-3 border-b-2 border-emerald-200 bg-emerald-50/40 px-1 pb-0 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-      <div className="min-w-0 pb-2">
-        <Link href="/" className="inline-flex items-center gap-2 hover:opacity-90">
-          <Image
-            src="/logo-camelia.png"
-            alt="Camelia Biotech"
-            width={40}
-            height={40}
-            className="h-10 w-10 object-contain"
-            priority
-          />
-          <span className="text-xl font-bold text-emerald-900 sm:text-2xl">
-            Camelia Biotech
-          </span>
+    <header className="flex w-full flex-row items-center gap-4 border-b border-emerald-900/30 bg-emerald-800 px-4 py-2 text-white">
+      {/* Izquierda: marca */}
+      <Link href="/" className="flex shrink-0 items-center gap-3 hover:opacity-95">
+        <Image
+          src="/logo-camelia.png"
+          alt="Camelia Biotech"
+          width={40}
+          height={40}
+          className="h-10 w-10 rounded bg-white/90 object-contain p-0.5"
+          priority
+        />
+        <span className="whitespace-nowrap text-xl font-bold text-white sm:text-2xl">
+          Camelia Biotech
+        </span>
+      </Link>
+
+      {/* Centro: navegación */}
+      <nav className="flex flex-1 items-center justify-center gap-1">
+        <Link href="/exploracion" className={claseEnlace(activa === "exploracion")}>
+          Exploración
         </Link>
-      </div>
+        <Link href="/muestras" className={claseEnlace(activa === "muestras")}>
+          Muestras y campañas
+        </Link>
+        <Link href="/prioridades" className={claseEnlace(activa === "prioridades")}>
+          Prioridades
+          {criticas > 0 && (
+            <span className="ml-1.5 rounded-full bg-red-500 px-1.5 py-0.5 text-xs font-semibold leading-none text-white">
+              {criticas}
+            </span>
+          )}
+        </Link>
+        <Link href="/ensayos/nuevo" className={claseEnlace(activa === "ensayos")}>
+          Nuevo ensayo
+        </Link>
+      </nav>
 
-      <div className="flex flex-col gap-2 sm:items-end">
-        <nav className="flex flex-wrap gap-x-1 gap-y-0">
-          <Link href="/exploracion" className={clase(activa === "exploracion")}>
-            Exploración
-          </Link>
-          <Link href="/muestras" className={clase(activa === "muestras")}>
-            Muestras y campañas
-          </Link>
-          <Link href="/prioridades" className={clasePrioridades()}>
-            Prioridades
-            {criticas > 0 && (
-              <span className="ml-1.5 rounded-full bg-red-600 px-1.5 py-0.5 text-xs font-semibold leading-none text-white">
-                {criticas}
-              </span>
-            )}
-          </Link>
-          <Link href="/ensayos/nuevo" className={clase(activa === "ensayos")}>
-            Nuevo ensayo
-          </Link>
-        </nav>
-
-        {usuario && (
-          <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
-            <span className="font-medium text-gray-800">{usuario.nombre}</span>
-            <span className="rounded bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200">
-              {usuario.rol_sistema}
+      {/* Derecha: perfil y cierre de sesión */}
+      <div className="shrink-0">
+        {usuario ? (
+          <div className="flex items-center gap-2 rounded-full bg-emerald-700/50 px-2 py-1.5 pl-1.5">
+            <IconoPerfil />
+            <span className="max-w-[10rem] truncate text-sm font-medium text-white sm:max-w-[14rem] sm:text-base">
+              {usuario.nombre}
             </span>
             <button
               type="button"
               onClick={() => void salir()}
-              className="rounded border border-emerald-200 px-2 py-0.5 text-xs font-medium text-emerald-800 transition-colors hover:bg-emerald-50"
+              className="rounded-full bg-rose-300 px-3 py-1 text-sm font-medium text-rose-950 transition-colors hover:bg-rose-200"
             >
               Salir
             </button>
           </div>
+        ) : (
+          <div className="h-10" />
         )}
       </div>
     </header>
