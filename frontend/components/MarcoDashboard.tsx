@@ -36,7 +36,7 @@ const ITEMS_MENU = [
   {
     href: "/",
     seccion: "inicio" as SeccionNav,
-    etiqueta: "Panel Principal",
+    etiqueta: "Inicio",
     icono: LayoutDashboard,
   },
   {
@@ -54,7 +54,7 @@ const ITEMS_MENU = [
   {
     href: "/exploracion",
     seccion: "exploracion" as SeccionNav,
-    etiqueta: "Exploración y Reportes",
+    etiqueta: "Reportes y Datos",
     icono: BarChart3,
   },
 ] as const;
@@ -126,15 +126,15 @@ export default function MarcoDashboard({
               <span>+ Nuevo Ensayo</span>
             </div>
             <span className="bg-emerald-800/60 text-[10px] font-extrabold px-2 py-0.5 rounded-md">
-              Analizar
+              Nuevo
             </span>
           </Link>
         </div>
 
-        {/* Navegación Principal con Indicador Activo Claro */}
+        {/* Navegación Principal */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Menú de Gestión
+            Menú
           </span>
 
           {ITEMS_MENU.map((item) => {
@@ -180,7 +180,7 @@ export default function MarcoDashboard({
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            <span className="truncate">Nube PostgreSQL Conectada</span>
+            <span className="truncate">Sistema conectado</span>
           </div>
 
           {/* Tarjeta de Usuario */}
@@ -195,7 +195,7 @@ export default function MarcoDashboard({
                     {usuario.nombre}
                   </span>
                   <span className="text-[10px] text-slate-500 font-medium truncate">
-                    Docente Investigador
+                    Investigador
                   </span>
                 </div>
               </div>
@@ -268,7 +268,7 @@ export default function MarcoDashboard({
             >
               <div className="flex items-center gap-2.5">
                 <FlaskConical className="h-4 w-4" />
-                <span>+ Nuevo Ensayo Electroforético</span>
+                <span>+ Nuevo Ensayo</span>
               </div>
               <ChevronRight className="h-4 w-4" />
             </Link>
@@ -339,7 +339,7 @@ export default function MarcoDashboard({
             </Link>
             <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
             <span className="font-bold text-slate-800">
-              {titulo || (activa === "inicio" ? "Panel Principal" : activa)}
+              {titulo || (activa === "inicio" ? "Inicio" : activa)}
             </span>
           </div>
 
@@ -349,7 +349,7 @@ export default function MarcoDashboard({
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Buscar muestra o animal (ej: LL-001)..."
+                placeholder="Buscar animal o muestra..."
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
                 onKeyDown={ejecutarBusqueda}

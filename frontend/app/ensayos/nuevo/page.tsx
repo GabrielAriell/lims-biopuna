@@ -15,14 +15,14 @@ export default function PaginaNuevoEnsayo({ searchParams }: Props) {
   return (
     <MarcoDashboard
       activa="ensayos"
-      titulo="Nuevo Ensayo Electroforético"
-      subtitulo="Seleccioná una muestra registrada para asociar los resultados, o analizá una tira libremente para control rápido."
+      titulo="Nuevo Ensayo"
+      subtitulo="Elegí una muestra registrada para guardarle los resultados, o analizá una tira suelta de forma rápida."
     >
       <div className="mx-auto max-w-5xl space-y-6">
         <Suspense
           fallback={
             <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-xs">
-              Cargando estación de ensayo...
+              Cargando...
             </div>
           }
         >

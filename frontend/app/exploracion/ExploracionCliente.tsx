@@ -252,8 +252,8 @@ export default function ExploracionCliente() {
   return (
     <MarcoDashboard
       activa="exploracion"
-      titulo="Exploración y Reportes de Datos"
-      subtitulo="Consultá y filtrá por especie, animal, localidad o investigador. Analizá métricas y exportá los resultados validados para el convenio con INTA."
+      titulo="Reportes y Datos"
+      subtitulo="Buscá y filtrá por animal, especie o localidad. Revisá resultados y descargá planillas Excel o PDF."
     >
       <div className="space-y-6 max-w-7xl">
 
@@ -274,7 +274,7 @@ export default function ExploracionCliente() {
             <Tarjeta titulo="Especies" valor={resumen.especies} />
             <Tarjeta titulo="Investigadores" valor={resumen.investigadores} />
             <Tarjeta
-              titulo="Atención / fuera plazo"
+              titulo="Pendientes de atención"
               valor={resumen.estados.amarillo + resumen.estados.rojo}
               detalle={`A:${resumen.estados.amarillo} R:${resumen.estados.rojo} V:${resumen.estados.verde}`}
             />

@@ -8,10 +8,10 @@ import { useMuestras } from "@/hooks/useMuestras";
 import type { EstadoMuestra } from "@/lib/tipos-muestras";
 
 const ESTADOS: { clave: EstadoMuestra; titulo: string; detalle: string; clase: string }[] = [
-  { clave: "verde", titulo: "En plazo", detalle: "menos de 24 h", clase: "border-green-300 bg-green-50 text-green-900" },
+  { clave: "verde", titulo: "A tiempo", detalle: "menos de 24 h", clase: "border-green-300 bg-green-50 text-green-900" },
   { clave: "amarillo", titulo: "Atención", detalle: "entre 24 y 40 h", clase: "border-yellow-300 bg-yellow-50 text-yellow-900" },
-  { clave: "rojo", titulo: "Fuera de plazo", detalle: "más de 40 h", clase: "border-red-300 bg-red-50 text-red-900" },
-  { clave: "procesada", titulo: "Procesadas", detalle: "ya tienen ensayo", clase: "border-gray-300 bg-gray-100 text-gray-800" },
+  { clave: "rojo", titulo: "Urgente", detalle: "más de 40 h", clase: "border-red-300 bg-red-50 text-red-900" },
+  { clave: "procesada", titulo: "Completadas", detalle: "ya analizadas", clase: "border-gray-300 bg-gray-100 text-gray-800" },
 ];
 
 export default function PrioridadesCliente() {
@@ -33,8 +33,8 @@ export default function PrioridadesCliente() {
   return (
     <MarcoDashboard
       activa="prioridades"
-      titulo="Prioridades y Semáforo Biológico (48 Horas)"
-      subtitulo="Monitoreo de viabilidad celular y cola de prioridades Lean FIFO para la corrida electroforética."
+      titulo="Prioridades de Muestras (48h)"
+      subtitulo="Control del tiempo transcurrido desde la extracción para analizar cada muestra dentro de las 48 horas."
     >
       <div className="space-y-6 max-w-7xl">
         {error && (
@@ -46,7 +46,7 @@ export default function PrioridadesCliente() {
         <section className="rounded-lg border border-gray-200 bg-white p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="text-xl font-semibold">Prioridades y semáforo (48 h)</h1>
+              <h1 className="text-xl font-semibold">Estado de las muestras (48h)</h1>
             </div>
             <button
               onClick={recargar}
@@ -69,27 +69,27 @@ export default function PrioridadesCliente() {
         </section>
 
         <section
-          aria-label="Cola de riesgo crítico"
+          aria-label="Muestras urgentes"
           className="rounded-xl border border-red-300 bg-red-50 p-5 shadow-sm"
         >
           <h2 className="text-lg font-semibold text-red-900">
-            Riesgo crítico (priorizar)
+            Urgentes (atender primero)
           </h2>
           <p className="mt-1 text-sm text-red-800">
-            Muestras pendientes (sin ensayo) con más de 40 h y hasta 48 h desde la extracción. Al superar 48 h la notificación desaparece.
+            Muestras pendientes sin analizar con más de 40 horas desde la toma. Conviene analizarlas cuanto antes.
           </p>
 
           {cargando ? (
             <p className="mt-3 text-sm text-gray-700">Cargando…</p>
           ) : criticas.length === 0 ? (
             <p className="mt-3 rounded-md border border-red-200 bg-white px-3 py-2 text-sm text-gray-700">
-              No hay muestras en riesgo crítico en este momento.
+              No hay muestras urgentes en este momento.
             </p>
           ) : (
             <>
               <p className="mt-3 text-sm font-medium text-red-900">
                 ⚠ {criticas.length}{" "}
-                {criticas.length === 1 ? "muestra en riesgo crítico" : "muestras en riesgo crítico"}
+                {criticas.length === 1 ? "muestra urgente" : "muestras urgentes"}
               </p>
               <ul className="mt-2 space-y-2">
                 {criticas.map((alerta) => (
@@ -98,11 +98,10 @@ export default function PrioridadesCliente() {
                     className="rounded-md border border-red-200 bg-white px-3 py-2 text-sm text-gray-800"
                   >
                     <p className="font-medium text-red-900">
-                      [{alerta.muestra.codigo_animal}] · {alerta.muestra.localidad_puna} · cumple{" "}
-                      {alerta.muestra.horas_transcurridas.toFixed(1)} h desde la extracción.
+                      [{alerta.muestra.codigo_animal}] · {alerta.muestra.localidad_puna} · {alerta.muestra.horas_transcurridas.toFixed(1)} h desde la extracción.
                     </p>
                     <p className="text-red-800">
-                      Priorizar corrida electroforética inmediatamente.
+                      Analizar cuanto antes.
                     </p>
                   </li>
                 ))}

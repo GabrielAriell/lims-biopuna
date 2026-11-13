@@ -22,8 +22,8 @@ export default function PaginaMuestrasCliente() {
   return (
     <MarcoDashboard
       activa="muestras"
-      titulo="Muestras y Campañas en Territorio"
-      subtitulo="Alta de expediciones en la Puna jujeña, registro de camélidos/ovinos y control de viabilidad de 48 hs."
+      titulo="Muestras y Campañas"
+      subtitulo="Carga de campañas en la Puna, registro de animales y control del tiempo de análisis (48 hs)."
     >
       <div className="space-y-6 max-w-7xl">
         {error && (
@@ -50,16 +50,16 @@ export default function PaginaMuestrasCliente() {
 
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 className="text-base font-bold text-slate-900">Consulta y Analítica de Muestras</h2>
+            <h2 className="text-base font-bold text-slate-900">Consultar y exportar datos</h2>
             <p className="mt-1 text-xs sm:text-sm text-slate-600">
-              Para buscar por animal, ver curvas densitométricas históricas y exportar planillas al INTA, visitá la sección de Exploración.
+              Para buscar animales, ver análisis anteriores o descargar planillas Excel, visitá la sección de Reportes.
             </p>
           </div>
           <Link
             href="/exploracion"
             className="inline-flex shrink-0 items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-2xs hover:bg-emerald-700 transition"
           >
-            Ir a Exploración →
+            Ir a Reportes →
           </Link>
         </section>
       </div>
