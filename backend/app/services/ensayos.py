@@ -20,9 +20,17 @@ class EnsayoInvalido(ValueError):
     """Los datos del ensayo no permiten guardarlo."""
 
 
-def _calcular_fracciones(datos: EnsayoIn) -> list[Any]:
-    """Recalcula cada carril y exige que tenga un esquema de 5 o 6 nombres."""
-    calculos = []
+def _fracciones_desde_entrada(
+    datos: EnsayoIn,
+) -> tuple[list[list[dict[str, Any]]], float | None]:
+    """Valida carriles y devuelve fracciones finales por carril y A/G.
+
+    Recalcula siempre desde perfil/zonas para validar el perfil y los límites.
+    Si el investigador envió fracciones editadas para un carril, se guardan esas
+    (validadas) en lugar de las calculadas automáticamente.
+    """
+    fracciones_por_carril: list[list[dict[str, Any]]] = []
+
     for indice, carril in enumerate(datos.carriles, start=1):
         try:
             calculo = limites.recalcular(
@@ -31,77 +39,33 @@ def _calcular_fracciones(datos: EnsayoIn) -> list[Any]:
         except ValueError as error:
             raise EnsayoInvalido(f"Carril {indice}: {error}") from error
 
-        if not calculo.nombres_asignados:
-            raise EnsayoInvalido(
-                f"Carril {indice}: se detectaron {len(calculo.fracciones)} "
-                "fracciones y se esperaban 5 o 6. Ajustá los límites antes de "
-                "guardar."
-            )
-        calculos.append(calculo)
-    return calculos
-
-
-def _relacion_ag_desde_calculos(calculos: list[Any]) -> float | None:
-    """A/G del primer carril con relación válida."""
-    for calculo in calculos:
-        valor = getattr(calculo, "relacion_ag", None)
-        if valor is None:
+        if carril.fracciones is not None:
+            if len(carril.fracciones) != len(carril.zonas):
+                raise EnsayoInvalido(
+                    f"Carril {indice}: la cantidad de fracciones no coincide con las zonas"
+                )
+            filas = []
+            for f in carril.fracciones:
+                nombre = f.nombre_fraccion.strip()
+                if not nombre:
+                    raise EnsayoInvalido(
+                        f"Carril {indice}: el nombre de la fracción no puede estar vacío"
+                    )
+                filas.append(
+                    {
+                        "nombre_fraccion": nombre,
+                        "area_integrada": round(float(f.area_integrada), 6),
+                        "porcentaje_relativo": round(float(f.porcentaje_relativo), 2),
+                        "concentracion_g_dl": round(float(f.concentracion_g_dl), 2),
+                    }
+                )
+            fracciones_por_carril.append(filas)
             continue
-        try:
-            n = float(valor)
-        except (TypeError, ValueError):
-            continue
-        if n > 0:
-            return round(n, 4)
-    return None
 
-
-def _relacion_ag_desde_fracciones(
-    fracciones: list[dict[str, Any]], proteinas_totales_g_dl: float | None = None
-) -> float | None:
-    """Calcula A/G desde fracciones guardadas (compatibilidad con ensayos viejos)."""
-    if not fracciones:
-        return None
-    albumina = None
-    for f in fracciones:
-        nombre = str(f.get("nombre_fraccion") or "").lower()
-        if "album" in nombre:
-            try:
-                albumina = float(f.get("concentracion_g_dl") or 0)
-            except (TypeError, ValueError):
-                albumina = None
-            break
-    if albumina is None or albumina <= 0:
-        return None
-    globulinas = None
-    try:
-        if proteinas_totales_g_dl is not None:
-            globulinas = float(proteinas_totales_g_dl) - albumina
-    except (TypeError, ValueError):
-        globulinas = None
-    if globulinas is None or globulinas <= 0:
-        suma = 0.0
-        for f in fracciones:
-            nombre = str(f.get("nombre_fraccion") or "").lower()
-            if "album" in nombre:
-                continue
-            try:
-                suma += float(f.get("concentracion_g_dl") or 0)
-            except (TypeError, ValueError):
-                pass
-        globulinas = suma if suma > 0 else None
-    if globulinas is None or globulinas <= 0:
-        return None
-    return round(albumina / globulinas, 4)
-
-
-def _filas_fracciones(id_ensayo: int, calculos: list[Any]) -> list[dict[str, Any]]:
-    filas = []
-    for calculo in calculos:
+        filas = []
         for fraccion in calculo.fracciones:
             filas.append(
                 {
-                    "id_ensayo": id_ensayo,
                     "nombre_fraccion": fraccion.nombre,
                     "area_integrada": round(float(fraccion.area), 6),
                     "porcentaje_relativo": round(float(fraccion.porcentaje), 2),
@@ -110,6 +74,98 @@ def _filas_fracciones(id_ensayo: int, calculos: list[Any]) -> list[dict[str, Any
                     ),
                 }
             )
+        fracciones_por_carril.append(filas)
+
+    relacion_ag = _relacion_ag_desde_fracciones(
+        fracciones_por_carril[0] if fracciones_por_carril else [],
+        datos.proteinas_totales,
+    )
+    return fracciones_por_carril, relacion_ag
+
+
+def _relacion_ag_desde_fracciones(
+    fracciones: list[dict[str, Any]], proteinas_totales_g_dl: float | None = None
+) -> float | None:
+    """Calcula A/G automáticamente desde fracciones.
+
+    Se considera Albúmina la fracción nombrada como tal; si no hay, se toma la
+    de mayor concentración/porcentaje (franja más intensa).
+    """
+    if not fracciones:
+        return None
+
+    def _num(valor: Any) -> float | None:
+        try:
+            n = float(valor)
+        except (TypeError, ValueError):
+            return None
+        return n
+
+    idx_albumina: int | None = None
+    for i, f in enumerate(fracciones):
+        nombre = str(f.get("nombre_fraccion") or "").lower()
+        if "album" in nombre:
+            idx_albumina = i
+            break
+
+    if idx_albumina is None:
+        mejor = -1.0
+        for i, f in enumerate(fracciones):
+            v = _num(f.get("concentracion_g_dl"))
+            if v is None:
+                v = _num(f.get("porcentaje_relativo"))
+            if v is None:
+                v = _num(f.get("area_integrada"))
+            if v is not None and v > mejor:
+                mejor = v
+                idx_albumina = i
+        if mejor <= 0:
+            idx_albumina = None
+
+    if idx_albumina is None:
+        return None
+
+    albumina = _num(fracciones[idx_albumina].get("concentracion_g_dl"))
+    if albumina is None or albumina <= 0:
+        # fallback por porcentaje si no hay g/dL
+        pct_alb = _num(fracciones[idx_albumina].get("porcentaje_relativo"))
+        if pct_alb is not None and proteinas_totales_g_dl is not None:
+            albumina = float(proteinas_totales_g_dl) * pct_alb / 100.0
+    if albumina is None or albumina <= 0:
+        return None
+
+    globulinas = None
+    try:
+        if proteinas_totales_g_dl is not None:
+            globulinas = float(proteinas_totales_g_dl) - albumina
+    except (TypeError, ValueError):
+        globulinas = None
+    if globulinas is None or globulinas <= 0:
+        suma = 0.0
+        for i, f in enumerate(fracciones):
+            if i == idx_albumina:
+                continue
+            v = _num(f.get("concentracion_g_dl"))
+            if v is None and proteinas_totales_g_dl is not None:
+                pct = _num(f.get("porcentaje_relativo"))
+                if pct is not None:
+                    v = float(proteinas_totales_g_dl) * pct / 100.0
+            if v is not None:
+                suma += v
+        globulinas = suma if suma > 0 else None
+
+    if globulinas is None or globulinas <= 0:
+        return None
+    return round(albumina / globulinas, 4)
+
+
+def _filas_fracciones(
+    id_ensayo: int, fracciones_por_carril: list[list[dict[str, Any]]]
+) -> list[dict[str, Any]]:
+    filas = []
+    for fracciones in fracciones_por_carril:
+        for fraccion in fracciones:
+            filas.append({"id_ensayo": id_ensayo, **fraccion})
     return filas
 
 
@@ -156,11 +212,12 @@ def guardar(
     id_investigador: str,
     imagen: tuple[bytes, str, str] | None = None,
 ) -> dict[str, Any]:
-    """Recalcula, sube la imagen (si hay) e inserta ensayo + fracciones.
+    """Valida, sube la imagen (si hay) e inserta ensayo + fracciones.
 
-    El investigador lo decide el endpoint a partir del token de sesión.
+    Se recalcula desde perfil/zonas para validar; si el investigador envió
+    fracciones editadas se guardan esas (validadas) como resultado final.
     """
-    calculos = _calcular_fracciones(datos)
+    fracciones_por_carril, relacion_ag = _fracciones_desde_entrada(datos)
 
     subida: dict[str, Any] | None = None
     if imagen is not None:
@@ -169,7 +226,6 @@ def guardar(
             contenido, tipo_contenido=tipo, nombre=nombre
         )
 
-    relacion_ag = _relacion_ag_desde_calculos(calculos)
     fila: dict[str, Any] = {
         "id_muestra": datos.id_muestra,
         "id_investigador": id_investigador,
@@ -186,9 +242,7 @@ def guardar(
         # Si no existe, se omite para no romper el guardado y se calcula al mostrar.
         if not cols or "relacion_ag" in cols:
             fila["relacion_ag"] = relacion_ag
-    supabase_rest.con_auditoria(
-        "ensayo_electroforetico", fila, id_investigador
-    )
+    supabase_rest.con_auditoria("ensayo_electroforetico", fila, id_investigador)
     if datos.fecha_corrida is not None:
         fila["fecha_corrida"] = datos.fecha_corrida.isoformat()
 
@@ -200,16 +254,14 @@ def guardar(
         raise
 
     if not creados:
-        raise supabase_rest.SupabaseError(
-            "Supabase no devolvió el ensayo creado"
-        )
+        raise supabase_rest.SupabaseError("Supabase no devolvió el ensayo creado")
 
     ensayo = creados[0]
     # Si la migración 006 no se aplicó aún, la columna relacion_ag no se devuelve.
     if relacion_ag is not None and ensayo.get("relacion_ag") is None:
         ensayo["relacion_ag"] = relacion_ag
     id_ensayo = ensayo["id_ensayo"]
-    filas = _filas_fracciones(id_ensayo, calculos)
+    filas = _filas_fracciones(id_ensayo, fracciones_por_carril)
 
     try:
         guardadas = supabase_rest.insertar("fraccion_proteica", filas)

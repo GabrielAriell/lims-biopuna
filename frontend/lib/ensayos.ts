@@ -1,9 +1,9 @@
 import type { AnalisisTira } from "./tipos";
 import type { CarrilParaGuardar } from "./tipos-ensayos";
 
-// Convierte el análisis (ya con los ajustes aplicados) al formato que espera
-// el backend. El backend vuelve a calcular las fracciones con estos perfiles y
-// zonas, así que acá solo se eligen los datos, no los resultados.
+// Convierte el análisis (ya con ajustes/ediciones aplicados) al formato que
+// espera el backend. Se envían perfil, zonas y las fracciones validadas por el
+// investigador para guardarlas tal cual.
 export function prepararCarriles(analisis: AnalisisTira): {
   carriles: CarrilParaGuardar[];
   problemas: string[];
@@ -16,13 +16,6 @@ export function prepararCarriles(analisis: AnalisisTira): {
       problemas.push(`Carril ${carril.indice}: ${carril.error}`);
       continue;
     }
-    if (!carril.nombres_asignados) {
-      problemas.push(
-        `Carril ${carril.indice}: tiene ${carril.fracciones.length} fracciones. ` +
-          "Ajustá los límites para obtener 5 o 6 antes de guardar.",
-      );
-      continue;
-    }
     if (carril.fracciones.length === 0) {
       problemas.push(`Carril ${carril.indice}: no tiene fracciones.`);
       continue;
@@ -33,6 +26,12 @@ export function prepararCarriles(analisis: AnalisisTira): {
       zonas: carril.fracciones.map(
         (fraccion) => [fraccion.inicio, fraccion.fin] as [number, number],
       ),
+      fracciones: carril.fracciones.map((fraccion) => ({
+        nombre_fraccion: fraccion.nombre,
+        area_integrada: fraccion.area,
+        porcentaje_relativo: fraccion.porcentaje,
+        concentracion_g_dl: fraccion.concentracion_g_dl ?? 0,
+      })),
     });
   }
 

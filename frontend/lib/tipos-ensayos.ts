@@ -1,9 +1,18 @@
 // Tipos del guardado y la consulta de ensayos.
 
+export type FraccionParaGuardar = {
+  nombre_fraccion: string;
+  area_integrada: number;
+  porcentaje_relativo: number;
+  concentracion_g_dl: number;
+};
+
 export type CarrilParaGuardar = {
   perfil: number[];
   // Zonas (inicio, fin) inclusivas, en columnas del perfil.
   zonas: [number, number][];
+  // Fracciones validadas/editadas por el investigador (si hay cambios manuales).
+  fracciones?: FraccionParaGuardar[];
 };
 
 export type NuevoEnsayo = {

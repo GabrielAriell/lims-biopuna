@@ -5,13 +5,13 @@ from scipy.integrate import trapezoid
 from .modelos import Fraccion, ResultadoFracciones
 from .picos import Zona
 
-# Nombres según la cantidad de fracciones detectadas (de la albúmina a la gamma).
-# 6 es la tabla del informe de la cátedra; 5 es el esquema clásico.
+# Nombres según la cantidad de fracciones cuando el esquema es el esperado
+# (de la albúmina a la gamma). 6 es la tabla del informe de la cátedra; 5 el clásico.
 ESQUEMAS_FRACCIONES = {
     5: ("Albumina", "Alfa1", "Alfa2", "Beta", "Gamma"),
     6: ("Albumina", "Alfa1", "Alfa2", "Beta1", "Beta2", "Gamma"),
 }
-PT_MAX_G_DL = 20.0       # mismo rango que valida la base de datos
+PT_MAX_G_DL = 20.0  # mismo rango que valida la base de datos
 
 
 def _validar_zonas(zonas: list[Zona], largo: int) -> None:
@@ -35,43 +35,52 @@ def calcular_fracciones(
 
     - Porcentaje = área de la fracción / área total * 100.
     - Concentración (g/dL) = porcentaje * proteínas totales.
-    Los nombres solo se asignan si la cantidad de zonas coincide con un esquema
-    conocido (5 o 6); en otro caso se advierte para que el investigador
-    revise los límites.
+    Si la cantidad de zonas coincide con un esquema conocido (5 o 6) se asignan
+    los nombres correctos; en caso contrario se usan nombres genéricos
+    (Fracción 1..N) y el investigador puede editarlos.
+    La relación A/G se calcula automáticamente: en esquemas conocidos se toma
+    la primera fracción (Albúmina) sobre el resto; en otros casos se toma la
+    franja más intensa como Albúmina sobre el resto.
     """
     _validar_zonas(zonas, len(perfil))
     if proteinas_totales is not None and not (0 < proteinas_totales <= PT_MAX_G_DL):
         raise ValueError(f"Las proteínas totales deben estar entre 0 y {PT_MAX_G_DL} g/dL")
 
-    areas = [float(trapezoid(perfil[i:f + 1])) for i, f in zonas]
+    areas = [float(trapezoid(perfil[i : f + 1])) for i, f in zonas]
     total = sum(areas)
     if total <= 0:
         raise ValueError("El perfil no tiene señal para cuantificar")
 
-    asignados = len(zonas) in ESQUEMAS_FRACCIONES
-    nombres = list(ESQUEMAS_FRACCIONES[len(zonas)]) if asignados else [f"Fraccion {k}" for k in range(1, len(zonas) + 1)]
+    esquema_conocido = len(zonas) in ESQUEMAS_FRACCIONES
+    if esquema_conocido:
+        nombres = list(ESQUEMAS_FRACCIONES[len(zonas)])
+    else:
+        nombres = [f"Fracción {k}" for k in range(1, len(zonas) + 1)]
 
     fracciones = []
     for nombre, (inicio, fin), area in zip(nombres, zonas, areas):
         porcentaje = 100.0 * area / total
-        fracciones.append(Fraccion(
-            nombre=nombre,
-            inicio=inicio,
-            fin=fin,
-            pico=inicio + int(np.argmax(perfil[inicio:fin + 1])),
-            area=area,
-            porcentaje=porcentaje,
-            concentracion_g_dl=None if proteinas_totales is None else proteinas_totales * porcentaje / 100.0,
-        ))
+        fracciones.append(
+            Fraccion(
+                nombre=nombre,
+                inicio=inicio,
+                fin=fin,
+                pico=inicio + int(np.argmax(perfil[inicio : fin + 1])),
+                area=area,
+                porcentaje=porcentaje,
+                concentracion_g_dl=(
+                    None if proteinas_totales is None else proteinas_totales * porcentaje / 100.0
+                ),
+            )
+        )
 
     relacion_ag = None
-    advertencias = []
-    if asignados:
-        globulinas = sum(areas[1:])
-        relacion_ag = areas[0] / globulinas if globulinas > 0 else None
-    else:
-        advertencias.append(
-            f"Se detectaron {len(zonas)} fracciones y se esperaban 5 o 6. "
-            "Revisá los límites antes de asignar nombres."
-        )
-    return ResultadoFracciones(fracciones, asignados, relacion_ag, advertencias)
+    if len(areas) >= 2:
+        if esquema_conocido:
+            idx_albumina = 0
+        else:
+            idx_albumina = int(max(range(len(areas)), key=lambda i: areas[i]))
+        globulinas = total - areas[idx_albumina]
+        relacion_ag = areas[idx_albumina] / globulinas if globulinas > 0 else None
+
+    return ResultadoFracciones(fracciones, True, relacion_ag, [])
