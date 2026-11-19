@@ -87,7 +87,6 @@ class MuestraIn(BaseModel):
     codigo_animal: str = Field(min_length=1, max_length=80)
     especie: Especie
     fecha_hora_extraccion: datetime
-    url_foto_campo: str | None = Field(None, max_length=2048)
 
     @field_validator("codigo_animal")
     @classmethod
@@ -96,14 +95,6 @@ class MuestraIn(BaseModel):
         if not limpio:
             raise ValueError("El código del animal no puede quedar vacío")
         return limpio
-
-    @field_validator("url_foto_campo")
-    @classmethod
-    def limpiar_url(cls, valor: str | None) -> str | None:
-        if valor is None:
-            return None
-        limpio = valor.strip()
-        return limpio or None
 
 
 class MuestraOut(BaseModel):
@@ -114,7 +105,6 @@ class MuestraOut(BaseModel):
     codigo_animal: str
     especie: Especie
     fecha_hora_extraccion: datetime
-    url_foto_campo: str | None
     primera_corrida: datetime | None
     horas_transcurridas: float
     estado_48h: EstadoMuestra
