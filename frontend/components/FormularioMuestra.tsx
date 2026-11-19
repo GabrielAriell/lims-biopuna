@@ -6,7 +6,7 @@ import { crearMuestra } from "@/lib/api-muestras";
 import type { Campana, Especie, NuevaMuestra } from "@/lib/tipos-muestras";
 
 const CAMPO = "w-full rounded border border-gray-300 bg-white px-3 py-2 text-gray-900";
-const ESPECIES: Especie[] = ["Llama", "Vicuña", "Ovino"];
+const ESPECIES: Especie[] = ["Llama", "Vicuña", "Oveja", "Caballo"];
 
 type Props = {
   campanas: Campana[];

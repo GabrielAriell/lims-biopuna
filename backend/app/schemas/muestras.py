@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-Especie = Literal["Llama", "Vicuña", "Ovino"]
+Especie = Literal["Llama", "Vicuña", "Oveja", "Caballo"]
 EstadoMuestra = Literal["verde", "amarillo", "rojo", "procesada"]
 
 

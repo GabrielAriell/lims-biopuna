@@ -22,7 +22,8 @@ import type { Campana, Muestra } from "@/lib/tipos-muestras";
 const COLORES_ESPECIE: Record<string, string> = {
   Llama: "#2563eb",
   Vicuña: "#16a34a",
-  Ovino: "#d97706",
+  Oveja: "#d97706",
+  Caballo: "#7c3aed",
 };
 
 // Paleta para departamentos/localidades (se repite si hay más categorías).

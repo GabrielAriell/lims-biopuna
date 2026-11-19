@@ -1,6 +1,6 @@
 // Tipos del módulo de muestras y campañas. Reflejan lo que devuelve la API.
 
-export type Especie = "Llama" | "Vicuña" | "Ovino";
+export type Especie = "Llama" | "Vicuña" | "Oveja" | "Caballo";
 
 export type EstadoMuestra = "verde" | "amarillo" | "rojo" | "procesada";
 
