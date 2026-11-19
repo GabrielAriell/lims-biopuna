@@ -23,6 +23,10 @@ class EnsayoInvalido(ValueError):
     """Los datos del ensayo no permiten guardarlo."""
 
 
+class EnsayoNoEncontrado(LookupError):
+    """El ensayo solicitado no existe."""
+
+
 _NOMBRES_CLASICOS = {
     "Albumina",
     "Alfa1",
@@ -377,3 +381,30 @@ def listar(id_muestra: int | None = None) -> list[dict[str, Any]]:
         _salida(ensayo, por_ensayo.get(ensayo["id_ensayo"], []), investigadores)
         for ensayo in ensayos
     ]
+
+
+def eliminar(id_ensayo: int) -> dict[str, Any]:
+    """Elimina un ensayo y sus fracciones, y limpia su imagen en Cloudinary.
+
+    Orden: se borra primero en la base (fuente de verdad, fracciones por cascade)
+    y luego se intenta borrar la imagen de forma best effort. Si no se puede
+    derivar/borrar la imagen remota, la base queda consistente.
+    """
+    filas = supabase_rest.seleccionar(
+        "ensayo_electroforetico",
+        columnas="id_ensayo,url_imagen_tira",
+        filtros=[("id_ensayo", f"eq.{id_ensayo}")],
+        limite=1,
+    )
+    if not filas:
+        raise EnsayoNoEncontrado("El ensayo no existe")
+
+    url_imagen = filas[0].get("url_imagen_tira")
+    supabase_rest.eliminar(
+        "ensayo_electroforetico", [("id_ensayo", f"eq.{id_ensayo}")]
+    )
+
+    public_id = cloudinary.public_id_desde_url(url_imagen)
+    if public_id:
+        cloudinary.eliminar_imagen(public_id)
+    return {"id_ensayo": id_ensayo, "imagen_limpieza_intentada": bool(public_id)}

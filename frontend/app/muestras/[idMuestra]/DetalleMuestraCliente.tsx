@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import MarcoDashboard from "@/components/MarcoDashboard";
+import { useSesion } from "@/components/ProveedorSesion";
 import Semaforo from "@/components/Semaforo";
-import { listarEnsayos } from "@/lib/api-ensayos";
+import { eliminarEnsayo, listarEnsayos } from "@/lib/api-ensayos";
 import { obtenerMuestra } from "@/lib/api-muestras";
 import { exportarMuestraExcel, exportarMuestraPdf } from "@/lib/api-reportes";
 import { calcularRelacionAG, esNombreAlbumina, evaluarValor } from "@/lib/rangos-referencia";
@@ -36,11 +37,36 @@ export default function DetalleMuestraCliente({
 }: {
   idMuestra: number;
 }) {
+  const { usuario } = useSesion();
   const [muestra, setMuestra] = useState<Muestra | null>(null);
   const [ensayos, setEnsayos] = useState<EnsayoGuardado[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [exportando, setExportando] = useState<string | null>(null);
+  const [eliminando, setEliminando] = useState<number | null>(null);
+
+  async function recargarDetalle() {
+    const [m, e] = await Promise.all([obtenerMuestra(idMuestra), listarEnsayos(idMuestra)]);
+    setMuestra(m);
+    setEnsayos(e);
+  }
+
+  async function onEliminarEnsayo(idEnsayo: number) {
+    const confirmar = window.confirm(
+      `¿Eliminar el ensayo #${idEnsayo}? Esta acción elimina el ensayo y sus fracciones, y no se puede deshacer.`,
+    );
+    if (!confirmar) return;
+    setEliminando(idEnsayo);
+    setError(null);
+    try {
+      await eliminarEnsayo(idEnsayo);
+      await recargarDetalle();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo eliminar el ensayo");
+    } finally {
+      setEliminando(null);
+    }
+  }
 
   async function exportar(formato: "xlsx" | "pdf") {
     setExportando(formato);
@@ -207,16 +233,28 @@ export default function DetalleMuestraCliente({
                         </span>
                       </p>
                     </div>
-                    {ensayo.url_imagen_tira && (
-                      <a
-                        href={ensayo.url_imagen_tira}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-sm font-medium text-blue-700 underline"
-                      >
-                        Ver imagen de tira
-                      </a>
-                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {ensayo.url_imagen_tira && (
+                        <a
+                          href={ensayo.url_imagen_tira}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sm font-medium text-blue-700 underline"
+                        >
+                          Ver imagen de tira
+                        </a>
+                      )}
+                      {usuario?.rol_sistema === "admin" && (
+                        <button
+                          type="button"
+                          onClick={() => void onEliminarEnsayo(ensayo.id_ensayo)}
+                          disabled={eliminando === ensayo.id_ensayo}
+                          className="rounded border border-red-300 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+                        >
+                          {eliminando === ensayo.id_ensayo ? "Eliminando..." : "Eliminar ensayo"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div className="mt-3 overflow-x-auto">
                     {(() => {
