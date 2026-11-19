@@ -1,8 +1,7 @@
 -- LIMS-BioPuna · Ampliación del catálogo de especies
 -- Reemplaza "Ovino" por "Oveja" y agrega "Caballo".
 --
--- Importante: las migraciones anteriores no se editan. Esta migración
--- transforma los datos existentes y actualiza la restricción CHECK.
+
 
 begin;
 
