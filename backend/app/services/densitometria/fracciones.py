@@ -35,11 +35,13 @@ def calcular_fracciones(
 
     - Porcentaje = área de la fracción / área total * 100.
     - Concentración (g/dL) = porcentaje * proteínas totales.
-    La propuesta automática usa nombres genéricos (Fracción 1..N), en orden; el
-    investigador puede renombrarlas (p. ej. Albúmina) si lo necesita.
-    La relación A/G se calcula automáticamente: si alguna fracción se llama
-    Albúmina se toma esa como referencia; en caso contrario se toma la franja de
-    mayor área como Albúmina sobre el resto.
+    Si se detectan 5 o 6 fracciones se asignan automáticamente los nombres
+    clásicos (Albúmina, Alfa1, Alfa2, Beta/Gamma o Beta1/Beta2); en cualquier
+    otro caso se usan nombres genéricos (Fracción 1..N). En ambos casos el
+    investigador puede editarlos.
+    La relación A/G se calcula automáticamente: en esquemas conocidos se toma la
+    primera fracción (Albúmina) sobre el resto; en caso contrario se toma la
+    franja de mayor área como Albúmina sobre el resto.
     """
     _validar_zonas(zonas, len(perfil))
     if proteinas_totales is not None and not (0 < proteinas_totales <= PT_MAX_G_DL):
@@ -50,7 +52,11 @@ def calcular_fracciones(
     if total <= 0:
         raise ValueError("El perfil no tiene señal para cuantificar")
 
-    nombres = [f"Fracción {k}" for k in range(1, len(zonas) + 1)]
+    esquema_conocido = len(zonas) in ESQUEMAS_FRACCIONES
+    if esquema_conocido:
+        nombres = list(ESQUEMAS_FRACCIONES[len(zonas)])
+    else:
+        nombres = [f"Fracción {k}" for k in range(1, len(zonas) + 1)]
 
     fracciones = []
     for nombre, (inicio, fin), area in zip(nombres, zonas, areas):
@@ -71,8 +77,11 @@ def calcular_fracciones(
 
     relacion_ag = None
     if len(areas) >= 2:
-        idx_albumina = int(max(range(len(areas)), key=lambda i: areas[i]))
+        if esquema_conocido:
+            idx_albumina = 0
+        else:
+            idx_albumina = int(max(range(len(areas)), key=lambda i: areas[i]))
         globulinas = total - areas[idx_albumina]
         relacion_ag = areas[idx_albumina] / globulinas if globulinas > 0 else None
 
-    return ResultadoFracciones(fracciones, True, relacion_ag, [])
+    return ResultadoFracciones(fracciones, esquema_conocido, relacion_ag, [])
