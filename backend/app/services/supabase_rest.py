@@ -241,3 +241,17 @@ def eliminar(tabla: str, filtros: list[tuple[str, str]]) -> None:
     PostgREST no ofrece transacciones entre varias llamadas.
     """
     _pedir("DELETE", tabla, headers=_cabeceras(), params=list(filtros))
+
+
+def actualizar(
+    tabla: str, datos: dict[str, Any], filtros: list[tuple[str, str]]
+) -> list[dict[str, Any]]:
+    """Actualiza filas que cumplen los filtros y devuelve las actualizadas."""
+    actualizadas = _pedir(
+        "PATCH",
+        tabla,
+        headers=_cabeceras("return=representation"),
+        params=list(filtros) + [("select", "*")],
+        json=datos,
+    )
+    return actualizadas or []
