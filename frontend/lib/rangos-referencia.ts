@@ -68,7 +68,13 @@ export const RANGOS_POR_ESPECIE: Partial<Record<Especie, RangosEspecie>> = {
       // Completar con datos de laboratorio.
     },
   },
-  Ovino: {
+  Oveja: {
+    etiqueta: "Fuera de rango de referencia",
+    parametros: {
+      // Completar con datos de laboratorio.
+    },
+  },
+  Caballo: {
     etiqueta: "Fuera de rango de referencia",
     parametros: {
       // Completar con datos de laboratorio.
