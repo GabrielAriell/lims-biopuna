@@ -25,3 +25,9 @@ export function guardarEnsayo(
     body: cuerpo,
   });
 }
+
+export function eliminarEnsayo(idEnsayo: number): Promise<void> {
+  return pedirJson<void>(`${API_URL}/ensayos/${idEnsayo}`, {
+    method: "DELETE",
+  });
+}

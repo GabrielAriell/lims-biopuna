@@ -37,7 +37,6 @@ export type Parametros = {
   proteinasTotales: string;
   prominencia: number;
   modo: Modo;
-  nCarriles: string;
   vertical: boolean;
   invertir: boolean;
 };

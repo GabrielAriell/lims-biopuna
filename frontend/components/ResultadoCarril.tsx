@@ -240,7 +240,7 @@ export default function ResultadoCarril({
     <section className="space-y-3 rounded-lg border border-gray-200 bg-white p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-lg font-semibold">Carril {carril.indice}</h2>
+          <h2 className="text-lg font-semibold">Tira analizada</h2>
           {hayEdicionManual && (
             <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
               Edición manual

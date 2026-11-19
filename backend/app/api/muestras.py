@@ -150,7 +150,6 @@ def _muestra_out(fila: dict[str, Any], campanas: dict[int, CampanaOut]) -> Muest
         codigo_animal=fila["codigo_animal"],
         especie=fila["especie"],
         fecha_hora_extraccion=fila["fecha_hora_extraccion"],
-        url_foto_campo=fila.get("url_foto_campo"),
         primera_corrida=fila.get("primera_corrida"),
         horas_transcurridas=fila["horas_transcurridas"],
         estado_48h=fila["estado_48h"],

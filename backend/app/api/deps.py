@@ -50,9 +50,22 @@ def usuario_actual(
 def exigir_escritura(
     usuario: Annotated[UsuarioActual, Depends(usuario_actual)],
 ) -> UsuarioActual:
-    """Cualquier usuario autenticado puede crear registros.
+    """Permite crear/modificar datos a roles operativos (admin, investigador).
 
-    Las restricciones (por ejemplo, eliminar datos ajenos) se aplican cuando
-    existan esas operaciones; por ahora no hay borrado desde la app.
+    El rol 'lectura' solo puede consultar. Las operaciones exclusivas de
+    administración usan exigir_admin.
     """
+    if usuario.rol_sistema == "lectura":
+        raise HTTPException(403, "Tu rol no permite realizar esta acción")
+    if usuario.rol_sistema not in {"admin", "investigador"}:
+        raise HTTPException(403, "Tu rol no permite realizar esta acción")
+    return usuario
+
+
+def exigir_admin(
+    usuario: Annotated[UsuarioActual, Depends(usuario_actual)],
+) -> UsuarioActual:
+    """Restringe el acceso a administradores."""
+    if usuario.rol_sistema != "admin":
+        raise HTTPException(403, "Solo un administrador puede realizar esta acción")
     return usuario

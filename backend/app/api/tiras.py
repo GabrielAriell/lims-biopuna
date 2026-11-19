@@ -31,7 +31,6 @@ def _ejecutar_analisis(
     proteinas_totales: float | None,
     prominencia: float,
     modo: Literal["gris_invertido", "verde_invertido", "absorbancia"],
-    n_carriles: int | None,
     region: str | None,
     vertical: bool,
     invertir: bool,
@@ -50,7 +49,6 @@ def _ejecutar_analisis(
             proteinas_totales=proteinas_totales,
             prominencia=prominencia,
             modo=modo,
-            n_carriles=n_carriles,
             region=_leer_region(region),
             vertical=vertical,
             invertir=invertir,
@@ -67,14 +65,13 @@ def analizar_tira(
     proteinas_totales: float | None = Form(None, gt=0, le=20, description="g/dL"),
     prominencia: float = Form(0.05, gt=0, le=1, description="Sensibilidad de picos"),
     modo: Literal["gris_invertido", "verde_invertido", "absorbancia"] = Form("gris_invertido"),
-    n_carriles: int | None = Form(None, ge=1, le=20),
     region: str | None = Form(None, description="Recorte 'x,y,ancho,alto'"),
     vertical: bool = Form(False),
     invertir: bool = Form(False),
 ):
-    """Analiza la tira y propone carriles, picos y fracciones. No guarda nada."""
+    """Analiza la tira y propone picos y fracciones. No guarda nada."""
     return _ejecutar_analisis(
-        imagen, proteinas_totales, prominencia, modo, n_carriles, region, vertical, invertir
+        imagen, proteinas_totales, prominencia, modo, region, vertical, invertir
     )
 
 

@@ -37,7 +37,6 @@ export type Muestra = {
   codigo_animal: string;
   especie: Especie;
   fecha_hora_extraccion: string; // ISO con zona horaria
-  url_foto_campo: string | null;
   primera_corrida: string | null;
   horas_transcurridas: number;
   estado_48h: EstadoMuestra;
@@ -60,5 +59,4 @@ export type NuevaMuestra = {
   codigo_animal: string;
   especie: Especie;
   fecha_hora_extraccion: string; // ISO con zona horaria
-  url_foto_campo?: string;
 };

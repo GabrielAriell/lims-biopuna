@@ -42,16 +42,14 @@ def analizar(
     proteinas_totales: float | None = None,
     prominencia: float = 0.05,
     modo: str = "gris_invertido",
-    n_carriles: int | None = None,
     region: Region | None = None,
     vertical: bool = False,
     invertir: bool = False,
 ) -> AnalisisTira:
-    """Analiza la imagen y propone las fracciones de cada carril. No guarda nada."""
+    """Analiza la imagen y propone las fracciones de la tira. No guarda nada."""
     tira = analizar_tira(
         datos,
         region=region,
-        n_carriles=n_carriles,
         modo=modo,
         vertical=vertical,
         invertir=invertir,
