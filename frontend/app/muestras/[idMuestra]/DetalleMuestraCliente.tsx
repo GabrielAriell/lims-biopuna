@@ -8,7 +8,7 @@ import Semaforo from "@/components/Semaforo";
 import { listarEnsayos } from "@/lib/api-ensayos";
 import { obtenerMuestra } from "@/lib/api-muestras";
 import { exportarMuestraExcel, exportarMuestraPdf } from "@/lib/api-reportes";
-import { calcularRelacionAG, evaluarValor } from "@/lib/rangos-referencia";
+import { calcularRelacionAG, esNombreAlbumina, evaluarValor } from "@/lib/rangos-referencia";
 import type { EnsayoGuardado } from "@/lib/tipos-ensayos";
 import type { Muestra } from "@/lib/tipos-muestras";
 
@@ -219,40 +219,77 @@ export default function DetalleMuestraCliente({
                     )}
                   </div>
                   <div className="mt-3 overflow-x-auto">
-                    <table className="min-w-max w-full text-sm">
-                      <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
-                        <tr>
-                          <th className="whitespace-nowrap px-3 py-2">Fracción</th>
-                          <th className="whitespace-nowrap px-3 py-2">%</th>
-                          <th className="whitespace-nowrap px-3 py-2">g/dL</th>
-                          <th className="whitespace-nowrap px-3 py-2">Área</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {ensayo.fracciones.map((f) => {
-                          const ev = evaluarValor(muestra.especie, f.nombre_fraccion, f.concentracion_g_dl);
-                          const clase =
-                            ev?.nivel === "critico"
-                              ? "bg-red-100 text-red-900 font-medium"
-                              : ev?.nivel === "alerta"
-                                ? "bg-yellow-100 text-yellow-900 font-medium"
-                                : "";
-                          return (
-                            <tr key={f.nombre_fraccion} className="border-t border-gray-100">
-                              <td className="whitespace-nowrap px-3 py-2 font-medium">{f.nombre_fraccion}</td>
-                              <td className="whitespace-nowrap px-3 py-2">{num(f.porcentaje_relativo)}</td>
-                              <td
-                                className={`whitespace-nowrap px-3 py-2 ${clase}`}
-                                title={ev && ev.nivel !== "normal" ? ev.etiqueta : undefined}
-                              >
-                                {num(f.concentracion_g_dl)}
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-2">{num(f.area_integrada, 4)}</td>
+                    {(() => {
+                      const idxNombrada = ensayo.fracciones.findIndex((f) =>
+                        esNombreAlbumina(f.nombre_fraccion),
+                      );
+                      let idxAlbumina = idxNombrada >= 0 ? idxNombrada : -1;
+                      if (idxAlbumina < 0) {
+                        let mejor = -1;
+                        ensayo.fracciones.forEach((f, i) => {
+                          const v = f.concentracion_g_dl ?? f.porcentaje_relativo ?? f.area_integrada;
+                          if (v != null && Number.isFinite(v) && v > mejor) {
+                            mejor = v;
+                            idxAlbumina = i;
+                          }
+                        });
+                      }
+                      return (
+                        <table className="min-w-max w-full text-sm">
+                          <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
+                            <tr>
+                              <th className="whitespace-nowrap px-3 py-2">Fracción</th>
+                              <th className="whitespace-nowrap px-3 py-2">%</th>
+                              <th className="whitespace-nowrap px-3 py-2">g/dL</th>
+                              <th className="whitespace-nowrap px-3 py-2">Área</th>
                             </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                          </thead>
+                          <tbody>
+                            {ensayo.fracciones.map((f, i) => {
+                              const ev = evaluarValor(
+                                muestra.especie,
+                                f.nombre_fraccion,
+                                f.concentracion_g_dl,
+                              );
+                              const evAlb =
+                                !ev && i === idxAlbumina
+                                  ? evaluarValor(muestra.especie, "Albúmina", f.concentracion_g_dl)
+                                  : null;
+                              const evFinal = ev ?? evAlb;
+                              const clase =
+                                evFinal?.nivel === "critico"
+                                  ? "bg-red-100 text-red-900 font-medium"
+                                  : evFinal?.nivel === "alerta"
+                                    ? "bg-yellow-100 text-yellow-900 font-medium"
+                                    : "";
+                              return (
+                                <tr key={`${f.nombre_fraccion}-${i}`} className="border-t border-gray-100">
+                                  <td className="whitespace-nowrap px-3 py-2 font-medium">
+                                    {f.nombre_fraccion}
+                                  </td>
+                                  <td className="whitespace-nowrap px-3 py-2">
+                                    {num(f.porcentaje_relativo)}
+                                  </td>
+                                  <td
+                                    className={`whitespace-nowrap px-3 py-2 ${clase}`}
+                                    title={
+                                      evFinal && evFinal.nivel !== "normal"
+                                        ? evFinal.etiqueta
+                                        : undefined
+                                    }
+                                  >
+                                    {num(f.concentracion_g_dl)}
+                                  </td>
+                                  <td className="whitespace-nowrap px-3 py-2">
+                                    {num(f.area_integrada, 4)}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      );
+                    })()}
                     {(() => {
                       const ag = ensayo.relacion_ag ?? calcularRelacionAG(ensayo.fracciones, ensayo.proteinas_totales_g_dl);
                       const evAg = evaluarValor(muestra.especie, "A/G", ag);
@@ -262,14 +299,34 @@ export default function DetalleMuestraCliente({
                           : evAg?.nivel === "alerta"
                             ? "bg-yellow-100 text-yellow-900"
                             : "";
+                      const idxNombrada = ensayo.fracciones.findIndex((f) =>
+                        esNombreAlbumina(f.nombre_fraccion),
+                      );
+                      let idxAlbumina = idxNombrada >= 0 ? idxNombrada : -1;
+                      if (idxAlbumina < 0) {
+                        let mejor = -1;
+                        ensayo.fracciones.forEach((f, i) => {
+                          const v = f.concentracion_g_dl ?? f.porcentaje_relativo ?? f.area_integrada;
+                          if (v != null && Number.isFinite(v) && v > mejor) {
+                            mejor = v;
+                            idxAlbumina = i;
+                          }
+                        });
+                      }
                       const etiquetas = Array.from(
                         new Set(
                           [
                             ...ensayo.fracciones
-                              .map((f) => {
+                              .map((f, i) => {
                                 const ev = evaluarValor(muestra.especie, f.nombre_fraccion, f.concentracion_g_dl);
-                                return ev && ev.nivel !== "normal" && ev.etiqueta
-                                  ? `${f.nombre_fraccion}: ${ev.etiqueta}`
+                                const evAlb =
+                                  !ev && i === idxAlbumina
+                                    ? evaluarValor(muestra.especie, "Albúmina", f.concentracion_g_dl)
+                                    : null;
+                                const evFinal = ev ?? evAlb;
+                                const etiquetaParam = ev ? f.nombre_fraccion : evAlb ? "Albúmina" : f.nombre_fraccion;
+                                return evFinal && evFinal.nivel !== "normal" && evFinal.etiqueta
+                                  ? `${etiquetaParam}: ${evFinal.etiqueta}`
                                   : null;
                               })
                               .filter((x): x is string => Boolean(x)),

@@ -18,7 +18,7 @@ import {
   exportarTerritorialPdf,
 } from "@/lib/api-reportes";
 import type { FiltrosReporte } from "@/lib/api-reportes";
-import { calcularRelacionAG, evaluarValor } from "@/lib/rangos-referencia";
+import { calcularRelacionAG, esNombreAlbumina, evaluarValor } from "@/lib/rangos-referencia";
 import type { EnsayoGuardado } from "@/lib/tipos-ensayos";
 import type { Campana, EstadoMuestra, Muestra } from "@/lib/tipos-muestras";
 
@@ -592,11 +592,37 @@ function TablaExploracionResultados({
               {(() => {
                 const ev =
                   fila.fraccion && fila.muestra
-                    ? evaluarValor(
-                      fila.muestra.especie,
-                      fila.fraccion.nombre_fraccion,
-                      fila.fraccion.concentracion_g_dl,
-                    )
+                    ? (() => {
+                        const base = evaluarValor(
+                          fila.muestra.especie,
+                          fila.fraccion.nombre_fraccion,
+                          fila.fraccion.concentracion_g_dl,
+                        );
+                        if (base) return base;
+                        const frs = fila.ensayo.fracciones;
+                        const idxNombrada = frs.findIndex((f) =>
+                          esNombreAlbumina(f.nombre_fraccion),
+                        );
+                        let idxAlbumina = idxNombrada >= 0 ? idxNombrada : -1;
+                        if (idxAlbumina < 0) {
+                          let mejor = -1;
+                          frs.forEach((f, i) => {
+                            const v = f.concentracion_g_dl ?? f.porcentaje_relativo ?? f.area_integrada;
+                            if (v != null && Number.isFinite(v) && v > mejor) {
+                              mejor = v;
+                              idxAlbumina = i;
+                            }
+                          });
+                        }
+                        const idxFila = frs.findIndex((f) => f === fila.fraccion);
+                        return idxFila === idxAlbumina
+                          ? evaluarValor(
+                              fila.muestra.especie,
+                              "Albúmina",
+                              fila.fraccion.concentracion_g_dl,
+                            )
+                          : null;
+                      })()
                     : null;
                 const clase =
                   ev?.nivel === "critico"

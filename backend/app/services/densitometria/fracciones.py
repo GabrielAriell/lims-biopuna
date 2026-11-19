@@ -5,8 +5,8 @@ from scipy.integrate import trapezoid
 from .modelos import Fraccion, ResultadoFracciones
 from .picos import Zona
 
-# Nombres según la cantidad de fracciones cuando el esquema es el esperado
-# (de la albúmina a la gamma). 6 es la tabla del informe de la cátedra; 5 el clásico.
+# Nombres clásicos conservados por compatibilidad (datos históricos/rangos).
+# La propuesta automática usa nombres genéricos: el investigador puede renombrar.
 ESQUEMAS_FRACCIONES = {
     5: ("Albumina", "Alfa1", "Alfa2", "Beta", "Gamma"),
     6: ("Albumina", "Alfa1", "Alfa2", "Beta1", "Beta2", "Gamma"),
@@ -35,12 +35,11 @@ def calcular_fracciones(
 
     - Porcentaje = área de la fracción / área total * 100.
     - Concentración (g/dL) = porcentaje * proteínas totales.
-    Si la cantidad de zonas coincide con un esquema conocido (5 o 6) se asignan
-    los nombres correctos; en caso contrario se usan nombres genéricos
-    (Fracción 1..N) y el investigador puede editarlos.
-    La relación A/G se calcula automáticamente: en esquemas conocidos se toma
-    la primera fracción (Albúmina) sobre el resto; en otros casos se toma la
-    franja más intensa como Albúmina sobre el resto.
+    La propuesta automática usa nombres genéricos (Fracción 1..N), en orden; el
+    investigador puede renombrarlas (p. ej. Albúmina) si lo necesita.
+    La relación A/G se calcula automáticamente: si alguna fracción se llama
+    Albúmina se toma esa como referencia; en caso contrario se toma la franja de
+    mayor área como Albúmina sobre el resto.
     """
     _validar_zonas(zonas, len(perfil))
     if proteinas_totales is not None and not (0 < proteinas_totales <= PT_MAX_G_DL):
@@ -51,11 +50,7 @@ def calcular_fracciones(
     if total <= 0:
         raise ValueError("El perfil no tiene señal para cuantificar")
 
-    esquema_conocido = len(zonas) in ESQUEMAS_FRACCIONES
-    if esquema_conocido:
-        nombres = list(ESQUEMAS_FRACCIONES[len(zonas)])
-    else:
-        nombres = [f"Fracción {k}" for k in range(1, len(zonas) + 1)]
+    nombres = [f"Fracción {k}" for k in range(1, len(zonas) + 1)]
 
     fracciones = []
     for nombre, (inicio, fin), area in zip(nombres, zonas, areas):
@@ -76,10 +71,7 @@ def calcular_fracciones(
 
     relacion_ag = None
     if len(areas) >= 2:
-        if esquema_conocido:
-            idx_albumina = 0
-        else:
-            idx_albumina = int(max(range(len(areas)), key=lambda i: areas[i]))
+        idx_albumina = int(max(range(len(areas)), key=lambda i: areas[i]))
         globulinas = total - areas[idx_albumina]
         relacion_ag = areas[idx_albumina] / globulinas if globulinas > 0 else None
 

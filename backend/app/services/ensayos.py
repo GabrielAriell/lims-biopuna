@@ -10,6 +10,7 @@ creado, porque PostgREST no permite una transacción entre varias llamadas.
 """
 from __future__ import annotations
 
+import re
 from collections import defaultdict
 from typing import Any
 
@@ -19,6 +20,22 @@ from app.services import cloudinary, limites, supabase_rest
 
 class EnsayoInvalido(ValueError):
     """Los datos del ensayo no permiten guardarlo."""
+
+
+_NOMBRES_CLASICOS = {
+    "Albumina",
+    "Alfa1",
+    "Alfa2",
+    "Beta",
+    "Beta1",
+    "Beta2",
+    "Gamma",
+}
+_RE_FRACCION_GENERICA = re.compile(r"^Fracción (?:[1-9]|1[0-9]|20)$")
+
+
+def _nombre_fraccion_valido(nombre: str) -> bool:
+    return nombre in _NOMBRES_CLASICOS or bool(_RE_FRACCION_GENERICA.match(nombre))
 
 
 def _fracciones_desde_entrada(
@@ -50,6 +67,11 @@ def _fracciones_desde_entrada(
             if not nombre:
                 raise EnsayoInvalido(
                     "El nombre de la fracción no puede estar vacío"
+                )
+            if not _nombre_fraccion_valido(nombre):
+                raise EnsayoInvalido(
+                    "Nombre de fracción inválido. Usá 'Fracción 1'..'Fracción 20' "
+                    "o un nombre clásico (Albumina, Alfa1, Alfa2, Beta, Beta1, Beta2, Gamma)"
                 )
             filas.append(
                 {

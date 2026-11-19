@@ -91,6 +91,10 @@ function normalizarNombre(nombre: string): string {
     .trim();
 }
 
+export function esNombreAlbumina(nombre: string): boolean {
+  return normalizarNombre(nombre).includes("album");
+}
+
 function buscarParametro(rangos: RangosEspecie, nombre: string): RangoParametro | undefined {
   if (rangos.parametros[nombre]) return rangos.parametros[nombre];
   const buscado = normalizarNombre(nombre);
