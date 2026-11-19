@@ -6,7 +6,6 @@ Uso:
 
 Opciones:
   --pt 6.5            proteínas totales (g/dL), para calcular concentraciones
-  --carriles 2        forzar la cantidad de carriles
   --prominencia 0.03  sensibilidad de picos (más bajo = más picos)
   --modo absorbancia  usar absorbancia en lugar de gris invertido
   --vertical          la tira está parada (migración de arriba hacia abajo)
@@ -84,7 +83,6 @@ def procesar(ruta: Path, args, escritor) -> None:
     resultado = analizar_tira(
         ruta.read_bytes(),
         region=args.region,
-        n_carriles=args.carriles,
         modo=args.modo,
         vertical=args.vertical,
         invertir=args.invertir,
@@ -92,7 +90,7 @@ def procesar(ruta: Path, args, escritor) -> None:
     x, y, w, h = resultado.region
     origen = "automatico" if resultado.recorte_automatico else "manual o imagen completa"
     print(f"\n{ruta.name}: recorte {origen} (x={x} y={y} ancho={w} alto={h}), "
-          f"{len(resultado.carriles)} carril(es)")
+          f"{len(resultado.carriles)} tira(s)")
 
     for aviso in resultado.advertencias:
         print("  AVISO:", aviso)
@@ -103,7 +101,7 @@ def procesar(ruta: Path, args, escritor) -> None:
         calculo = calcular_fracciones(carril.perfil, zonas, args.pt)
         calculos.append(calculo)
 
-        print(f"  Carril {i}: {len(calculo.fracciones)} fracciones")
+        print(f"  Tira: {len(calculo.fracciones)} fracciones")
         for fr in calculo.fracciones:
             conc = "" if fr.concentracion_g_dl is None else f"  {fr.concentracion_g_dl:.2f} g/dL"
             print(f"    {fr.nombre:<10} {fr.porcentaje:5.1f} %{conc}")
@@ -123,7 +121,6 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("ruta", nargs="?", default="ejemplos/tira_ejemplo.jpg", type=Path)
     parser.add_argument("--pt", type=float, default=None)
-    parser.add_argument("--carriles", type=int, default=None)
     parser.add_argument("--prominencia", type=float, default=0.05)
     parser.add_argument("--modo", default="gris_invertido", choices=["gris_invertido", "verde_invertido", "absorbancia"])
     parser.add_argument("--vertical", action="store_true")

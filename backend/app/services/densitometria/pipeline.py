@@ -10,16 +10,18 @@ from .tira import detectar_tira
 def analizar_tira(
     datos: bytes,
     region: Region | None = None,
-    n_carriles: int | None = None,
     modo: str = MODO_POR_DEFECTO,
     vertical: bool = False,
     invertir: bool = False,
 ) -> ResultadoTira:
-    """Orienta, recorta, detecta los carriles y calcula el perfil de cada uno.
+    """Orienta, recorta y calcula el perfil de la tira.
+
+    Un ensayo equivale a una sola tira, así que todo el recorte se analiza como
+    un único carril. Si se detectan varias tiras en la imagen, se avisa para que
+    el usuario recorte la que quiere medir.
 
     - region: recorte elegido por el usuario, en coordenadas de la imagen ya
       orientada. Si es None, se detecta la tira sola.
-    - n_carriles: fuerza la cantidad de carriles. Si es None, se detectan solos.
     - modo: "gris_invertido" o "absorbancia" (ver densidad.py).
     - vertical / invertir: ver orientar() en imagen.py.
     """
@@ -36,12 +38,15 @@ def analizar_tira(
 
     recorte = recortar(original, region)
     od = a_densidad_optica(recorte, modo)
-    carriles = [
-        Carril(ini, fin, perfil_carril(od, ini, fin))
-        for ini, fin in detectar_carriles(od, n_carriles)
-    ]
+    alto_recorte = od.shape[0]
+    carriles = [Carril(0, alto_recorte, perfil_carril(od, 0, alto_recorte))]
 
     advertencias = []
+    if len(detectar_carriles(od)) > 1:
+        advertencias.append(
+            "Se detectaron varias tiras en la imagen. Se analiza todo el recorte "
+            "como una sola tira; recortá la tira que querés medir para mayor precisión."
+        )
     if recorte.shape[0] > recorte.shape[1]:
         advertencias.append(
             "La tira parece estar parada (más alta que ancha). Probá con vertical=True."

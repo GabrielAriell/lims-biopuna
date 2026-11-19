@@ -37,7 +37,9 @@ class EnsayoIn(BaseModel):
     proteinas_totales: float = Field(gt=0, le=20)
     fecha_corrida: datetime | None = None
     metodo_lectura: MetodoLectura = "digital_opencv"
-    carriles: list[CarrilIn] = Field(min_length=1, max_length=20)
+    # Un ensayo equivale a una sola tira: la base guarda un único juego de
+    # fracciones por ensayo (unique id_ensayo, nombre_fraccion).
+    carriles: list[CarrilIn] = Field(min_length=1, max_length=1)
 
 
 class FraccionGuardadaOut(BaseModel):

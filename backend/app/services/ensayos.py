@@ -1,11 +1,12 @@
 """Guardado y lectura de ensayos electroforéticos.
 
-El navegador manda el perfil de cada carril y las zonas que confirmó el
+El navegador manda el perfil de la tira y las zonas que confirmó el
 investigador. Acá se recalculan las fracciones con ``limites.recalcular``:
 nunca se confía en los porcentajes que vienen del cliente.
 
-Si falla la inserción de las fracciones se borra el ensayo recién creado,
-porque PostgREST no permite una transacción entre varias llamadas.
+Un ensayo equivale a una sola tira: la base guarda un único juego de fracciones
+por ensayo. Si falla la inserción de las fracciones se borra el ensayo recién
+creado, porque PostgREST no permite una transacción entre varias llamadas.
 """
 from __future__ import annotations
 
@@ -22,65 +23,57 @@ class EnsayoInvalido(ValueError):
 
 def _fracciones_desde_entrada(
     datos: EnsayoIn,
-) -> tuple[list[list[dict[str, Any]]], float | None]:
-    """Valida carriles y devuelve fracciones finales por carril y A/G.
+) -> tuple[list[dict[str, Any]], float | None]:
+    """Valida la tira y devuelve sus fracciones finales y la relación A/G.
 
-    Recalcula siempre desde perfil/zonas para validar el perfil y los límites.
-    Si el investigador envió fracciones editadas para un carril, se guardan esas
-    (validadas) en lugar de las calculadas automáticamente.
+    Un ensayo equivale a una sola tira (el esquema lo garantiza). Recalcula
+    siempre desde perfil/zonas para validar el perfil y los límites. Si el
+    investigador envió fracciones editadas, se guardan esas (validadas) en
+    lugar de las calculadas automáticamente.
     """
-    fracciones_por_carril: list[list[dict[str, Any]]] = []
+    carril = datos.carriles[0]
+    try:
+        calculo = limites.recalcular(
+            carril.perfil, carril.zonas, datos.proteinas_totales
+        )
+    except ValueError as error:
+        raise EnsayoInvalido(f"Tira: {error}") from error
 
-    for indice, carril in enumerate(datos.carriles, start=1):
-        try:
-            calculo = limites.recalcular(
-                carril.perfil, carril.zonas, datos.proteinas_totales
+    if carril.fracciones is not None:
+        if len(carril.fracciones) != len(carril.zonas):
+            raise EnsayoInvalido(
+                "La cantidad de fracciones no coincide con las zonas"
             )
-        except ValueError as error:
-            raise EnsayoInvalido(f"Carril {indice}: {error}") from error
-
-        if carril.fracciones is not None:
-            if len(carril.fracciones) != len(carril.zonas):
-                raise EnsayoInvalido(
-                    f"Carril {indice}: la cantidad de fracciones no coincide con las zonas"
-                )
-            filas = []
-            for f in carril.fracciones:
-                nombre = f.nombre_fraccion.strip()
-                if not nombre:
-                    raise EnsayoInvalido(
-                        f"Carril {indice}: el nombre de la fracción no puede estar vacío"
-                    )
-                filas.append(
-                    {
-                        "nombre_fraccion": nombre,
-                        "area_integrada": round(float(f.area_integrada), 6),
-                        "porcentaje_relativo": round(float(f.porcentaje_relativo), 2),
-                        "concentracion_g_dl": round(float(f.concentracion_g_dl), 2),
-                    }
-                )
-            fracciones_por_carril.append(filas)
-            continue
-
         filas = []
-        for fraccion in calculo.fracciones:
+        for f in carril.fracciones:
+            nombre = f.nombre_fraccion.strip()
+            if not nombre:
+                raise EnsayoInvalido(
+                    "El nombre de la fracción no puede estar vacío"
+                )
             filas.append(
                 {
-                    "nombre_fraccion": fraccion.nombre,
-                    "area_integrada": round(float(fraccion.area), 6),
-                    "porcentaje_relativo": round(float(fraccion.porcentaje), 2),
-                    "concentracion_g_dl": round(
-                        float(fraccion.concentracion_g_dl or 0), 2
-                    ),
+                    "nombre_fraccion": nombre,
+                    "area_integrada": round(float(f.area_integrada), 6),
+                    "porcentaje_relativo": round(float(f.porcentaje_relativo), 2),
+                    "concentracion_g_dl": round(float(f.concentracion_g_dl), 2),
                 }
             )
-        fracciones_por_carril.append(filas)
+    else:
+        filas = [
+            {
+                "nombre_fraccion": fraccion.nombre,
+                "area_integrada": round(float(fraccion.area), 6),
+                "porcentaje_relativo": round(float(fraccion.porcentaje), 2),
+                "concentracion_g_dl": round(
+                    float(fraccion.concentracion_g_dl or 0), 2
+                ),
+            }
+            for fraccion in calculo.fracciones
+        ]
 
-    relacion_ag = _relacion_ag_desde_fracciones(
-        fracciones_por_carril[0] if fracciones_por_carril else [],
-        datos.proteinas_totales,
-    )
-    return fracciones_por_carril, relacion_ag
+    relacion_ag = _relacion_ag_desde_fracciones(filas, datos.proteinas_totales)
+    return filas, relacion_ag
 
 
 def _relacion_ag_desde_fracciones(
@@ -160,13 +153,9 @@ def _relacion_ag_desde_fracciones(
 
 
 def _filas_fracciones(
-    id_ensayo: int, fracciones_por_carril: list[list[dict[str, Any]]]
+    id_ensayo: int, fracciones: list[dict[str, Any]]
 ) -> list[dict[str, Any]]:
-    filas = []
-    for fracciones in fracciones_por_carril:
-        for fraccion in fracciones:
-            filas.append({"id_ensayo": id_ensayo, **fraccion})
-    return filas
+    return [{"id_ensayo": id_ensayo, **fraccion} for fraccion in fracciones]
 
 
 def _salida(
@@ -217,7 +206,7 @@ def guardar(
     Se recalcula desde perfil/zonas para validar; si el investigador envió
     fracciones editadas se guardan esas (validadas) como resultado final.
     """
-    fracciones_por_carril, relacion_ag = _fracciones_desde_entrada(datos)
+    fracciones, relacion_ag = _fracciones_desde_entrada(datos)
 
     subida: dict[str, Any] | None = None
     if imagen is not None:
@@ -261,7 +250,7 @@ def guardar(
     if relacion_ag is not None and ensayo.get("relacion_ag") is None:
         ensayo["relacion_ag"] = relacion_ag
     id_ensayo = ensayo["id_ensayo"]
-    filas = _filas_fracciones(id_ensayo, fracciones_por_carril)
+    filas = _filas_fracciones(id_ensayo, fracciones)
 
     try:
         guardadas = supabase_rest.insertar("fraccion_proteica", filas)
