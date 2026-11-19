@@ -72,6 +72,11 @@ async def crear_ensayo(
             raise HTTPException(
                 422, "Algún valor del ensayo no cumple las reglas de la base"
             ) from error
+        if error.codigo == "P0001" and "fecha de corrida" in str(error).lower():
+            raise HTTPException(
+                422,
+                "La fecha de corrida no puede ser anterior a la fecha de extracción de la muestra",
+            ) from error
         raise HTTPException(error.status, str(error)) from error
 
 

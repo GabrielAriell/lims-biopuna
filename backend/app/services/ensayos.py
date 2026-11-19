@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import re
 from collections import defaultdict
+from datetime import datetime, timezone
 from typing import Any
 
 from app.schemas.ensayos import EnsayoIn
@@ -180,6 +181,54 @@ def _filas_fracciones(
     return [{"id_ensayo": id_ensayo, **fraccion} for fraccion in fracciones]
 
 
+def _a_datetime_aware(valor: Any) -> datetime | None:
+    if valor is None:
+        return None
+    if isinstance(valor, datetime):
+        dt = valor
+    else:
+        try:
+            dt = datetime.fromisoformat(str(valor).replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+def _validar_fecha_corrida(datos: EnsayoIn) -> datetime | None:
+    """Valida que la corrida no sea anterior a la extracción de la muestra.
+
+    Devuelve la fecha efectiva (aware) a guardar, o None para usar el default
+    now() de la base (que también se valida contra la extracción).
+    """
+    filas = supabase_rest.seleccionar(
+        "muestra_animal",
+        columnas="id_muestra,fecha_hora_extraccion",
+        filtros=[("id_muestra", f"eq.{datos.id_muestra}")],
+        limite=1,
+    )
+    if not filas:
+        raise EnsayoInvalido("La muestra indicada no existe")
+
+    extraccion = _a_datetime_aware(filas[0].get("fecha_hora_extraccion"))
+    if extraccion is None:
+        raise EnsayoInvalido("La muestra no tiene una fecha de extracción válida")
+
+    efectiva = (
+        _a_datetime_aware(datos.fecha_corrida)
+        if datos.fecha_corrida is not None
+        else datetime.now(timezone.utc)
+    )
+    if efectiva is None:
+        raise EnsayoInvalido("La fecha de corrida no es válida")
+    if efectiva < extraccion:
+        raise EnsayoInvalido(
+            "La fecha de corrida no puede ser anterior a la fecha de extracción de la muestra"
+        )
+    return _a_datetime_aware(datos.fecha_corrida) if datos.fecha_corrida is not None else None
+
+
 def _salida(
     ensayo: dict[str, Any],
     fracciones: list[dict[str, Any]],
@@ -227,8 +276,10 @@ def guardar(
 
     Se recalcula desde perfil/zonas para validar; si el investigador envió
     fracciones editadas se guardan esas (validadas) como resultado final.
+    La fecha de corrida no puede ser anterior a la extracción de la muestra.
     """
     fracciones, relacion_ag = _fracciones_desde_entrada(datos)
+    fecha_corrida = _validar_fecha_corrida(datos)
 
     subida: dict[str, Any] | None = None
     if imagen is not None:
@@ -254,8 +305,8 @@ def guardar(
         if not cols or "relacion_ag" in cols:
             fila["relacion_ag"] = relacion_ag
     supabase_rest.con_auditoria("ensayo_electroforetico", fila, id_investigador)
-    if datos.fecha_corrida is not None:
-        fila["fecha_corrida"] = datos.fecha_corrida.isoformat()
+    if fecha_corrida is not None:
+        fila["fecha_corrida"] = fecha_corrida.isoformat()
 
     try:
         creados = supabase_rest.insertar("ensayo_electroforetico", [fila])
