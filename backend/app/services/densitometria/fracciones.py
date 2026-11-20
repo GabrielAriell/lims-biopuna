@@ -8,8 +8,9 @@ from .picos import Zona
 # Nombres clásicos conservados por compatibilidad (datos históricos/rangos).
 # La propuesta automática usa nombres genéricos: el investigador puede renombrar.
 ESQUEMAS_FRACCIONES = {
-    5: ("Albumina", "Alfa1", "Alfa2", "Beta", "Gamma"),
-    6: ("Albumina", "Alfa1", "Alfa2", "Beta1", "Beta2", "Gamma"),
+    4: ("Albúmina", "Alfa", "Beta", "Gamma"),
+    5: ("Albúmina", "Alfa 1", "Alfa 2", "Beta", "Gamma"),
+    6: ("Albúmina", "Alfa I", "Alfa II", "Beta", "Gama I", "Gama II"),
 }
 PT_MAX_G_DL = 20.0  # mismo rango que valida la base de datos
 

@@ -16,26 +16,60 @@ def suavizar(perfil: np.ndarray) -> np.ndarray:
     return gaussian_filter1d(perfil, sigma=max(1.0, len(perfil) * SUAVIZADO_REL))
 
 
-def detectar_picos(perfil: np.ndarray, prominencia_rel: float = PROMINENCIA_REL) -> list[int]:
-    """Devuelve las posiciones (columna) de los picos principales.
+# def detectar_picos(perfil: np.ndarray, prominencia_rel: float = PROMINENCIA_REL) -> list[int]:
+#     """Devuelve las posiciones (columna) de los picos principales.
 
-    prominencia_rel: cuánto debe sobresalir un pico (fracción del máximo).
-    Más bajo detecta más picos; más alto, menos.
-    """
+#     prominencia_rel: cuánto debe sobresalir un pico (fracción del máximo).
+#     Más bajo detecta más picos; más alto, menos.
+#     """
+#     suave = suavizar(perfil)
+#     if suave.max() <= 0:
+#         return []
+#     picos, _ = find_peaks(
+#         suave,
+#         prominence=prominencia_rel * suave.max(),
+#         distance=max(1, int(len(suave) * DISTANCIA_MIN_REL)),
+#     )
+#     picos = list(picos)
+
+#     # Dos picos con un valle muy superficial entre ellos son una sola banda
+#     # (por ejemplo, la muesca en la cima de la albúmina): se queda el más alto.
+#     fusionado = True
+#     while fusionado and len(picos) > 1:
+#         fusionado = False
+#         for i in range(len(picos) - 1):
+#             a, b = picos[i], picos[i + 1]
+#             valle = suave[a:b + 1].min()
+#             if valle >= FUSION_VALLE * min(suave[a], suave[b]):
+#                 picos.pop(i if suave[a] < suave[b] else i + 1)
+#                 fusionado = True
+#                 break
+#     return [int(p) for p in picos]
+
+def detectar_picos(
+    perfil: np.ndarray,
+    prominencia_rel: float = PROMINENCIA_REL,
+    cantidad_fracciones: int | None = None,
+) -> list[int]:
+    """Devuelve las posiciones (columna) de los picos principales."""
     suave = suavizar(perfil)
     if suave.max() <= 0:
         return []
-    picos, _ = find_peaks(
+
+    # Si se pide una cantidad fija, arrancamos con prominencia muy baja para capturar
+    # todos los candidatos (incluidas bandas tenues como Alfa1 o Beta2) y elegimos
+    # los N más prominentes.
+    prom_inicial = 0.002 if cantidad_fracciones else prominencia_rel
+    picos, props = find_peaks(
         suave,
-        prominence=prominencia_rel * suave.max(),
+        prominence=prom_inicial * suave.max(),
         distance=max(1, int(len(suave) * DISTANCIA_MIN_REL)),
     )
     picos = list(picos)
 
-    # Dos picos con un valle muy superficial entre ellos son una sola banda
-    # (por ejemplo, la muesca en la cima de la albúmina): se queda el más alto.
+    # Fusión de muescas superficiales (solo si no nos quedamos cortos de bandas)
     fusionado = True
-    while fusionado and len(picos) > 1:
+    while fusionado and len(picos) > (cantidad_fracciones or 1):
         fusionado = False
         for i in range(len(picos) - 1):
             a, b = picos[i], picos[i + 1]
@@ -44,17 +78,45 @@ def detectar_picos(perfil: np.ndarray, prominencia_rel: float = PROMINENCIA_REL)
                 picos.pop(i if suave[a] < suave[b] else i + 1)
                 fusionado = True
                 break
+
+    # Si se especificó 4, 5 o 6 fracciones y hay más candidatos, nos quedamos
+    # con los N de mayor prominencia, ordenados de izquierda a derecha.
+    if cantidad_fracciones and len(picos) > cantidad_fracciones:
+        _, props_filtrados = find_peaks(suave, prominence=0, distance=1)
+        mapa_prom = dict(zip(
+            find_peaks(suave, prominence=0, distance=1)[0],
+            props_filtrados["prominences"],
+        ))
+        mejores = sorted(picos, key=lambda p: mapa_prom.get(p, 0), reverse=True)[:cantidad_fracciones]
+        picos = sorted(mejores)
+
     return [int(p) for p in picos]
 
 
-def proponer_limites(perfil: np.ndarray, prominencia_rel: float = PROMINENCIA_REL) -> list[Zona]:
-    """Divide el perfil en una zona por pico, cortando en el valle entre picos.
+# def proponer_limites(perfil: np.ndarray, prominencia_rel: float = PROMINENCIA_REL) -> list[Zona]:
+#     """Divide el perfil en una zona por pico, cortando en el valle entre picos.
 
-    Estos cortes reemplazan al bisturí. Son una propuesta: el investigador
-    puede ajustarlos antes de calcular.
-    """
+#     Estos cortes reemplazan al bisturí. Son una propuesta: el investigador
+#     puede ajustarlos antes de calcular.
+#     """
+#     ultimo = len(perfil) - 1
+#     picos = detectar_picos(perfil, prominencia_rel)
+#     if not picos:
+#         return [(0, ultimo)]
+
+#     suave = suavizar(perfil)
+#     valles = [a + int(np.argmin(suave[a:b + 1])) for a, b in zip(picos[:-1], picos[1:])]
+#     cortes = [0] + valles + [ultimo]
+#     return [(cortes[i], cortes[i + 1]) for i in range(len(cortes) - 1)]
+
+def proponer_limites(
+    perfil: np.ndarray,
+    prominencia_rel: float = PROMINENCIA_REL,
+    cantidad_fracciones: int | None = None,
+) -> list[Zona]:
+    """Divide el perfil en una zona por pico, cortando en el valle entre picos."""
     ultimo = len(perfil) - 1
-    picos = detectar_picos(perfil, prominencia_rel)
+    picos = detectar_picos(perfil, prominencia_rel, cantidad_fracciones)
     if not picos:
         return [(0, ultimo)]
 

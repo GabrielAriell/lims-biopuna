@@ -18,6 +18,7 @@ import {
   Search,
   ChevronRight,
   ShieldCheck,
+  HeartPulse,
   type LucideIcon,
 } from "lucide-react";
 
@@ -31,6 +32,7 @@ export type SeccionNav =
   | "ensayos"
   | "exploracion"
   | "prioridades"
+  | "salud"
   | "admin";
 
 function etiquetaRol(rol?: string | null): string {
@@ -78,6 +80,12 @@ const ITEMS_MENU_BASE: ItemMenu[] = [
     seccion: "exploracion",
     etiqueta: "Reportes y Datos",
     icono: BarChart3,
+  },
+  {
+    href: "/salud",
+    seccion: "salud" as SeccionNav,
+    etiqueta: "Salud Poblacional",
+    icono: HeartPulse,
   },
 ];
 
