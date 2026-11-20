@@ -107,24 +107,6 @@ export default function FormularioTira({
           />
         </div>
         <div>
-          <label
-            htmlFor="tira-carriles"
-            className="mb-1 block text-sm font-medium"
-          >
-            Cantidad de carriles
-          </label>
-          <input
-            id="tira-carriles"
-            type="number"
-            min={1}
-            max={20}
-            placeholder="Automático"
-            value={parametros.nCarriles}
-            onChange={(e) => cambiar("nCarriles", e.target.value)}
-            className={CAMPO}
-          />
-        </div>
-        <div>
           <label htmlFor="tira-modo" className="mb-1 block text-sm font-medium">
             Modo de lectura
           </label>

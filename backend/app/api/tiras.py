@@ -25,81 +25,15 @@ def _leer_region(texto: str | None) -> tuple[int, int, int, int] | None:
         raise HTTPException(422, "region tiene valores inválidos")
     return x, y, ancho, alto
 
-# def _ejecutar_analisis(
-#     imagen: UploadFile,
-#     proteinas_totales: float | None,
-#     prominencia: float,
-#     modo: Literal["gris_invertido", "verde_invertido", "absorbancia"],
-#     n_carriles: int | None,
-#     region: str | None,
-#     vertical: bool,
-#     invertir: bool,
-# ) -> AnalisisTiraOut:
-#     if imagen.content_type not in TIPOS_PERMITIDOS:
-#         raise HTTPException(415, "Subí una imagen JPG, PNG, TIFF o BMP")
-#     datos = imagen.file.read(TAMANO_MAXIMO + 1)
-#     if len(datos) > TAMANO_MAXIMO:
-#         raise HTTPException(413, "La imagen supera los 15 MB")
-#     if not datos:
-#         raise HTTPException(422, "El archivo está vacío")
-
-#     try:
-#         analisis = analisis_tira.analizar(
-#             datos,
-#             proteinas_totales=proteinas_totales,
-#             prominencia=prominencia,
-#             modo=modo,
-#             n_carriles=n_carriles,
-#             region=_leer_region(region),
-#             vertical=vertical,
-#             invertir=invertir,
-#         )
-#         return AnalisisTiraOut.desde_analisis(analisis)
-#     except ValueError as error:
-#         raise HTTPException(422, str(error))
-
-
-# @router.post("/analizar-tira", response_model=AnalisisTiraOut)
-# def analizar_tira(
-#     usuario: Annotated[UsuarioActual, Depends(usuario_actual)],
-#     imagen: UploadFile = File(..., description="Foto o escaneo de la tira"),
-#     proteinas_totales: float | None = Form(None, gt=0, le=20, description="g/dL"),
-#     prominencia: float = Form(0.05, gt=0, le=1, description="Sensibilidad de picos"),
-#     modo: Literal["gris_invertido", "verde_invertido", "absorbancia"] = Form("gris_invertido"),
-#     n_carriles: int | None = Form(None, ge=1, le=20),
-#     region: str | None = Form(None, description="Recorte 'x,y,ancho,alto'"),
-#     vertical: bool = Form(False),
-#     invertir: bool = Form(False),
-# ):
-#     """Analiza la tira y propone carriles, picos y fracciones. No guarda nada."""
-#     return _ejecutar_analisis(
-#         imagen, proteinas_totales, prominencia, modo, n_carriles, region, vertical, invertir
-#     )
-
-
-def _leer_cantidad_fracciones(valor: str | None) -> int | None:
-    """Convierte '', None, '4', '5' o '6' a int | None."""
-    if not valor or not valor.strip():
-        return None
-    try:
-        n = int(valor)
-    except ValueError:
-        raise HTTPException(422, "cantidad_fracciones debe ser 4, 5 o 6")
-    if n not in (4, 5, 6):
-        raise HTTPException(422, "cantidad_fracciones debe ser 4, 5 o 6")
-    return n
-
 
 def _ejecutar_analisis(
     imagen: UploadFile,
     proteinas_totales: float | None,
     prominencia: float,
     modo: Literal["gris_invertido", "verde_invertido", "absorbancia"],
-    n_carriles: int | None,
     region: str | None,
     vertical: bool,
     invertir: bool,
-    cantidad_fracciones: int | None,
 ) -> AnalisisTiraOut:
     if imagen.content_type not in TIPOS_PERMITIDOS:
         raise HTTPException(415, "Subí una imagen JPG, PNG, TIFF o BMP")
@@ -115,11 +49,9 @@ def _ejecutar_analisis(
             proteinas_totales=proteinas_totales,
             prominencia=prominencia,
             modo=modo,
-            n_carriles=n_carriles,
             region=_leer_region(region),
             vertical=vertical,
             invertir=invertir,
-            cantidad_fracciones=cantidad_fracciones,
         )
         return AnalisisTiraOut.desde_analisis(analisis)
     except ValueError as error:
@@ -133,24 +65,15 @@ def analizar_tira(
     proteinas_totales: float | None = Form(None, gt=0, le=20, description="g/dL"),
     prominencia: float = Form(0.05, gt=0, le=1, description="Sensibilidad de picos"),
     modo: Literal["gris_invertido", "verde_invertido", "absorbancia"] = Form("gris_invertido"),
-    n_carriles: int | None = Form(None, ge=1, le=20),
     region: str | None = Form(None, description="Recorte 'x,y,ancho,alto'"),
     vertical: bool = Form(False),
     invertir: bool = Form(False),
-    cantidad_fracciones: str | None = Form(None),
 ):
-    """Analiza la tira y propone carriles, picos y fracciones. No guarda nada."""
+    """Analiza la tira y propone picos y fracciones. No guarda nada."""
     return _ejecutar_analisis(
-        imagen,
-        proteinas_totales,
-        prominencia,
-        modo,
-        n_carriles,
-        region,
-        vertical,
-        invertir,
-        _leer_cantidad_fracciones(cantidad_fracciones),
+        imagen, proteinas_totales, prominencia, modo, region, vertical, invertir
     )
+
 
 @router.post("/recalcular", response_model=RecalculoOut)
 def recalcular_tira(

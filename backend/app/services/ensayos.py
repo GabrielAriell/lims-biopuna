@@ -1,15 +1,18 @@
 """Guardado y lectura de ensayos electroforéticos.
 
-El navegador manda el perfil de cada carril y las zonas que confirmó el
+El navegador manda el perfil de la tira y las zonas que confirmó el
 investigador. Acá se recalculan las fracciones con ``limites.recalcular``:
 nunca se confía en los porcentajes que vienen del cliente.
 
-Si falla la inserción de las fracciones se borra el ensayo recién creado,
-porque PostgREST no permite una transacción entre varias llamadas.
+Un ensayo equivale a una sola tira: la base guarda un único juego de fracciones
+por ensayo. Si falla la inserción de las fracciones se borra el ensayo recién
+creado, porque PostgREST no permite una transacción entre varias llamadas.
 """
 from __future__ import annotations
 
+import re
 from collections import defaultdict
+from datetime import datetime, timezone
 from typing import Any
 
 from app.schemas.ensayos import EnsayoIn
@@ -20,67 +23,84 @@ class EnsayoInvalido(ValueError):
     """Los datos del ensayo no permiten guardarlo."""
 
 
+class EnsayoNoEncontrado(LookupError):
+    """El ensayo solicitado no existe."""
+
+
+_NOMBRES_CLASICOS = {
+    "Albumina",
+    "Alfa1",
+    "Alfa2",
+    "Beta",
+    "Beta1",
+    "Beta2",
+    "Gamma",
+}
+_RE_FRACCION_GENERICA = re.compile(r"^Fracción (?:[1-9]|1[0-9]|20)$")
+
+
+def _nombre_fraccion_valido(nombre: str) -> bool:
+    return nombre in _NOMBRES_CLASICOS or bool(_RE_FRACCION_GENERICA.match(nombre))
+
+
 def _fracciones_desde_entrada(
     datos: EnsayoIn,
-) -> tuple[list[list[dict[str, Any]]], float | None]:
-    """Valida carriles y devuelve fracciones finales por carril y A/G.
+) -> tuple[list[dict[str, Any]], float | None]:
+    """Valida la tira y devuelve sus fracciones finales y la relación A/G.
 
-    Recalcula siempre desde perfil/zonas para validar el perfil y los límites.
-    Si el investigador envió fracciones editadas para un carril, se guardan esas
-    (validadas) en lugar de las calculadas automáticamente.
+    Un ensayo equivale a una sola tira (el esquema lo garantiza). Recalcula
+    siempre desde perfil/zonas para validar el perfil y los límites. Si el
+    investigador envió fracciones editadas, se guardan esas (validadas) en
+    lugar de las calculadas automáticamente.
     """
-    fracciones_por_carril: list[list[dict[str, Any]]] = []
+    carril = datos.carriles[0]
+    try:
+        calculo = limites.recalcular(
+            carril.perfil, carril.zonas, datos.proteinas_totales
+        )
+    except ValueError as error:
+        raise EnsayoInvalido(f"Tira: {error}") from error
 
-    for indice, carril in enumerate(datos.carriles, start=1):
-        try:
-            calculo = limites.recalcular(
-                carril.perfil, carril.zonas, datos.proteinas_totales
+    if carril.fracciones is not None:
+        if len(carril.fracciones) != len(carril.zonas):
+            raise EnsayoInvalido(
+                "La cantidad de fracciones no coincide con las zonas"
             )
-        except ValueError as error:
-            raise EnsayoInvalido(f"Carril {indice}: {error}") from error
-
-        if carril.fracciones is not None:
-            if len(carril.fracciones) != len(carril.zonas):
-                raise EnsayoInvalido(
-                    f"Carril {indice}: la cantidad de fracciones no coincide con las zonas"
-                )
-            filas = []
-            for f in carril.fracciones:
-                nombre = f.nombre_fraccion.strip()
-                if not nombre:
-                    raise EnsayoInvalido(
-                        f"Carril {indice}: el nombre de la fracción no puede estar vacío"
-                    )
-                filas.append(
-                    {
-                        "nombre_fraccion": nombre,
-                        "area_integrada": round(float(f.area_integrada), 6),
-                        "porcentaje_relativo": round(float(f.porcentaje_relativo), 2),
-                        "concentracion_g_dl": round(float(f.concentracion_g_dl), 2),
-                    }
-                )
-            fracciones_por_carril.append(filas)
-            continue
-
         filas = []
-        for fraccion in calculo.fracciones:
+        for f in carril.fracciones:
+            nombre = f.nombre_fraccion.strip()
+            if not nombre:
+                raise EnsayoInvalido(
+                    "El nombre de la fracción no puede estar vacío"
+                )
+            if not _nombre_fraccion_valido(nombre):
+                raise EnsayoInvalido(
+                    "Nombre de fracción inválido. Usá 'Fracción 1'..'Fracción 20' "
+                    "o un nombre clásico (Albumina, Alfa1, Alfa2, Beta, Beta1, Beta2, Gamma)"
+                )
             filas.append(
                 {
-                    "nombre_fraccion": fraccion.nombre,
-                    "area_integrada": round(float(fraccion.area), 6),
-                    "porcentaje_relativo": round(float(fraccion.porcentaje), 2),
-                    "concentracion_g_dl": round(
-                        float(fraccion.concentracion_g_dl or 0), 2
-                    ),
+                    "nombre_fraccion": nombre,
+                    "area_integrada": round(float(f.area_integrada), 6),
+                    "porcentaje_relativo": round(float(f.porcentaje_relativo), 2),
+                    "concentracion_g_dl": round(float(f.concentracion_g_dl), 2),
                 }
             )
-        fracciones_por_carril.append(filas)
+    else:
+        filas = [
+            {
+                "nombre_fraccion": fraccion.nombre,
+                "area_integrada": round(float(fraccion.area), 6),
+                "porcentaje_relativo": round(float(fraccion.porcentaje), 2),
+                "concentracion_g_dl": round(
+                    float(fraccion.concentracion_g_dl or 0), 2
+                ),
+            }
+            for fraccion in calculo.fracciones
+        ]
 
-    relacion_ag = _relacion_ag_desde_fracciones(
-        fracciones_por_carril[0] if fracciones_por_carril else [],
-        datos.proteinas_totales,
-    )
-    return fracciones_por_carril, relacion_ag
+    relacion_ag = _relacion_ag_desde_fracciones(filas, datos.proteinas_totales)
+    return filas, relacion_ag
 
 
 def _relacion_ag_desde_fracciones(
@@ -160,13 +180,57 @@ def _relacion_ag_desde_fracciones(
 
 
 def _filas_fracciones(
-    id_ensayo: int, fracciones_por_carril: list[list[dict[str, Any]]]
+    id_ensayo: int, fracciones: list[dict[str, Any]]
 ) -> list[dict[str, Any]]:
-    filas = []
-    for fracciones in fracciones_por_carril:
-        for fraccion in fracciones:
-            filas.append({"id_ensayo": id_ensayo, **fraccion})
-    return filas
+    return [{"id_ensayo": id_ensayo, **fraccion} for fraccion in fracciones]
+
+
+def _a_datetime_aware(valor: Any) -> datetime | None:
+    if valor is None:
+        return None
+    if isinstance(valor, datetime):
+        dt = valor
+    else:
+        try:
+            dt = datetime.fromisoformat(str(valor).replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+def _validar_fecha_corrida(datos: EnsayoIn) -> datetime | None:
+    """Valida que la corrida no sea anterior a la extracción de la muestra.
+
+    Devuelve la fecha efectiva (aware) a guardar, o None para usar el default
+    now() de la base (que también se valida contra la extracción).
+    """
+    filas = supabase_rest.seleccionar(
+        "muestra_animal",
+        columnas="id_muestra,fecha_hora_extraccion",
+        filtros=[("id_muestra", f"eq.{datos.id_muestra}")],
+        limite=1,
+    )
+    if not filas:
+        raise EnsayoInvalido("La muestra indicada no existe")
+
+    extraccion = _a_datetime_aware(filas[0].get("fecha_hora_extraccion"))
+    if extraccion is None:
+        raise EnsayoInvalido("La muestra no tiene una fecha de extracción válida")
+
+    efectiva = (
+        _a_datetime_aware(datos.fecha_corrida)
+        if datos.fecha_corrida is not None
+        else datetime.now(timezone.utc)
+    )
+    if efectiva is None:
+        raise EnsayoInvalido("La fecha de corrida no es válida")
+    if efectiva < extraccion:
+        raise EnsayoInvalido(
+            "La fecha de corrida no puede ser anterior a la fecha de extracción de la muestra"
+        )
+    return _a_datetime_aware(datos.fecha_corrida) if datos.fecha_corrida is not None else None
 
 
 def _salida(
@@ -216,8 +280,10 @@ def guardar(
 
     Se recalcula desde perfil/zonas para validar; si el investigador envió
     fracciones editadas se guardan esas (validadas) como resultado final.
+    La fecha de corrida no puede ser anterior a la extracción de la muestra.
     """
-    fracciones_por_carril, relacion_ag = _fracciones_desde_entrada(datos)
+    fracciones, relacion_ag = _fracciones_desde_entrada(datos)
+    fecha_corrida = _validar_fecha_corrida(datos)
 
     subida: dict[str, Any] | None = None
     if imagen is not None:
@@ -243,8 +309,8 @@ def guardar(
         if not cols or "relacion_ag" in cols:
             fila["relacion_ag"] = relacion_ag
     supabase_rest.con_auditoria("ensayo_electroforetico", fila, id_investigador)
-    if datos.fecha_corrida is not None:
-        fila["fecha_corrida"] = datos.fecha_corrida.isoformat()
+    if fecha_corrida is not None:
+        fila["fecha_corrida"] = fecha_corrida.isoformat()
 
     try:
         creados = supabase_rest.insertar("ensayo_electroforetico", [fila])
@@ -261,7 +327,7 @@ def guardar(
     if relacion_ag is not None and ensayo.get("relacion_ag") is None:
         ensayo["relacion_ag"] = relacion_ag
     id_ensayo = ensayo["id_ensayo"]
-    filas = _filas_fracciones(id_ensayo, fracciones_por_carril)
+    filas = _filas_fracciones(id_ensayo, fracciones)
 
     try:
         guardadas = supabase_rest.insertar("fraccion_proteica", filas)
@@ -315,3 +381,30 @@ def listar(id_muestra: int | None = None) -> list[dict[str, Any]]:
         _salida(ensayo, por_ensayo.get(ensayo["id_ensayo"], []), investigadores)
         for ensayo in ensayos
     ]
+
+
+def eliminar(id_ensayo: int) -> dict[str, Any]:
+    """Elimina un ensayo y sus fracciones, y limpia su imagen en Cloudinary.
+
+    Orden: se borra primero en la base (fuente de verdad, fracciones por cascade)
+    y luego se intenta borrar la imagen de forma best effort. Si no se puede
+    derivar/borrar la imagen remota, la base queda consistente.
+    """
+    filas = supabase_rest.seleccionar(
+        "ensayo_electroforetico",
+        columnas="id_ensayo,url_imagen_tira",
+        filtros=[("id_ensayo", f"eq.{id_ensayo}")],
+        limite=1,
+    )
+    if not filas:
+        raise EnsayoNoEncontrado("El ensayo no existe")
+
+    url_imagen = filas[0].get("url_imagen_tira")
+    supabase_rest.eliminar(
+        "ensayo_electroforetico", [("id_ensayo", f"eq.{id_ensayo}")]
+    )
+
+    public_id = cloudinary.public_id_desde_url(url_imagen)
+    if public_id:
+        cloudinary.eliminar_imagen(public_id)
+    return {"id_ensayo": id_ensayo, "imagen_limpieza_intentada": bool(public_id)}

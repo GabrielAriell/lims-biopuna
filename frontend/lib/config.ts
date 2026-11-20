@@ -10,7 +10,6 @@ export const PARAMETROS_INICIALES: Parametros = {
   proteinasTotales: "",
   prominencia: 0.05,
   modo: "gris_invertido",
-  nCarriles: "",
   vertical: false,
   invertir: false,
   cantidadFracciones: null, // <--- Esto agregué por si quieren borrar.

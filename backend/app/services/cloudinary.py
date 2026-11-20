@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import re
 import time
 from pathlib import Path
 from typing import Any
@@ -164,3 +165,40 @@ def eliminar_imagen(public_id: str) -> None:
         )
     except (CloudinaryNoConfigurado, httpx.HTTPError):
         pass
+
+
+_RE_VERSION_URL = re.compile(r"^v\d+/")
+
+
+def public_id_desde_url(url: str | None) -> str | None:
+    """Deriva el ``public_id`` de una URL de Cloudinary, si es posible.
+
+    Espera URLs del tipo ``.../image/upload/(v123/)?<public_id>.<ext>``.
+    Si la URL no es de Cloudinary o no puede interpretarse, devuelve None para
+    evitar borrar un recurso equivocado.
+    """
+    if not url:
+        return None
+    try:
+        from urllib.parse import unquote, urlparse
+
+        ruta = unquote(urlparse(url).path or "")
+        marcador = "/image/upload/"
+        indice = ruta.find(marcador)
+        if indice == -1:
+            return None
+        resto = ruta[indice + len(marcador) :]
+        resto = _RE_VERSION_URL.sub("", resto).lstrip("/")
+        if not resto:
+            return None
+        if "/" in resto:
+            carpeta, nombre = resto.rsplit("/", 1)
+            if "." in nombre:
+                nombre = nombre.rsplit(".", 1)[0]
+            resto = f"{carpeta}/{nombre}" if carpeta else nombre
+        elif "." in resto:
+            resto = resto.rsplit(".", 1)[0]
+        resto = resto.strip("/")
+        return resto or None
+    except Exception:
+        return None

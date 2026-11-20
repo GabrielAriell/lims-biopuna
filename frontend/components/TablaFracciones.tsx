@@ -1,6 +1,6 @@
 ﻿import type { Fraccion } from "@/lib/tipos";
 import type { Especie } from "@/lib/tipos-muestras";
-import { evaluarValor } from "@/lib/rangos-referencia";
+import { esNombreAlbumina, evaluarValor } from "@/lib/rangos-referencia";
 
 const fmt = (v: number, d = 2) =>
   v.toLocaleString("es-AR", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -36,6 +36,22 @@ export default function TablaFracciones({
   const evalAg = evaluarValor(especie, "A/G", relacionAg);
   const etiquetas = new Set<string>();
 
+  // Si ninguna fracción se llama Albúmina, se toma la de mayor g/dL (o %)
+  // como candidata para aplicar rangos de Albúmina con nombres genéricos.
+  let idxAlbumina: number | null = null;
+  const idxNombrada = fracciones.findIndex((f) => esNombreAlbumina(f.nombre));
+  if (idxNombrada >= 0) idxAlbumina = idxNombrada;
+  else {
+    let mejor = -1;
+    fracciones.forEach((f, i) => {
+      const v = f.concentracion_g_dl ?? f.porcentaje ?? f.area;
+      if (v != null && Number.isFinite(v) && v > mejor) {
+        mejor = v;
+        idxAlbumina = i;
+      }
+    });
+  }
+
   return (
     <div className="space-y-2 overflow-x-auto">
       {editable && (
@@ -56,8 +72,14 @@ export default function TablaFracciones({
         <tbody>
           {fracciones.map((f, k) => {
             const ev = evaluarValor(especie, f.nombre, f.concentracion_g_dl);
-            if (ev && ev.nivel !== "normal" && ev.etiqueta) {
-              etiquetas.add(`${f.nombre}: ${ev.etiqueta}`);
+            const evAlbumina =
+              !ev && k === idxAlbumina
+                ? evaluarValor(especie, "Albúmina", f.concentracion_g_dl)
+                : null;
+            const evFinal = ev ?? evAlbumina;
+            const etiquetaParam = ev ? f.nombre : evAlbumina ? "Albúmina" : f.nombre;
+            if (evFinal && evFinal.nivel !== "normal" && evFinal.etiqueta) {
+              etiquetas.add(`${etiquetaParam}: ${evFinal.etiqueta}`);
             }
             const editada = Boolean(editadas?.[k]);
             return (
@@ -97,8 +119,10 @@ export default function TablaFracciones({
                   )}
                 </td>
                 <td
-                  className={`py-2 pr-4 text-right ${claseCelda(ev?.nivel)}`}
-                  title={ev && ev.nivel !== "normal" ? ev.etiqueta : undefined}
+                  className={`py-2 pr-4 text-right ${claseCelda(evFinal?.nivel)}`}
+                  title={
+                    evFinal && evFinal.nivel !== "normal" ? evFinal.etiqueta : undefined
+                  }
                 >
                   {editable ? (
                     <input

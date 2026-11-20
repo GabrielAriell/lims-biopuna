@@ -68,7 +68,13 @@ export const RANGOS_POR_ESPECIE: Partial<Record<Especie, RangosEspecie>> = {
       // Completar con datos de laboratorio.
     },
   },
-  Ovino: {
+  Oveja: {
+    etiqueta: "Fuera de rango de referencia",
+    parametros: {
+      // Completar con datos de laboratorio.
+    },
+  },
+  Caballo: {
     etiqueta: "Fuera de rango de referencia",
     parametros: {
       // Completar con datos de laboratorio.
@@ -83,6 +89,10 @@ function normalizarNombre(nombre: string): string {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+export function esNombreAlbumina(nombre: string): boolean {
+  return normalizarNombre(nombre).includes("album");
 }
 
 function buscarParametro(rangos: RangosEspecie, nombre: string): RangoParametro | undefined {

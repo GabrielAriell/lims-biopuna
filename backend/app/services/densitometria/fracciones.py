@@ -5,8 +5,8 @@ from scipy.integrate import trapezoid
 from .modelos import Fraccion, ResultadoFracciones
 from .picos import Zona
 
-# Nombres según la cantidad de fracciones cuando el esquema es el esperado
-# (de la albúmina a la gamma). 6 es la tabla del informe de la cátedra; 5 el clásico.
+# Nombres clásicos conservados por compatibilidad (datos históricos/rangos).
+# La propuesta automática usa nombres genéricos: el investigador puede renombrar.
 ESQUEMAS_FRACCIONES = {
     4: ("Albúmina", "Alfa", "Beta", "Gamma"),
     5: ("Albúmina", "Alfa 1", "Alfa 2", "Beta", "Gamma"),
@@ -36,12 +36,13 @@ def calcular_fracciones(
 
     - Porcentaje = área de la fracción / área total * 100.
     - Concentración (g/dL) = porcentaje * proteínas totales.
-    Si la cantidad de zonas coincide con un esquema conocido (5 o 6) se asignan
-    los nombres correctos; en caso contrario se usan nombres genéricos
-    (Fracción 1..N) y el investigador puede editarlos.
-    La relación A/G se calcula automáticamente: en esquemas conocidos se toma
-    la primera fracción (Albúmina) sobre el resto; en otros casos se toma la
-    franja más intensa como Albúmina sobre el resto.
+    Si se detectan 5 o 6 fracciones se asignan automáticamente los nombres
+    clásicos (Albúmina, Alfa1, Alfa2, Beta/Gamma o Beta1/Beta2); en cualquier
+    otro caso se usan nombres genéricos (Fracción 1..N). En ambos casos el
+    investigador puede editarlos.
+    La relación A/G se calcula automáticamente: en esquemas conocidos se toma la
+    primera fracción (Albúmina) sobre el resto; en caso contrario se toma la
+    franja de mayor área como Albúmina sobre el resto.
     """
     _validar_zonas(zonas, len(perfil))
     if proteinas_totales is not None and not (0 < proteinas_totales <= PT_MAX_G_DL):
@@ -84,4 +85,4 @@ def calcular_fracciones(
         globulinas = total - areas[idx_albumina]
         relacion_ag = areas[idx_albumina] / globulinas if globulinas > 0 else None
 
-    return ResultadoFracciones(fracciones, True, relacion_ag, [])
+    return ResultadoFracciones(fracciones, esquema_conocido, relacion_ag, [])
