@@ -114,7 +114,7 @@ def proponer_limites(
     prominencia_rel: float = PROMINENCIA_REL,
     cantidad_fracciones: int | None = None,
 ) -> list[Zona]:
-    """Divide el perfil en una zona por pico, cortando en el valle entre picos."""
+    """Divide el perfil en una zona por pico, cortando en valles y puntos de inflexión."""
     ultimo = len(perfil) - 1
     picos = detectar_picos(perfil, prominencia_rel, cantidad_fracciones)
     if not picos:
@@ -123,4 +123,27 @@ def proponer_limites(
     suave = suavizar(perfil)
     valles = [a + int(np.argmin(suave[a:b + 1])) for a, b in zip(picos[:-1], picos[1:])]
     cortes = [0] + valles + [ultimo]
+
+    # Si se pidió una cantidad fija (4, 5 o 6) y faltan cortes (por hombros sin valle),
+    # subdividimos en los puntos de inflexión más marcados de la segunda derivada.
+    if cantidad_fracciones and (len(cortes) - 1) < cantidad_fracciones:
+        d2 = np.gradient(np.gradient(suave))
+        # Los puntos de inflexión/hombros entre bandas corresponden a máximos locales de d2
+        inflexiones, props = find_peaks(d2, prominence=0)
+        margen = max(5, int(len(suave) * DISTANCIA_MIN_REL))
+
+        candidatos = sorted(
+            zip(inflexiones, props["prominences"]),
+            key=lambda item: item[1],
+            reverse=True,
+        )
+        for pos, _ in candidatos:
+            if (len(cortes) - 1) >= cantidad_fracciones:
+                break
+            pos = int(pos)
+            # Evitar cortar demasiado cerca de un corte ya existente o de los bordes
+            if all(abs(pos - c) >= margen for c in cortes):
+                cortes.append(pos)
+                cortes.sort()
+
     return [(cortes[i], cortes[i + 1]) for i in range(len(cortes) - 1)]
