@@ -78,6 +78,9 @@ export async function analizarTira(
   if (p.nCarriles.trim()) datos.append("n_carriles", p.nCarriles);
   datos.append("vertical", String(p.vertical));
   datos.append("invertir", String(p.invertir));
+  if (p.cantidadFracciones) {
+    datos.append("cantidad_fracciones", String(p.cantidadFracciones));
+  } //<-- Esto agregué por si quieren borrar.
   if (region) datos.append("region", region);
 
   return pedirJson<AnalisisTira>(`${API_URL}/ensayos/analizar-tira`, {

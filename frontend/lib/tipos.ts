@@ -40,6 +40,7 @@ export type Parametros = {
   nCarriles: string;
   vertical: boolean;
   invertir: boolean;
+  cantidadFracciones: 4 | 5 | 6 | null; // <--- Esto agregué por si quieren borrar.
 };
 
 // (inicio, fin) inclusivos, en columnas del perfil.

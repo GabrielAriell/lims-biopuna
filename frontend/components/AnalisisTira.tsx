@@ -82,6 +82,7 @@ export default function AnalisisTira({
             key={t.urlVista}
             src={t.urlVista}
             onRecorte={t.fijarRecorte}
+            onTransformar={t.transformarImagen}
           />
           <button
             onClick={t.analizar}

@@ -7,9 +7,13 @@ import "react-image-crop/dist/ReactCrop.css";
 type Props = {
   src: string;
   onRecorte: (crop: PixelCrop | undefined, imagen: HTMLImageElement | null) => void;
+  onTransformar: (tipo: "izq" | "der" | "espejo") => void;
 };
 
-export default function RecortadorImagen({ src, onRecorte }: Props) {
+const BOTON =
+  "rounded border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50";
+
+export default function RecortadorImagen({ src, onRecorte, onTransformar }: Props) {
   const [crop, setCrop] = useState<Crop>();
   const [noSePuedeMostrar, setNoSePuedeMostrar] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -26,19 +30,49 @@ export default function RecortadorImagen({ src, onRecorte }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-semibold">Recortar la zona a analizar</h2>
-        <button
-          onClick={quitarRecorte}
-          disabled={!crop}
-          className="rounded border border-gray-300 px-3 py-1 text-sm disabled:opacity-50"
-        >
-          Quitar recorte
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => onTransformar("izq")}
+            disabled={noSePuedeMostrar}
+            className={BOTON}
+            title="Girar 90° a la izquierda"
+          >
+            ↺ Girar izq.
+          </button>
+          <button
+            type="button"
+            onClick={() => onTransformar("der")}
+            disabled={noSePuedeMostrar}
+            className={BOTON}
+            title="Girar 90° a la derecha"
+          >
+            ↻ Girar der.
+          </button>
+          <button
+            type="button"
+            onClick={() => onTransformar("espejo")}
+            disabled={noSePuedeMostrar}
+            className={BOTON}
+            title="Voltear horizontalmente (albúmina a la izquierda)"
+          >
+            ⇄ Voltear horizontal
+          </button>
+          <button
+            type="button"
+            onClick={quitarRecorte}
+            disabled={!crop}
+            className={BOTON}
+          >
+            Quitar recorte
+          </button>
+        </div>
       </div>
       <p className="text-sm text-gray-600">
-        Arrastrá sobre la imagen para elegir solo la tira (sin bordes ni texto). Podés mover el
-        recuadro y estirarlo desde las esquinas. Si no recortás, se analiza la imagen completa.
+        Orientá la tira horizontalmente con la albúmina a la izquierda y arrastrá sobre la imagen
+        para elegir solo la tira.
       </p>
 
       {noSePuedeMostrar ? (
@@ -47,7 +81,7 @@ export default function RecortadorImagen({ src, onRecorte }: Props) {
           recortar acá: se analizará la imagen completa.
         </p>
       ) : (
-        <div className="flex justify-center rounded bg-gray-100 p-2">
+        <div className="flex h-[55vh] items-center justify-center overflow-hidden rounded bg-gray-100 p-2">
           <ReactCrop
             crop={crop}
             onChange={(c) => setCrop(c)}
@@ -62,7 +96,7 @@ export default function RecortadorImagen({ src, onRecorte }: Props) {
               src={src}
               alt="Imagen original para recortar"
               onError={() => setNoSePuedeMostrar(true)}
-              style={{ maxHeight: "70vh", maxWidth: "100%" }}
+              style={{ maxHeight: "52vh", maxWidth: "100%" }}
             />
           </ReactCrop>
         </div>

@@ -17,13 +17,14 @@ import {
   Search,
   ChevronRight,
   ShieldCheck,
+  HeartPulse,
 } from "lucide-react";
 
 import { useSesion } from "./ProveedorSesion";
 import { useMuestras } from "@/hooks/useMuestras";
 import { construirAlertasCriticas } from "@/lib/alertas";
 
-export type SeccionNav = "inicio" | "muestras" | "ensayos" | "exploracion" | "prioridades";
+export type SeccionNav = "inicio" | "muestras" | "ensayos" | "exploracion" | "prioridades" | "salud";
 
 type Props = {
   activa?: SeccionNav;
@@ -56,6 +57,12 @@ const ITEMS_MENU = [
     seccion: "exploracion" as SeccionNav,
     etiqueta: "Reportes y Datos",
     icono: BarChart3,
+  },
+  {
+    href: "/salud",
+    seccion: "salud" as SeccionNav,
+    etiqueta: "Salud Poblacional",
+    icono: HeartPulse,
   },
 ] as const;
 

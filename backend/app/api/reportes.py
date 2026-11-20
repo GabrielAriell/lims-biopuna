@@ -849,3 +849,397 @@ def exportar_muestra_pdf(
 
     doc.build(story)
     return _pdf_respuesta(bio, f"muestra_{id_muestra}_{datetime.now():%Y%m%d}.pdf")
+
+
+### Metricas de salud ###
+import math
+
+
+def _stats_lista(valores: list[float]) -> dict[str, float | int | None]:
+    """Calcula n, media, desvío estándar, mínimo y máximo de una lista."""
+    n = len(valores)
+    if n == 0:
+        return {"n": 0, "media": None, "desvio": None, "min": None, "max": None}
+    media = sum(valores) / n
+    varianza = sum((x - media) ** 2 for x in valores) / (n - 1) if n > 1 else 0.0
+    return {
+        "n": n,
+        "media": round(media, 3),
+        "desvio": round(math.sqrt(varianza), 3),
+        "min": round(min(valores), 3),
+        "max": round(max(valores), 3),
+    }
+
+
+def _normalizar_fraccion(nombre: str | None) -> str:
+    """Agrupa variantes de escritura (Alfa 1 / Alfa I / α1) en nombres uniformes."""
+    raw = (nombre or "").strip().lower()
+    if "alb" in raw:
+        return "Albúmina"
+    if ("alfa" in raw or "α" in raw) and ("2" in raw or "ii" in raw):
+        return "Alfa II"
+    if "alfa" in raw or "α" in raw:
+        return "Alfa I"
+    if "beta" in raw or "β" in raw:
+        return "Beta"
+    if ("gama" in raw or "gamma" in raw or "γ" in raw) and ("2" in raw or "ii" in raw):
+        return "Gama II"
+    if "gama" in raw or "gamma" in raw or "γ" in raw:
+        return "Gama I"
+    return (nombre or "Otra").strip()
+
+
+def _resumir_registros_salud(registros: list[dict[str, Any]]) -> dict[str, Any]:
+    """Resume métricas globales y agrupadas (por especie, departamento y localidad)."""
+    ags = [r["relacion_ag"] for r in registros if r["relacion_ag"] is not None]
+    pts = [r["proteinas_totales"] for r in registros if r["proteinas_totales"] is not None]
+
+    # Medias por fracción (% y g/dL)
+    orden_fracs = ["Albúmina", "Alfa I", "Alfa II", "Beta", "Gama I", "Gama II"]
+    fracs_pct: dict[str, list[float]] = {k: [] for k in orden_fracs}
+    fracs_gdl: dict[str, list[float]] = {k: [] for k in orden_fracs}
+
+    for r in registros:
+        for f in r["fracciones"]:
+            clave = _normalizar_fraccion(f.get("nombre_fraccion"))
+            if clave not in fracs_pct:
+                fracs_pct[clave] = []
+                fracs_gdl[clave] = []
+            if f.get("porcentaje_relativo") is not None:
+                fracs_pct[clave].append(float(f["porcentaje_relativo"]))
+            if f.get("concentracion_g_dl") is not None:
+                fracs_gdl[clave].append(float(f["concentracion_g_dl"]))
+
+    fracciones_resumen = []
+    for nombre in list(fracs_pct.keys()):
+        if fracs_pct[nombre] or fracs_gdl[nombre]:
+            fracciones_resumen.append(
+                {
+                    "fraccion": nombre,
+                    "porcentaje": _stats_lista(fracs_pct[nombre]),
+                    "g_dl": _stats_lista(fracs_gdl[nombre]),
+                }
+            )
+
+    def _agrupar(campo: str) -> list[dict[str, Any]]:
+        grupos: dict[str, list[dict[str, Any]]] = {}
+        for r in registros:
+            etiqueta = str(r.get(campo) or "Sin dato")
+            grupos.setdefault(etiqueta, []).append(r)
+
+        filas = []
+        for nombre, items in grupos.items():
+            g_ag = [x["relacion_ag"] for x in items if x["relacion_ag"] is not None]
+            g_pt = [x["proteinas_totales"] for x in items if x["proteinas_totales"] is not None]
+            g_alb = []
+            for x in items:
+                for f in x["fracciones"]:
+                    if _normalizar_fraccion(f.get("nombre_fraccion")) == "Albúmina" and f.get("porcentaje_relativo") is not None:
+                        g_alb.append(float(f["porcentaje_relativo"]))
+            filas.append(
+                {
+                    "grupo": nombre,
+                    "ensayos": len(items),
+                    "animales": len({x["id_muestra"] for x in items}),
+                    "relacion_ag": _stats_lista(g_ag),
+                    "proteinas_totales": _stats_lista(g_pt),
+                    "albumina_pct": _stats_lista(g_alb),
+                }
+            )
+        return sorted(filas, key=lambda x: (-x["ensayos"], x["grupo"]))
+
+    return {
+        "total_ensayos": len(registros),
+        "total_animales": len({r["id_muestra"] for r in registros}),
+        "relacion_ag": _stats_lista(ags),
+        "proteinas_totales": _stats_lista(pts),
+        "fracciones": fracciones_resumen,
+        "por_especie": _agrupar("especie"),
+        "por_departamento": _agrupar("departamento"),
+        "por_localidad": _agrupar("localidad"),
+        "por_campana": _agrupar("ubicacion_campana"),
+    }
+
+
+def _serie_estacional(registros: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Agrupa los ensayos automáticamente por estación climática (Hemisferio Sur) en orden cronológico."""
+    grupos: dict[tuple[int, int], dict[str, Any]] = {}
+
+    for r in registros:
+        fecha = r.get("fecha") or ""
+        if len(fecha) < 7:
+            continue
+        try:
+            anio = int(fecha[:4])
+            mes = int(fecha[5:7])
+        except ValueError:
+            continue
+
+        # Hemisferio Sur (Jujuy / Puna):
+        # Dic-Feb -> Verano | Mar-May -> Otoño | Jun-Ago -> Invierno | Sep-Nov -> Primavera
+        if mes == 12:
+            anio_est, orden_est, nombre_est = anio + 1, 1, "Verano"
+        elif mes in (1, 2):
+            anio_est, orden_est, nombre_est = anio, 1, "Verano"
+        elif mes in (3, 4, 5):
+            anio_est, orden_est, nombre_est = anio, 2, "Otoño"
+        elif mes in (6, 7, 8):
+            anio_est, orden_est, nombre_est = anio, 3, "Invierno"
+        else:
+            anio_est, orden_est, nombre_est = anio, 4, "Primavera"
+
+        clave = (anio_est, orden_est)
+        bucket = grupos.setdefault(
+            clave,
+            {
+                "anio": anio_est,
+                "orden": orden_est,
+                "estacion": nombre_est,
+                "items": [],
+            },
+        )
+        bucket["items"].append(r)
+
+    # Numerar correlativamente cada estación que aparece ("1° Verano 2026", "1° Invierno 2026", "2° Verano 2027"...)
+    contador_estacion: dict[str, int] = {}
+    serie = []
+    for clave in sorted(grupos.keys()):
+        b = grupos[clave]
+        est = b["estacion"]
+        contador_estacion[est] = contador_estacion.get(est, 0) + 1
+        num = contador_estacion[est]
+
+        items = b["items"]
+        ags = [x["relacion_ag"] for x in items if x["relacion_ag"] is not None]
+        pts = [x["proteinas_totales"] for x in items if x["proteinas_totales"] is not None]
+        albs = []
+        for x in items:
+            for f in x["fracciones"]:
+                if _normalizar_fraccion(f.get("nombre_fraccion")) == "Albúmina" and f.get("porcentaje_relativo") is not None:
+                    albs.append(float(f["porcentaje_relativo"]))
+
+        serie.append(
+            {
+                "clave": f"{b['anio']}-{b['orden']}",
+                "etiqueta": f"{num}° {est} {b['anio']}",
+                "estacion": est,
+                "anio": b["anio"],
+                "animales": len({x["id_muestra"] for x in items}),
+                "ensayos": len(items),
+                "relacion_ag": _stats_lista(ags),
+                "proteinas_totales": _stats_lista(pts),
+                "albumina_pct": _stats_lista(albs),
+            }
+        )
+    return serie
+
+
+import logging
+import os
+
+logger = logging.getLogger(__name__)
+
+
+def _sin_credenciales_supabase() -> bool:
+    """Detecta si el entorno local no tiene configurada una URL real de Supabase."""
+    url = (os.getenv("SUPABASE_URL") or "").strip().lower()
+    return (not url) or ("tu-proyecto" in url) or ("localhost" in url)
+
+
+@router.get("/salud-poblacional")
+def obtener_salud_poblacional(
+    # En producción con Supabase activo, descomenta la línea de abajo para exigir sesión:
+    _usuario: Annotated[UsuarioActual, Depends(usuario_actual)],
+    especie: str | None = None,
+    departamento: str | None = None,
+    localidad: str | None = None,
+    id_campana: int | None = None,
+    convenio: str | None = None,
+    fecha_desde: str | None = None,
+    fecha_hasta: str | None = None,
+    comp_desde: str | None = None,
+    comp_hasta: str | None = None,
+):
+    """Calcula medias de salud animal (Relación A/G, PT y fracciones) y compara temporadas."""
+    usar_demo = _sin_credenciales_supabase()
+
+    if not usar_demo:
+        try:
+            lista_ensayos = ensayos.listar()
+            muestras = _muestras_datos()
+        except Exception as exc:
+            # Si falló por DNS/red local sin Supabase, caemos a demo; si es un error real de BD, mostramos el log completo
+            msg = str(exc).lower()
+            if "getaddrinfo failed" in msg or "name or service not known" in msg:
+                logger.warning("Sin conexión DNS a Supabase; usando dataset local de demostración: %s", exc)
+                usar_demo = True
+            else:
+                logger.exception("Error real consultando ensayos/muestras en Supabase")
+                raise
+
+    if usar_demo:
+        # 6 temporadas cronológicas (36 muestras) para entorno local sin credenciales
+        temporadas_demo = [
+            ("2025-07-15", 1, 1.02, 5.45, 50.2),  # 1° Invierno 2025 (Mal estado nutricional)
+            ("2025-10-18", 2, 1.24, 5.95, 54.8),  # 1° Primavera 2025 (Recuperación inicial)
+            ("2026-02-14", 3, 1.48, 6.45, 59.4),  # 1° Verano 2026 (Buen estado)
+            ("2026-04-20", 4, 1.39, 6.28, 57.9),  # 1° Otoño 2026 (Transición)
+            ("2026-07-19", 5, 1.31, 6.12, 56.3),  # 2° Invierno 2026 (Baja levemente en seca)
+            ("2027-02-12", 6, 1.66, 6.85, 62.5),  # 2° Verano 2027 (Pico máximo en verano lluvioso)
+        ]
+        animales_base = [
+            ("LL-01", "Llama", "Abra Pampa · Cochinoca · Jujuy", "Cochinoca", "Abra Pampa", True, 0.04, 0.15, 0.8),
+            ("LL-02", "Llama", "Abra Pampa · Cochinoca · Jujuy", "Cochinoca", "Abra Pampa", True, -0.02, -0.05, -0.4),
+            ("OV-10", "Oveja", "Humahuaca · Humahuaca · Jujuy", "Humahuaca", "Humahuaca", False, -0.08, -0.22, -1.5),
+            ("OV-11", "Oveja", "Humahuaca · Humahuaca · Jujuy", "Humahuaca", "Humahuaca", False, -0.05, -0.14, -1.0),
+            ("VI-04", "Vicuña", "Susques · Susques · Jujuy", "Susques", "Susques", True, 0.09, 0.25, 1.6),
+            ("VI-05", "Vicuña", "Susques · Susques · Jujuy", "Susques", "Susques", True, 0.02, 0.06, 0.5),
+        ]
+
+        muestras = []
+        lista_ensayos = []
+        seq = 1
+        for fecha_m, id_camp, ag_base, pt_base, alb_base in temporadas_demo:
+            for cod, esp, ubic, dep, loc, conv, d_ag, d_pt, d_alb in animales_base:
+                ag = round(ag_base + d_ag, 2)
+                pt = round(pt_base + d_pt, 2)
+                alb_pct = round(alb_base + d_alb, 1)
+                resto = round(100.0 - alb_pct, 1)
+                a1_pct = round(resto * 0.09, 1)
+                a2_pct = round(resto * 0.23, 1)
+                be_pct = round(resto * 0.20, 1)
+                g1_pct = round(resto * 0.39, 1)
+                g2_pct = round(resto - (a1_pct + a2_pct + be_pct + g1_pct), 1)
+
+                muestras.append(
+                    {
+                        "id_muestra": seq,
+                        "codigo_animal": cod,
+                        "especie": esp,
+                        "id_campana": id_camp,
+                        "ubicacion_campana": ubic,
+                        "departamento": dep,
+                        "localidad": loc,
+                        "convenio_inta": conv,
+                        "fecha_hora_extraccion": f"{fecha_m}T09:15:00",
+                    }
+                )
+                lista_ensayos.append(
+                    {
+                        "id_ensayo": seq,
+                        "id_muestra": seq,
+                        "fecha_corrida": fecha_m,
+                        "proteinas_totales_g_dl": pt,
+                        "relacion_ag": ag,
+                        "fracciones": [
+                            {"nombre_fraccion": "Albúmina", "porcentaje_relativo": alb_pct, "concentracion_g_dl": round(pt * alb_pct / 100, 2)},
+                            {"nombre_fraccion": "Alfa I", "porcentaje_relativo": a1_pct, "concentracion_g_dl": round(pt * a1_pct / 100, 2)},
+                            {"nombre_fraccion": "Alfa II", "porcentaje_relativo": a2_pct, "concentracion_g_dl": round(pt * a2_pct / 100, 2)},
+                            {"nombre_fraccion": "Beta", "porcentaje_relativo": be_pct, "concentracion_g_dl": round(pt * be_pct / 100, 2)},
+                            {"nombre_fraccion": "Gama I", "porcentaje_relativo": g1_pct, "concentracion_g_dl": round(pt * g1_pct / 100, 2)},
+                            {"nombre_fraccion": "Gama II", "porcentaje_relativo": g2_pct, "concentracion_g_dl": round(pt * g2_pct / 100, 2)},
+                        ],
+                    }
+                )
+                seq += 1
+
+    mapa_muestras = {m["id_muestra"]: m for m in muestras}
+
+    # Cruzar cada ensayo con los metadatos territoriales y de especie de su muestra
+    registros_base: list[dict[str, Any]] = []
+    especies_disp: set[str] = set()
+    deptos_disp: set[str] = set()
+    localidades_disp: set[str] = set()
+    campanas_disp: dict[int, str] = {}
+
+    for e in lista_ensayos:
+        m = mapa_muestras.get(e["id_muestra"])
+        if not m:
+            continue
+
+        esp = (m.get("especie") or "").strip()
+        dep = (m.get("departamento") or "Sin departamento").strip()
+        loc = (m.get("localidad") or "Sin localidad").strip()
+        camp_id = int(m["id_campana"])
+        camp_nom = m.get("ubicacion_campana") or f"Campaña #{camp_id}"
+
+        if esp:
+            especies_disp.add(esp)
+        if dep:
+            deptos_disp.add(dep)
+        if loc:
+            localidades_disp.add(loc)
+        campanas_disp[camp_id] = camp_nom
+
+        if especie and esp.lower() != especie.strip().lower():
+            continue
+        if departamento and dep.lower() != departamento.strip().lower():
+            continue
+        if localidad and loc.lower() != localidad.strip().lower():
+            continue
+        if id_campana and camp_id != int(id_campana):
+            continue
+        conv = (convenio or "").strip().lower()
+        if conv == "con" and not m.get("convenio_inta"):
+            continue
+        if conv == "sin" and m.get("convenio_inta"):
+            continue
+
+        fecha_ref = str(m.get("fecha_hora_extraccion") or e.get("fecha_corrida") or "")[:10]
+        ag_val = float(e["relacion_ag"]) if e.get("relacion_ag") is not None else None
+        pt_val = (
+            float(e["proteinas_totales_g_dl"])
+            if e.get("proteinas_totales_g_dl") is not None
+            else None
+        )
+
+        registros_base.append(
+            {
+                "id_ensayo": e["id_ensayo"],
+                "id_muestra": e["id_muestra"],
+                "codigo_animal": m.get("codigo_animal"),
+                "especie": esp or "Sin especie",
+                "departamento": dep,
+                "localidad": loc,
+                "id_campana": camp_id,
+                "ubicacion_campana": camp_nom,
+                "fecha": fecha_ref,
+                "relacion_ag": ag_val,
+                "proteinas_totales": pt_val,
+                "fracciones": e.get("fracciones") or [],
+            }
+        )
+
+    def _en_rango(items: list[dict[str, Any]], f_ini: str | None, f_fin: str | None) -> list[dict[str, Any]]:
+        ini = (f_ini or "").strip()
+        fin = (f_fin or "").strip()
+        return [
+            r
+            for r in items
+            if (not ini or r["fecha"] >= ini) and (not fin or r["fecha"] <= fin)
+        ]
+
+    reg_principal = _en_rango(registros_base, fecha_desde, fecha_hasta)
+    resumen_principal = _resumir_registros_salud(reg_principal)
+
+    tiene_comparacion = bool((comp_desde or "").strip() or (comp_hasta or "").strip())
+    resumen_comp = (
+        _resumir_registros_salud(_en_rango(registros_base, comp_desde, comp_hasta))
+        if tiene_comparacion
+        else None
+    )
+
+    return {
+        "principal": resumen_principal,
+        "comparacion": resumen_comp,
+        "linea_tiempo": _serie_estacional(registros_base),
+        "opciones_filtro": {
+            "especies": sorted(especies_disp),
+            "departamentos": sorted(deptos_disp),
+            "localidades": sorted(localidades_disp),
+            "campanas": [
+                {"id_campana": k, "nombre": v}
+                for k, v in sorted(campanas_disp.items(), key=lambda kv: kv[1])
+            ],
+        },
+    }
