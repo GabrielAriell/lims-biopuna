@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, Plus, Save, Shield, UserPlus, X } from "lucide-react";
 
+import Cargando from "@/components/Cargando";
 import MarcoDashboard from "@/components/MarcoDashboard";
 import { useSesion } from "@/components/ProveedorSesion";
 import {
@@ -265,9 +266,7 @@ export default function AdminUsuariosCliente() {
           </div>
 
           {cargando ? (
-            <div className="flex items-center gap-2 text-sm text-slate-500 py-6">
-              <Loader2 className="h-4 w-4 animate-spin" /> Cargando usuarios...
-            </div>
+            <Cargando texto="Cargando usuarios..." />
           ) : usuarios.length === 0 ? (
             <p className="text-sm text-slate-500 py-4">No hay usuarios registrados.</p>
           ) : (

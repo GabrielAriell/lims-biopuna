@@ -11,6 +11,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 
+import Cargando from "@/components/Cargando";
 import MarcoDashboard from "@/components/MarcoDashboard";
 import { pedirJson } from "@/lib/api";
 import { API_URL } from "@/lib/config";
@@ -819,7 +820,7 @@ export default function SaludPoblacionalPage() {
           </div>
 
           {cargando ? (
-            <p className="text-sm text-slate-500 py-6 text-center">Calculando medias...</p>
+            <Cargando texto="Calculando medias..." />
           ) : filasAgrupadas.length === 0 ? (
             <p className="text-sm text-slate-500 py-6 text-center rounded-lg border border-dashed border-slate-200">
               No hay ensayos guardados que coincidan con los filtros seleccionados.

@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 
+import Cargando from "@/components/Cargando";
 import MarcoDashboard from "@/components/MarcoDashboard";
 import { construirAlertasCriticas } from "@/lib/alertas";
 import { useMuestras } from "@/hooks/useMuestras";
@@ -80,7 +81,7 @@ export default function PrioridadesCliente() {
           </p>
 
           {cargando ? (
-            <p className="mt-3 text-sm text-gray-700">Cargando…</p>
+            <Cargando texto="Cargando urgentes..." />
           ) : criticas.length === 0 ? (
             <p className="mt-3 rounded-md border border-red-200 bg-white px-3 py-2 text-sm text-gray-700">
               No hay muestras urgentes en este momento.

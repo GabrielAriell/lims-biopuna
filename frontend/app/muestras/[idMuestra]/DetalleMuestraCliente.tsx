@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { ArrowLeft, FileDown, Image as ImagenIcono, Plus, Trash2 } from "lucide-react";
 
+import Cargando from "@/components/Cargando";
 import MarcoDashboard from "@/components/MarcoDashboard";
 import { useSesion } from "@/components/ProveedorSesion";
 import Semaforo from "@/components/Semaforo";
@@ -12,6 +14,11 @@ import { exportarMuestraExcel, exportarMuestraPdf } from "@/lib/api-reportes";
 import { calcularRelacionAG, esNombreAlbumina, evaluarValor } from "@/lib/rangos-referencia";
 import type { EnsayoGuardado } from "@/lib/tipos-ensayos";
 import type { Muestra } from "@/lib/tipos-muestras";
+
+const BOTON_PRIMARIO =
+  "inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-sm font-semibold text-white shadow-2xs hover:bg-emerald-700 transition-colors disabled:opacity-50 sm:w-auto";
+const BOTON_LINEA =
+  "inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50 sm:w-auto";
 
 function fechaHora(iso: string): string {
   return new Date(iso).toLocaleString("es-AR", {
@@ -30,6 +37,25 @@ function num(n: number, dec = 2): string {
     minimumFractionDigits: dec,
     maximumFractionDigits: dec,
   });
+}
+
+function Campo({
+  etiqueta,
+  children,
+}: {
+  etiqueta: string;
+  children: ReactNode;
+}) {
+  return (
+    <div>
+      <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        {etiqueta}
+      </dt>
+      <dd className="mt-0.5 text-[15px] font-medium text-slate-900">
+        {children}
+      </dd>
+    </div>
+  );
 }
 
 export default function DetalleMuestraCliente({
@@ -107,140 +133,154 @@ export default function DetalleMuestraCliente({
   return (
     <MarcoDashboard
       activa="muestras"
-      titulo={`Detalle de Muestra #${idMuestra}`}
-      subtitulo="Ficha técnica, trazabilidad biológica e historial de corridas electroforéticas."
+      titulo={
+        muestra
+          ? `Muestra ${muestra.codigo_animal} · ${muestra.especie}`
+          : `Muestra #${idMuestra}`
+      }
+      subtitulo="Ficha de la muestra, campaña de origen y ensayos registrados."
     >
-      <div className="space-y-6 max-w-6xl">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold">Detalle de muestra #{idMuestra}</h1>
-            <p className="text-sm text-gray-600">
-              Información de la muestra, campaña y todos los ensayos/resultados.
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Link
-              href="/muestras"
-              className="rounded border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Volver a muestras
-            </Link>
-            {muestra && (
-              <Link
-                href={`/ensayos/nuevo?muestra=${muestra.id_muestra}`}
-                className="whitespace-nowrap rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white"
-              >
-                Nuevo ensayo
-              </Link>
-            )}
-          </div>
-        </div>
+      <div className="space-y-6">
+        <Link
+          href={
+            muestra
+              ? `/muestras/campana/${muestra.id_campana}`
+              : "/muestras"
+          }
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700 hover:text-emerald-800"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          {muestra ? "Volver a la campaña" : "Volver a campañas"}
+        </Link>
 
         {error && (
-          <div className="rounded border border-red-300 bg-red-50 p-3 text-red-800">
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800 shadow-xs">
             {error}
           </div>
         )}
-        {cargando && <p className="text-sm text-gray-500">Cargando...</p>}
+        {cargando && <Cargando texto="Cargando muestra..." />}
 
         {muestra && (
-          <section className="rounded-lg border border-gray-200 bg-white p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-lg font-semibold">Muestra y campaña</h2>
-              <div className="flex flex-wrap gap-2">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs sm:p-7">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h2 className="text-lg font-bold tracking-tight text-slate-900">
+                    {muestra.codigo_animal}
+                    <span className="font-medium text-slate-600">
+                      {" "}
+                      · {muestra.especie}
+                    </span>
+                  </h2>
+                  <Semaforo estado={muestra.estado_48h} />
+                </div>
+                <p className="mt-1 text-sm text-slate-600">
+                  {muestra.localidad_puna} · Extraída{" "}
+                  {fechaHora(muestra.fecha_hora_extraccion)} ·{" "}
+                  {num(muestra.horas_transcurridas, 1)} h transcurridas
+                </p>
+              </div>
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                <Link
+                  href={`/ensayos/nuevo?muestra=${muestra.id_muestra}`}
+                  className={BOTON_PRIMARIO}
+                >
+                  <Plus className="h-4 w-4" />
+                  Nuevo ensayo
+                </Link>
                 <button
                   type="button"
                   onClick={() => void exportar("xlsx")}
                   disabled={Boolean(exportando)}
-                  className="rounded border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-50"
+                  className={BOTON_LINEA}
                 >
-                  {exportando === "xlsx" ? "Exportando..." : "Exportar Excel"}
+                  <FileDown className="h-4 w-4" />
+                  {exportando === "xlsx" ? "Exportando..." : "Excel"}
                 </button>
                 <button
                   type="button"
                   onClick={() => void exportar("pdf")}
                   disabled={Boolean(exportando)}
-                  className="rounded border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-50"
+                  className={BOTON_LINEA}
                 >
-                  {exportando === "pdf" ? "Exportando..." : "Exportar PDF"}
+                  <FileDown className="h-4 w-4" />
+                  {exportando === "pdf" ? "Exportando..." : "PDF"}
                 </button>
               </div>
             </div>
-            <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
-              <div>
-                <dt className="text-gray-500">Código animal</dt>
-                <dd className="font-medium">{muestra.codigo_animal}</dd>
-              </div>
-              <div>
-                <dt className="text-gray-500">Especie</dt>
-                <dd>{muestra.especie}</dd>
-              </div>
-              <div className="sm:col-span-2">
-                <dt className="text-gray-500">Ubicación / campaña</dt>
-                <dd>{muestra.localidad_puna}</dd>
-              </div>
-              <div>
-                <dt className="text-gray-500">Fecha salida</dt>
-                <dd>{fechaCorta(muestra.fecha_salida)}</dd>
-              </div>
-              <div>
-                <dt className="text-gray-500">Extracción</dt>
-                <dd>{fechaHora(muestra.fecha_hora_extraccion)}</dd>
-              </div>
-              <div>
-                <dt className="text-gray-500">Horas transcurridas</dt>
-                <dd>{num(muestra.horas_transcurridas, 1)} h</dd>
-              </div>
-              <div>
-                <dt className="text-gray-500">Estado 48 h</dt>
-                <dd><Semaforo estado={muestra.estado_48h} /></dd>
-              </div>
-              <div>
-                <dt className="text-gray-500">ID muestra / campaña</dt>
-                <dd>#{muestra.id_muestra} / #{muestra.id_campana}</dd>
-              </div>
+
+            <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-slate-100 pt-5 sm:grid-cols-3">
+              <Campo etiqueta="Campaña">{muestra.localidad_puna}</Campo>
+              <Campo etiqueta="Fecha de salida">
+                {fechaCorta(muestra.fecha_salida)}
+              </Campo>
+              <Campo etiqueta="Extracción">
+                {fechaHora(muestra.fecha_hora_extraccion)}
+              </Campo>
+              <Campo etiqueta="Horas transcurridas">
+                {num(muestra.horas_transcurridas, 1)} h
+              </Campo>
+              <Campo etiqueta="Estado 48 h">
+                <Semaforo estado={muestra.estado_48h} />
+              </Campo>
+              <Campo etiqueta="ID muestra / campaña">
+                #{muestra.id_muestra} / #{muestra.id_campana}
+              </Campo>
             </dl>
           </section>
         )}
 
         {!cargando && muestra && (
           <section className="space-y-4">
-            <h2 className="text-lg font-semibold">
-              Ensayos y resultados ({ensayos.length})
-            </h2>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-lg font-bold tracking-tight text-slate-900">
+                Ensayos y resultados
+              </h2>
+              {ensayos.length > 0 && (
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                  {ensayos.length}{" "}
+                  {ensayos.length === 1 ? "ensayo" : "ensayos"}
+                </span>
+              )}
+            </div>
+
             {ensayos.length === 0 ? (
-              <p className="rounded border border-dashed border-gray-300 bg-white p-6 text-sm text-gray-500">
-                Esta muestra todavía no tiene ensayos guardados.
+              <p className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500 shadow-xs">
+                Esta muestra todavía no tiene ensayos guardados. Analizá una
+                tira desde &quot;Nuevo ensayo&quot;.
               </p>
             ) : (
               ensayos.map((ensayo) => (
                 <article
                   key={ensayo.id_ensayo}
-                  className="rounded-lg border border-gray-200 bg-white p-5"
+                  className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs sm:p-6"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <h3 className="font-semibold">Ensayo #{ensayo.id_ensayo}</h3>
-                      <p className="text-sm text-gray-600">
+                    <div className="min-w-0">
+                      <h3 className="text-base font-bold text-slate-900">
+                        Ensayo #{ensayo.id_ensayo}
+                      </h3>
+                      <p className="mt-0.5 text-sm text-slate-600">
                         Corrida: {fechaHora(ensayo.fecha_corrida)} · PT:{" "}
                         {num(ensayo.proteinas_totales_g_dl)} g/dL · Método:{" "}
                         {ensayo.metodo_lectura}
                       </p>
-                      <p className="text-sm text-gray-600">
-                        Investigador (corrió/cargó):{" "}
-                        <span className="font-medium text-gray-800">
+                      <p className="text-sm text-slate-600">
+                        Investigador:{" "}
+                        <span className="font-semibold text-slate-800">
                           {ensayo.investigador_nombre || ensayo.id_investigador}
                         </span>
                       </p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
                       {ensayo.url_imagen_tira && (
                         <a
                           href={ensayo.url_imagen_tira}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-sm font-medium text-blue-700 underline"
+                          className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50/40 hover:border-emerald-300 sm:w-auto"
                         >
+                          <ImagenIcono className="h-4 w-4" />
                           Ver imagen de tira
                         </a>
                       )}
@@ -249,9 +289,12 @@ export default function DetalleMuestraCliente({
                           type="button"
                           onClick={() => void onEliminarEnsayo(ensayo.id_ensayo)}
                           disabled={eliminando === ensayo.id_ensayo}
-                          className="rounded border border-red-300 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+                          className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50 sm:w-auto"
                         >
-                          {eliminando === ensayo.id_ensayo ? "Eliminando..." : "Eliminar ensayo"}
+                          <Trash2 className="h-4 w-4" />
+                          {eliminando === ensayo.id_ensayo
+                            ? "Eliminando..."
+                            : "Eliminar ensayo"}
                         </button>
                       )}
                     </div>
@@ -274,12 +317,12 @@ export default function DetalleMuestraCliente({
                       }
                       return (
                         <table className="min-w-max w-full text-sm">
-                          <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
-                            <tr>
-                              <th className="whitespace-nowrap px-3 py-2">Fracción</th>
-                              <th className="whitespace-nowrap px-3 py-2">%</th>
-                              <th className="whitespace-nowrap px-3 py-2">g/dL</th>
-                              <th className="whitespace-nowrap px-3 py-2">Área</th>
+                          <thead>
+                            <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                              <th className="pb-2 pr-3">Fracción</th>
+                              <th className="pb-2 pr-3">%</th>
+                              <th className="pb-2 pr-3">g/dL</th>
+                              <th className="pb-2 pr-3">Área</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -296,29 +339,31 @@ export default function DetalleMuestraCliente({
                               const evFinal = ev ?? evAlb;
                               const clase =
                                 evFinal?.nivel === "critico"
-                                  ? "bg-red-100 text-red-900 font-medium"
+                                  ? "rounded bg-red-100 px-1.5 text-red-900 font-semibold"
                                   : evFinal?.nivel === "alerta"
-                                    ? "bg-yellow-100 text-yellow-900 font-medium"
+                                    ? "rounded bg-amber-100 px-1.5 text-amber-900 font-semibold"
                                     : "";
                               return (
-                                <tr key={`${f.nombre_fraccion}-${i}`} className="border-t border-gray-100">
-                                  <td className="whitespace-nowrap px-3 py-2 font-medium">
+                                <tr key={`${f.nombre_fraccion}-${i}`} className="border-b border-slate-100 last:border-0">
+                                  <td className="whitespace-nowrap py-2.5 pr-3 font-semibold text-slate-900">
                                     {f.nombre_fraccion}
                                   </td>
-                                  <td className="whitespace-nowrap px-3 py-2">
+                                  <td className="whitespace-nowrap py-2.5 pr-3 text-slate-600">
                                     {num(f.porcentaje_relativo)}
                                   </td>
                                   <td
-                                    className={`whitespace-nowrap px-3 py-2 ${clase}`}
+                                    className="whitespace-nowrap py-2.5 pr-3 text-slate-900"
                                     title={
                                       evFinal && evFinal.nivel !== "normal"
                                         ? evFinal.etiqueta
                                         : undefined
                                     }
                                   >
-                                    {num(f.concentracion_g_dl)}
+                                    <span className={clase || undefined}>
+                                      {num(f.concentracion_g_dl)}
+                                    </span>
                                   </td>
-                                  <td className="whitespace-nowrap px-3 py-2">
+                                  <td className="whitespace-nowrap py-2.5 pr-3 text-slate-600">
                                     {num(f.area_integrada, 4)}
                                   </td>
                                 </tr>
@@ -335,8 +380,8 @@ export default function DetalleMuestraCliente({
                         evAg?.nivel === "critico"
                           ? "bg-red-100 text-red-900"
                           : evAg?.nivel === "alerta"
-                            ? "bg-yellow-100 text-yellow-900"
-                            : "";
+                            ? "bg-amber-100 text-amber-900"
+                            : "bg-slate-100 text-slate-700";
                       const idxNombrada = ensayo.fracciones.findIndex((f) =>
                         esNombreAlbumina(f.nombre_fraccion),
                       );
@@ -376,16 +421,16 @@ export default function DetalleMuestraCliente({
                         <>
                           {ag !== null && (
                             <p
-                              className={`mt-2 inline-block rounded px-2 py-1 text-sm font-medium ${claseAg}`}
+                              className={`mt-3 inline-block rounded-lg px-2.5 py-1 text-sm font-semibold ${claseAg}`}
                               title={evAg && evAg.nivel !== "normal" ? evAg.etiqueta : undefined}
                             >
                               Relación A/G: {num(ag)}
                             </p>
                           )}
                           {etiquetas.length > 0 && (
-                            <div className="mt-2 space-y-1">
+                            <div className="mt-2 space-y-1.5">
                               {etiquetas.map((e) => (
-                                <p key={e} className="rounded border border-yellow-200 bg-yellow-50 px-2 py-1 text-xs text-yellow-900">
+                                <p key={e} className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-900">
                                   {e}
                                 </p>
                               ))}

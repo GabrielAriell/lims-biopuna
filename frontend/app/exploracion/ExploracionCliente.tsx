@@ -9,6 +9,7 @@ import type {
   ExportacionTerritorial,
   FiltroConvenio,
 } from "@/components/GraficosTerritoriales";
+import Cargando from "@/components/Cargando";
 import Semaforo from "@/components/Semaforo";
 import { listarEnsayos } from "@/lib/api-ensayos";
 import { listarCampanas, listarMuestras } from "@/lib/api-muestras";
@@ -414,7 +415,7 @@ export default function ExploracionCliente() {
         )}
 
         {cargando ? (
-          <p className="text-sm text-gray-500">Cargando datos...</p>
+          <Cargando texto="Cargando datos..." />
         ) : vista === "muestras" ? (
           <TablaExploracionMuestras filas={muestrasFiltradas} />
         ) : (

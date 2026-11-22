@@ -18,6 +18,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import BotonTema from "./BotonTema";
 import { useSesion } from "./ProveedorSesion";
 import { useMuestras } from "@/hooks/useMuestras";
 import { construirAlertasCriticas } from "@/lib/alertas";
@@ -111,14 +112,14 @@ const ITEM_ANALIZAR: ItemMenu = {
 const ITEM_URGENTES: ItemMenu = {
   href: "/prioridades",
   seccion: "prioridades",
-  etiqueta: "Urgentes (48h)",
+  etiqueta: "Prioridades",
   corta: "Urgentes",
   icono: Clock,
 };
 const ITEM_MUESTRAS: ItemMenu = {
   href: "/muestras",
   seccion: "muestras",
-  etiqueta: "Muestras",
+  etiqueta: "Campañas y Muestras",
   corta: "Muestras",
   icono: ClipboardList,
 };
@@ -377,8 +378,8 @@ export default function MarcoDashboard({
   const itemsMenu = useMemo<ItemMenu[]>(
     () => [
       ITEM_INICIO,
-      ITEM_URGENTES,
       ITEM_MUESTRAS,
+      ITEM_URGENTES,
       ITEM_RESULTADOS,
       ITEM_SALUD,
       ...(esAdmin ? [ITEM_USUARIOS] : []),
@@ -532,6 +533,7 @@ export default function MarcoDashboard({
       </SidebarInset>
 
       <BarraCelular activa={activa} criticas={criticas} itemsMas={itemsMas} />
+      <BotonTema />
     </SidebarProvider>
   );
 }

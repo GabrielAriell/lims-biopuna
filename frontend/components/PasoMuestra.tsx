@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 
+import Cargando from "./Cargando";
 import Semaforo from "./Semaforo";
 import type { Muestra } from "@/lib/tipos-muestras";
 
@@ -89,7 +90,7 @@ export default function PasoMuestra({
       )}
 
       {cargando ? (
-        <p className="text-sm text-slate-500">Cargando muestras...</p>
+        <Cargando texto="Cargando muestras..." />
       ) : (
         <>
           <label className="flex items-center gap-2 text-sm text-slate-600">

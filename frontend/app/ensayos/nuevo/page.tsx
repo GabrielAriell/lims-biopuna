@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 
+import Cargando from "@/components/Cargando";
 import MarcoDashboard from "@/components/MarcoDashboard";
 import NuevoEnsayoVista from "./NuevoEnsayoVista";
 
@@ -21,8 +22,8 @@ export default function PaginaNuevoEnsayo({ searchParams }: Props) {
       <div className="mx-auto max-w-5xl space-y-6">
         <Suspense
           fallback={
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-xs">
-              Cargando...
+            <div className="rounded-2xl border border-slate-200 bg-white shadow-xs">
+              <Cargando />
             </div>
           }
         >

@@ -134,7 +134,7 @@ export default function EditorLimites({
           Restablecer propuesta
         </button>
         <span className="text-xs text-gray-500">
-          Arrastrá las líneas azules para mover los límites. Con ← → se ajusta de a 1 (Shift: 10).
+          Arrastrá las líneas para mover los límites. Con ← → se ajusta de a 1 (Shift: 10).
         </span>
       </div>
 
@@ -196,14 +196,16 @@ export default function EditorLimites({
                 style={{ left: `${(corte / ultimo) * 100}%` }}
               >
                 <span
-                  className={`absolute inset-y-0 left-1/2 w-px -translate-x-1/2 ${
-                    activo ? "bg-blue-700" : "bg-blue-500/60"
+                  className={`absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 rounded-full ${
+                    activo
+                      ? "bg-blue-700 dark:bg-white"
+                      : "bg-blue-500/70 dark:bg-white/80"
                   }`}
                 />
                 <span
-                  className={`absolute -top-1 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full border border-white ${
+                  className={`absolute -top-1 left-1/2 h-3.5 w-3.5 -translate-x-1/2 rounded-full border-2 border-white dark:border-slate-900 ${
                     activo ? "bg-blue-700" : "bg-blue-500"
-                  }`}
+                  } dark:bg-slate-50`}
                 />
               </div>
             );

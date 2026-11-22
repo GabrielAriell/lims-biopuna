@@ -101,19 +101,321 @@ body {
   font-family: var(--font-inter), Arial, Helvetica, sans-serif;
 }
 
-.dark {
-  --sidebar: hsl(240 5.9% 10%);
-  --sidebar-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-primary: hsl(224.3 76.3% 48%);
-  --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(240 3.7% 15.9%);
-  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-border: hsl(240 3.7% 15.9%);
-  --sidebar-ring: hsl(217.2 91.2% 59.8%);
-}
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+}
+
+/* ==========================================================================
+   MODO NOCHE
+   La clase .dark la alterna BotonTema sobre <html>. Las variables de color se
+   redefinen abajo; las utilidades literales (bg-white, text-slate-900, etc.)
+   se remapean a la paleta oscura sin tocar los componentes. Las reglas fuera
+   de capas ganan sobre las utilidades de Tailwind por orden de cascada.
+   ========================================================================== */
+
+.dark {
+  /* Base (los personalizables siguen mandando) */
+  --fondo-app: #070d1a;
+  --texto-app: #e2e8f0;
+  --fondo-tarjeta: #0f172a;
+  --borde-tarjeta: #1e293b;
+
+  --card: #0f172a;
+  --card-foreground: #e2e8f0;
+  --popover: #0f172a;
+  --popover-foreground: #e2e8f0;
+  --secondary: #1e293b;
+  --secondary-foreground: #e2e8f0;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #1e293b;
+  --accent-foreground: #e2e8f0;
+  --border: #1e293b;
+  --input: #334155;
+
+  --sidebar: #0b1220;
+  --sidebar-foreground: #e2e8f0;
+  --sidebar-accent: #1e293b;
+  --sidebar-accent-foreground: #e2e8f0;
+  --sidebar-border: #1e293b;
+
+  --color-secundario: #1e293b;
+  --borde-secundario: #334155;
+  --color-exito-fondo: #052e16;
+  --color-exito-texto: #86efac;
+  --color-error-fondo: #450a0a;
+  --color-error-texto: #fca5a5;
+}
+
+/* ---- Superficies claras → superficies de noche ---- */
+.dark .bg-white,
+.dark .bg-card {
+  background-color: #0f172a;
+}
+.dark .bg-white\/95 {
+  background-color: rgb(15 23 42 / 0.95);
+}
+.dark .bg-white\/15 {
+  background-color: rgb(255 255 255 / 0.08);
+}
+.dark .bg-slate-50,
+.dark .bg-gray-50 {
+  background-color: #0b1220;
+}
+.dark .bg-slate-50\/80 {
+  background-color: rgb(11 18 32 / 0.8);
+}
+.dark .bg-slate-50\/60,
+.dark .bg-slate-50\/50 {
+  background-color: rgb(11 18 32 / 0.6);
+}
+.dark .bg-slate-100,
+.dark .bg-gray-100 {
+  background-color: #1e293b;
+}
+.dark .bg-slate-200 {
+  background-color: #334155;
+}
+.dark .bg-slate-900 {
+  background-color: #020617;
+}
+.dark .bg-slate-900\/60 {
+  background-color: rgb(2 6 23 / 0.6);
+}
+
+/* Tintes de color suaves → tintes de noche */
+.dark .bg-emerald-50,
+.dark .bg-emerald-50\/60,
+.dark .bg-emerald-50\/70 {
+  background-color: #022c22;
+}
+.dark .bg-emerald-50\/40 {
+  background-color: rgb(2 44 34 / 0.4);
+}
+.dark .bg-emerald-100 {
+  background-color: #064e3b;
+}
+.dark .bg-green-50 {
+  background-color: #052e16;
+}
+.dark .bg-yellow-50,
+.dark .bg-yellow-100,
+.dark .bg-amber-50,
+.dark .bg-amber-100 {
+  background-color: #451a03;
+}
+.dark .bg-red-50,
+.dark .bg-red-100 {
+  background-color: #450a0a;
+}
+.dark .bg-rose-50 {
+  background-color: #4c0519;
+}
+.dark .bg-blue-100 {
+  background-color: #172554;
+}
+
+/* ---- Bordes claros → bordes de noche ---- */
+.dark .border-slate-100,
+.dark .border-slate-200,
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #1e293b;
+}
+.dark .border-slate-200\/60 {
+  border-color: rgb(30 41 59 / 0.6);
+}
+.dark .border-slate-200\/80 {
+  border-color: rgb(30 41 59 / 0.8);
+}
+.dark .border-slate-300,
+.dark .border-gray-300 {
+  border-color: #334155;
+}
+.dark .border-emerald-100,
+.dark .border-emerald-200,
+.dark .border-emerald-200\/80 {
+  border-color: #065f46;
+}
+.dark .border-emerald-300,
+.dark .border-emerald-400 {
+  border-color: #047857;
+}
+.dark .border-emerald-950\/15 {
+  border-color: rgb(110 231 183 / 0.15);
+}
+.dark .border-red-100 {
+  border-color: #7f1d1d;
+}
+.dark .border-red-200,
+.dark .border-red-300 {
+  border-color: #991b1b;
+}
+.dark .border-rose-200,
+.dark .border-rose-200\/70 {
+  border-color: #9f1239;
+}
+.dark .border-yellow-200,
+.dark .border-yellow-300 {
+  border-color: #854d0e;
+}
+.dark .border-amber-100,
+.dark .border-amber-200,
+.dark .border-amber-200\/80,
+.dark .border-amber-300 {
+  border-color: #92400e;
+}
+.dark .border-green-300 {
+  border-color: #166534;
+}
+.dark .border-blue-300 {
+  border-color: #1e40af;
+}
+
+/* ---- Textos ---- */
+.dark .text-slate-800,
+.dark .text-slate-900,
+.dark .text-gray-800,
+.dark .text-gray-900 {
+  color: #f1f5f9;
+}
+.dark .text-slate-700,
+.dark .text-gray-700 {
+  color: #e2e8f0;
+}
+.dark .text-slate-600,
+.dark .text-gray-600 {
+  color: #cbd5e1;
+}
+.dark .text-slate-500,
+.dark .text-gray-500 {
+  color: #94a3b8;
+}
+.dark .placeholder\:text-slate-400::placeholder,
+.dark .placeholder\:text-gray-400::placeholder {
+  color: #64748b;
+}
+.dark .text-emerald-600,
+.dark .text-emerald-700 {
+  color: #34d399;
+}
+.dark .text-emerald-800,
+.dark .text-emerald-900,
+.dark .text-emerald-950 {
+  color: #6ee7b7;
+}
+.dark .text-green-800,
+.dark .text-green-900 {
+  color: #86efac;
+}
+.dark .text-yellow-800,
+.dark .text-yellow-900 {
+  color: #fde68a;
+}
+.dark .text-amber-700,
+.dark .text-amber-800,
+.dark .text-amber-900 {
+  color: #fcd34d;
+}
+.dark .text-red-600,
+.dark .text-red-700,
+.dark .text-red-800,
+.dark .text-red-900,
+.dark .text-red-950 {
+  color: #fca5a5;
+}
+.dark .text-rose-700,
+.dark .text-rose-800 {
+  color: #fda4af;
+}
+.dark .text-blue-700 {
+  color: #93c5fd;
+}
+
+/* ---- Estados interactivos ---- */
+.dark .hover\:bg-slate-50:hover,
+.dark .hover\:bg-gray-50:hover {
+  background-color: #16223a;
+}
+.dark .hover\:bg-slate-100:hover,
+.dark .hover\:bg-gray-100:hover {
+  background-color: #1e293b;
+}
+.dark .hover\:bg-slate-200:hover {
+  background-color: #334155;
+}
+.dark .hover\:bg-slate-50\/80:hover {
+  background-color: rgb(30 41 59 / 0.8);
+}
+.dark .hover\:bg-emerald-50:hover,
+.dark .hover\:bg-emerald-50\/40:hover {
+  background-color: #064e3b;
+}
+.dark .hover\:bg-green-100:hover {
+  background-color: #14532d;
+}
+.dark .hover\:bg-red-100:hover {
+  background-color: #7f1d1d;
+}
+.dark .hover\:bg-rose-50:hover,
+.dark .focus\:bg-rose-50:focus {
+  background-color: #4c0519;
+}
+.dark .hover\:bg-blue-50:hover {
+  background-color: #1e3a8a;
+}
+.dark .hover\:text-slate-900:hover,
+.dark .hover\:text-gray-800:hover {
+  color: #f1f5f9;
+}
+.dark .hover\:text-emerald-800:hover {
+  color: #6ee7b7;
+}
+.dark .hover\:text-rose-800:hover {
+  color: #fda4af;
+}
+.dark .hover\:border-slate-300:hover,
+.dark .hover\:border-slate-400:hover {
+  border-color: #475569;
+}
+.dark .data-\[active\=true\]\:bg-emerald-50[data-active="true"] {
+  background-color: #052e2b;
+}
+.dark .data-\[active\=true\]\:text-emerald-950[data-active="true"] {
+  color: #a7f3d0;
+}
+
+/* ---- Gradientes literales ---- */
+.dark .from-white {
+  --tw-gradient-from: #0f172a;
+  --tw-gradient-to: rgb(15 23 42 / 0);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.dark .to-emerald-50\/70 {
+  --tw-gradient-to: rgb(2 44 34 / 0.7);
+}
+
+/* ---- Gráfico de densitometría (Recharts) ---- */
+/* La curva usa currentColor; aquí se aclaran ejes, etiquetas y grilla. */
+.dark .recharts-cartesian-axis-tick text,
+.dark .recharts-text {
+  fill: #94a3b8;
+}
+.dark .recharts-label {
+  fill: #cbd5e1;
+}
+.dark .recharts-cartesian-grid-horizontal line,
+.dark .recharts-cartesian-grid-vertical line {
+  stroke: #334155;
+}
+.dark .recharts-default-tooltip {
+  background-color: #0f172a !important;
+  border: 1px solid #334155 !important;
+}
+.dark .recharts-tooltip-item,
+.dark .recharts-tooltip-label {
+  color: #e2e8f0 !important;
 }
