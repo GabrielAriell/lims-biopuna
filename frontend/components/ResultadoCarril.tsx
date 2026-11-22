@@ -140,7 +140,6 @@ export default function ResultadoCarril({
       if (campo === "concentracion_g_dl") f.concentracion_g_dl = n;
     }
 
-    const nuevasEditadas = actual.map((_, i) => (i === indice ? true : Boolean(editadas[i] && manual)));
     // si antes no había manual, marcar solo esta; si había, preservar
     const flags = actual.map((_, i) =>
       i === indice ? true : manual ? Boolean(editadas[i]) : false,
@@ -153,9 +152,6 @@ export default function ResultadoCarril({
   async function aplicar(nuevosCortes: number[]) {
     // Si hay ediciones manuales, el recálculo automático las reemplaza:
     // se guarda un punto de deshacer antes de recalcular.
-    let baseParaRecalculo = calculoBase;
-    let manualAntes: Fraccion[] | null = manual;
-    let editadasAntes = editadas;
     if (manual) {
       setDeshacerStack((prev) => [
         ...prev,
@@ -169,8 +165,6 @@ export default function ResultadoCarril({
       ]);
       setManual(null);
       setEditadas([]);
-      manualAntes = null;
-      editadasAntes = [];
     }
 
     const id = ++peticion.current;
@@ -237,32 +231,35 @@ export default function ResultadoCarril({
   }
 
   return (
-    <section className="space-y-3 rounded-lg border border-gray-200 bg-white p-5">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-lg font-semibold">Tira analizada</h2>
-          {hayEdicionManual && (
-            <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
-              Edición manual
-            </span>
-          )}
+    <div className="space-y-4">
+      {(hayEdicionManual || recalculando || deshacerStack.length > 0) && (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {hayEdicionManual && (
+              <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                Edición manual
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {recalculando && (
+              <span className="text-sm text-slate-500">Recalculando…</span>
+            )}
+            {deshacerStack.length > 0 && (
+              <button
+                type="button"
+                onClick={deshacer}
+                className="rounded-lg border border-slate-300 px-3 py-1 text-sm hover:bg-slate-50"
+              >
+                Deshacer
+              </button>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          {recalculando && <span className="text-sm text-gray-500">Recalculando…</span>}
-          {deshacerStack.length > 0 && (
-            <button
-              type="button"
-              onClick={deshacer}
-              className="rounded border border-gray-300 px-3 py-1 text-sm hover:bg-gray-50"
-            >
-              Deshacer
-            </button>
-          )}
-        </div>
-      </div>
+      )}
 
       {hayEdicionManual && (
-        <p className="rounded bg-amber-50 p-2 text-sm text-amber-900">
+        <p className="rounded-lg bg-amber-50 p-2 text-sm text-amber-900">
           Hay valores editados manualmente. Si movés los cortes, se recalcularán
           automáticamente y se reemplazarán estas ediciones (podés usar{" "}
           <strong>Deshacer</strong> para volver).
@@ -270,7 +267,7 @@ export default function ResultadoCarril({
       )}
 
       {carril.error ? (
-        <p className="rounded bg-red-50 p-2 text-sm text-red-800">{carril.error}</p>
+        <p className="rounded-lg bg-red-50 p-2 text-sm text-red-800">{carril.error}</p>
       ) : (
         <>
           <EditorLimites
@@ -287,7 +284,7 @@ export default function ResultadoCarril({
             onRestablecer={restablecer}
           />
           {error && (
-            <p className="rounded bg-red-50 p-2 text-sm text-red-800">{error}</p>
+            <p className="rounded-lg bg-red-50 p-2 text-sm text-red-800">{error}</p>
           )}
           <TablaFracciones
             fracciones={fracciones}
@@ -301,10 +298,13 @@ export default function ResultadoCarril({
       )}
 
       {advertencias.map((a) => (
-        <p key={a} className="rounded bg-yellow-50 p-2 text-sm text-yellow-800">
+        <p
+          key={a}
+          className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
+        >
           {a}
         </p>
       ))}
-    </section>
+    </div>
   );
 }

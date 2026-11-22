@@ -15,8 +15,8 @@ export default function PaginaNuevoEnsayo({ searchParams }: Props) {
   return (
     <MarcoDashboard
       activa="ensayos"
-      titulo="Nuevo Ensayo"
-      subtitulo="Elegí una muestra registrada para guardarle los resultados, o analizá una tira suelta de forma rápida."
+      titulo="Analizar tira"
+      subtitulo="Seguí los pasos: elegí la muestra, cargá la foto, revisá las bandas y guardá el resultado."
     >
       <div className="mx-auto max-w-5xl space-y-6">
         <Suspense

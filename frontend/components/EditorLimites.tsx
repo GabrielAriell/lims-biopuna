@@ -109,11 +109,11 @@ export default function EditorLimites({
   }
 
   const boton =
-    "rounded border border-gray-300 px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50";
+    "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:py-1 sm:rounded";
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2 text-sm">
+      <div className="flex flex-col gap-2 text-sm sm:flex-row sm:flex-wrap sm:items-center">
         <button type="button" onClick={agregar} disabled={deshabilitado} className={boton}>
           Agregar corte
         </button>

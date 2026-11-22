@@ -1,12 +1,18 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-import AnalisisTira from "./AnalisisTira";
-import SelectorMuestra from "./SelectorMuestra";
-import Semaforo from "./Semaforo";
+import ExitoGuardado from "./ExitoGuardado";
+import PasoFoto from "./PasoFoto";
+import PasoMuestra from "./PasoMuestra";
+import PasoResultado from "./PasoResultado";
+import PasosProgreso from "./PasosProgreso";
+import ResultadoCarril from "./ResultadoCarril";
+import { useAnalisisTira } from "@/hooks/useAnalisisTira";
 import { useMuestras } from "@/hooks/useMuestras";
+import { aplicarAjustes, type AjustesPorCarril } from "@/lib/ajustes";
+import { descargarTexto, resultadosACsv } from "@/lib/csv";
+import type { CalculoLimites } from "@/lib/tipos";
 import type { EnsayoGuardado } from "@/lib/tipos-ensayos";
 import type { Muestra } from "@/lib/tipos-muestras";
 
@@ -14,256 +20,262 @@ type Props = {
   idMuestraInicial: number | null;
 };
 
+const TARJETA =
+  "rounded-2xl border border-slate-200 bg-white p-5 shadow-xs sm:p-7";
+
 export default function NuevoEnsayo({ idMuestraInicial }: Props) {
   const { muestras, cargando, error, recargar } = useMuestras();
+  const t = useAnalisisTira();
+
+  const [paso, setPaso] = useState(1);
   const [idMuestra, setIdMuestra] = useState<number | null>(idMuestraInicial);
-  // Cambiar esta clave borra archivo, recorte y resultado del análisis.
+  // Remonta los pasos 2-4 después de guardar: borra recorte y ediciones.
   const [reinicio, setReinicio] = useState(0);
-  // Resumen del último ensayo guardado. Vive fuera del análisis para que se
-  // pueda limpiar la ventana sin perder el mensaje de éxito.
   const [ultimoGuardado, setUltimoGuardado] = useState<EnsayoGuardado | null>(
     null,
   );
+  const [ajustes, setAjustes] = useState<{
+    version: number;
+    porCarril: AjustesPorCarril;
+  }>({ version: -1, porCarril: {} });
 
   const muestra = useMemo(
     () => muestras.find((actual) => actual.id_muestra === idMuestra) ?? null,
     [muestras, idMuestra],
   );
 
-  function elegir(elegida: Muestra) {
-    setIdMuestra(elegida.id_muestra);
+  const muestraFueraDePlazo = Boolean(
+    muestra &&
+      muestra.estado_48h !== "procesada" &&
+      muestra.horas_transcurridas > 48,
+  );
+
+  // Solo valen los ajustes del análisis actual; al analizar otra tira se ignoran.
+  const ajustesActuales =
+    ajustes.version === t.version ? ajustes.porCarril : {};
+  const carrilAnalizado = t.resultado?.carriles[0] ?? null;
+
+  // Al cambiar de paso se vuelve arriba de la ventana.
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [paso]);
+
+  // Al salir de la pantalla se libera la imagen temporal; al volver, el
+  // componente se monta de cero y todos los campos arrancan limpios.
+  const tRef = useRef(t);
+  useEffect(() => {
+    tRef.current = t;
+  });
+  useEffect(() => () => tRef.current.reiniciar(), []);
+
+  function elegir(elegida: Muestra | null) {
+    setIdMuestra(elegida ? elegida.id_muestra : null);
     setUltimoGuardado(null);
   }
 
-  function quitarMuestra() {
-    setIdMuestra(null);
-    setUltimoGuardado(null);
+  function registrarAjuste(indice: number, calculo: CalculoLimites | null) {
+    setAjustes((prev) => {
+      const porCarril =
+        prev.version === t.version ? { ...prev.porCarril } : {};
+      if (calculo) porCarril[indice] = calculo;
+      else delete porCarril[indice];
+      return { version: t.version, porCarril };
+    });
+  }
+
+  function descargar() {
+    if (!t.archivo || !t.resultado) return;
+    const base = t.archivo.name.replace(/\.[^.]+$/, "");
+    const resultado = aplicarAjustes(t.resultado, ajustesActuales);
+    descargarTexto(`${base}.csv`, resultadosACsv(t.archivo.name, resultado));
   }
 
   function alGuardar(ensayo: EnsayoGuardado) {
     setUltimoGuardado(ensayo);
-    // Al remontar el análisis se borran imagen, recorte y resultado: la
-    // ventana queda lista para cargar otra tira.
+    // Se reinician los campos al terminar: quedan solo los datos de éxito.
+    t.reiniciar();
     setReinicio((n) => n + 1);
+    setAjustes({ version: -1, porCarril: {} });
     void recargar();
   }
 
-  function irAlAnalisis() {
-    document
-      .getElementById("analisis-ensayo")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  function otraTira() {
+    setUltimoGuardado(null);
+    setIdMuestra(null);
+    setPaso(1);
   }
 
-  useEffect(() => {
-    if (!ultimoGuardado) return;
-    document
-      .getElementById("resumen-guardado")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [ultimoGuardado]);
-
   return (
-    <div className="space-y-6">
-      <SelectorMuestra
-        muestras={muestras}
-        cargando={cargando}
-        error={error}
-        seleccionada={idMuestra}
-        onElegir={elegir}
-        onDeseleccionar={quitarMuestra}
-      />
+    <div className="space-y-5">
+      <section className={TARJETA}>
+        <PasosProgreso paso={paso} onIrA={setPaso} />
+      </section>
 
-      {idMuestra !== null && !muestra && !cargando && (
-        <p className="rounded border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-900">
-          No se encontró la muestra #{idMuestra}. Elegí otra de la lista.
-        </p>
-      )}
-
-      {ultimoGuardado && (
-        <section
-          id="resumen-guardado"
-          className="space-y-4 rounded-lg border border-green-300 bg-green-50 p-5"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold text-green-900">
-                Ensayo #{ultimoGuardado.id_ensayo} guardado correctamente
-              </h2>
-              <p className="text-sm text-green-800">
-                La ventana de análisis quedó limpia. Podés cargar otra imagen
-                abajo para analizar un nuevo ensayo.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setUltimoGuardado(null)}
-              className="rounded px-1 text-xl leading-none text-green-800 hover:bg-green-100"
-              aria-label="Cerrar resumen del ensayo guardado"
-            >
-              ×
-            </button>
-          </div>
-
-          <dl className="grid gap-2 text-sm text-green-900 sm:grid-cols-2">
-            <div>
-              <dt className="font-medium">Muestra</dt>
-              <dd>
-                {muestra?.codigo_animal ?? `#${ultimoGuardado.id_muestra}`}
-                {muestra ? ` · ${muestra.especie}` : ""}
-              </dd>
-            </div>
-            <div>
-              <dt className="font-medium">Proteínas totales</dt>
-              <dd>
-                {ultimoGuardado.proteinas_totales_g_dl.toLocaleString("es-AR")}{" "}
-                g/dL
-              </dd>
-            </div>
-            <div>
-              <dt className="font-medium">Fracciones guardadas</dt>
-              <dd>{ultimoGuardado.fracciones.length}</dd>
-            </div>
-            <div>
-              <dt className="font-medium">Fecha de corrida</dt>
-              <dd>
-                {new Date(ultimoGuardado.fecha_corrida).toLocaleString("es-AR", {
-                  dateStyle: "short",
-                  timeStyle: "short",
-                })}
-              </dd>
-            </div>
-          </dl>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm text-green-900">
-              <thead>
-                <tr className="border-b border-green-300 text-left">
-                  <th className="py-1 pr-4 font-medium">Fracción</th>
-                  <th className="py-1 pr-4 font-medium">%</th>
-                  <th className="py-1 font-medium">g/dL</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ultimoGuardado.fracciones.map((fraccion) => (
-                  <tr
-                    key={fraccion.nombre_fraccion}
-                    className="border-b border-green-200 last:border-0"
-                  >
-                    <td className="py-1 pr-4">{fraccion.nombre_fraccion}</td>
-                    <td className="py-1 pr-4">
-                      {fraccion.porcentaje_relativo.toLocaleString("es-AR", {
-                        maximumFractionDigits: 2,
-                      })}
-                    </td>
-                    <td className="py-1">
-                      {fraccion.concentracion_g_dl.toLocaleString("es-AR", {
-                        maximumFractionDigits: 2,
-                      })}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3 text-sm">
-            <button
-              type="button"
-              onClick={irAlAnalisis}
-              className="rounded bg-green-700 px-3 py-1.5 font-medium text-white hover:bg-green-800"
-            >
-              Analizar otra tira
-            </button>
-            <Link href="/muestras" className="font-medium text-blue-700 underline">
-              Volver a muestras
-            </Link>
-            {ultimoGuardado.url_imagen_tira && (
-              <a
-                href={ultimoGuardado.url_imagen_tira}
-                target="_blank"
-                rel="noreferrer"
-                className="font-medium text-blue-700 underline"
-              >
-                Ver imagen en Cloudinary
-              </a>
-            )}
-          </div>
-        </section>
-      )}
-
-      {muestra && (
-        <section className="space-y-2 rounded-lg border border-gray-200 bg-white p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold">
-                Muestra seleccionada: {muestra.codigo_animal}
-              </h2>
-              <p className="text-sm text-gray-600">
-                {muestra.especie} · {muestra.localidad_puna} · extraída{" "}
-                {new Date(muestra.fecha_hora_extraccion).toLocaleString("es-AR", {
-                  dateStyle: "short",
-                  timeStyle: "short",
-                })}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Semaforo estado={muestra.estado_48h} />
-              <button
-                type="button"
-                onClick={quitarMuestra}
-                className="rounded border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Quitar selección
-              </button>
-            </div>
-          </div>
-          {muestra.estado_48h !== "procesada" && muestra.horas_transcurridas > 48 && (
-            <p className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-800">
-              <strong>Muestra fuera de plazo:</strong> superó las 48 h (
-              {muestra.horas_transcurridas.toFixed(1)} h desde la extracción). Podés
-              registrar el ensayo para mantener la trazabilidad, pero quedará fuera del
-              tiempo recomendado. Se pedirá confirmación antes de guardar.
-            </p>
-          )}
-          <p className="text-sm text-gray-500">
-            Al guardar se crea un ensayo asociado a esta muestra. Si es la
-            primera corrida, la muestra pasa a &quot;procesada&quot;. Podés
-            cargar varias tiras para la misma muestra.
-          </p>
-        </section>
-      )}
-
-      <section
-        id="analisis-ensayo"
-        className="space-y-4 rounded-lg border border-gray-200 bg-white p-5"
-      >
-        <div>
-          <h2 className="text-lg font-semibold">
-            2. {muestra ? "Analizá la tira" : "Análisis libre"}
-          </h2>
-          <p className="text-sm text-gray-500">
-            Cargá la foto o el escaneo, ajustá los límites si hace falta y
-            revisá las fracciones.
-          </p>
-        </div>
-
-        {!muestra && (
-          <p className="rounded border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
-            <strong>Modo análisis libre:</strong> podés analizar la imagen y
-            descargar el CSV, pero no se guarda nada. Para guardar el ensayo,
-            elegí una muestra en el paso 1.
+      {/* Paso 1: elegir muestra */}
+      <section className={TARJETA} hidden={paso !== 1}>
+        <PasoMuestra
+          muestras={muestras}
+          cargando={cargando}
+          error={error}
+          seleccionada={idMuestra}
+          onElegir={elegir}
+        />
+        {idMuestra !== null && !muestra && !cargando && (
+          <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+            No se encontró la muestra #{idMuestra}. Elegí otra de la lista.
           </p>
         )}
-
-        <AnalisisTira
-          key={reinicio}
-          idMuestra={muestra?.id_muestra}
-          especie={muestra?.especie}
-          muestraFueraDePlazo={
-            Boolean(muestra && muestra.estado_48h !== "procesada" && muestra.horas_transcurridas > 48)
-          }
-          onGuardado={alGuardar}
-        />
+        <div className="mt-5 flex flex-col gap-2.5 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={() => setPaso(2)}
+            className="w-full rounded-lg bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 sm:w-auto"
+          >
+            Siguiente →
+          </button>
+        </div>
       </section>
+
+      {/* Pasos 2 a 4: quedan montados una vez visitados para no perder el
+          recorte ni las ediciones de bandas entre ida y vuelta. */}
+      <div key={reinicio}>
+        {/* Paso 2: cargar foto */}
+        {paso >= 2 && (
+          <section className={TARJETA} hidden={paso !== 2}>
+            <PasoFoto
+              archivo={t.archivo}
+              urlVista={t.urlVista}
+              preparando={t.preparando}
+              cargando={t.cargando}
+              error={t.error}
+              parametros={t.parametros}
+              onArchivo={t.elegirArchivo}
+              onParametros={t.setParametros}
+              onRecorte={t.fijarRecorte}
+              onTransformar={t.transformarImagen}
+              onAnalizar={async () => {
+                // Con el análisis listo se avanza solo a revisar bandas.
+                if (await t.analizar()) setPaso(3);
+              }}
+              onVolver={() => setPaso(1)}
+            />
+          </section>
+        )}
+
+        {/* Paso 3: revisar bandas (dos tarjetas: imagen + edición) */}
+        {paso >= 3 && t.resultado && (
+          <div hidden={paso !== 3} className="space-y-5">
+            <section className={TARJETA}>
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-xl font-bold tracking-tight text-slate-900">
+                  Imagen analizada
+                </h2>
+                <button
+                  type="button"
+                  onClick={descargar}
+                  className="shrink-0 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Descargar CSV
+                </button>
+              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={t.resultado.imagen}
+                alt="Recorte analizado de la tira"
+                className="mt-4 w-full rounded-lg border border-slate-200 bg-slate-50 object-contain"
+              />
+              <p className="mt-2 text-sm text-slate-500">
+                {t.resultado.recorte_automatico
+                  ? "El recorte se detectó automáticamente."
+                  : "Se usó el recorte indicado."}
+              </p>
+            </section>
+
+            <section className={TARJETA}>
+              <div className="space-y-5">
+                <div>
+                  <h2 className="text-xl font-bold tracking-tight text-slate-900">
+                    Tira analizada
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-600">
+                    El sistema separó la tira en{" "}
+                    {carrilAnalizado?.fracciones.length ?? 0} partes. Si se ve
+                    bien, seguí; si no, mové las líneas de la curva.
+                  </p>
+                </div>
+
+                {t.resultado.advertencias.map((a) => (
+                  <p
+                    key={a}
+                    className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
+                  >
+                    {a}
+                  </p>
+                ))}
+
+                {carrilAnalizado && (
+                  <ResultadoCarril
+                    key={`${t.version}-${carrilAnalizado.indice}`}
+                    carril={carrilAnalizado}
+                    proteinasTotales={t.parametros.proteinasTotales}
+                    especie={muestra?.especie}
+                    onAjuste={(calculo) =>
+                      registrarAjuste(carrilAnalizado.indice, calculo)
+                    }
+                  />
+                )}
+
+                <div className="flex flex-col gap-2.5 border-t border-slate-100 pt-4 sm:flex-row sm:justify-between">
+                  <button
+                    type="button"
+                    onClick={() => setPaso(2)}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:w-auto"
+                  >
+                    ← Volver
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaso(4)}
+                    className="w-full rounded-lg bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 sm:w-auto"
+                  >
+                    Ver resultado →
+                  </button>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {/* Paso 4: resultado y guardado */}
+        {paso >= 4 && t.resultado && (
+          <section className={TARJETA} hidden={paso !== 4}>
+            <PasoResultado
+              analisis={aplicarAjustes(t.resultado, ajustesActuales)}
+              proteinasTotales={t.parametros.proteinasTotales}
+              onProteinas={(valor) =>
+                t.setParametros({ ...t.parametros, proteinasTotales: valor })
+              }
+              muestra={muestra}
+              muestraFueraDePlazo={muestraFueraDePlazo}
+              onGuardado={alGuardar}
+              onVolver={() => setPaso(3)}
+              onDescargar={descargar}
+              onElegirMuestra={() => setPaso(1)}
+            />
+          </section>
+        )}
+      </div>
+
+      {/* Confirmación final: aparece sobre el paso 4 ya vacío. */}
+      {ultimoGuardado && (
+        <section className={TARJETA}>
+          <ExitoGuardado
+            ensayo={ultimoGuardado}
+            muestra={muestra}
+            onOtraTira={otraTira}
+          />
+        </section>
+      )}
     </div>
   );
 }

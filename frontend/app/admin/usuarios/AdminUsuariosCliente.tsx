@@ -44,29 +44,37 @@ export default function AdminUsuariosCliente() {
   });
   const [ediciones, setEdiciones] = useState<Record<string, Edicion>>({});
 
-  async function cargar() {
-    setCargando(true);
-    setError(null);
-    try {
-      const datos = await listarUsuariosAdmin();
-      setUsuarios(datos);
-      const mapa: Record<string, Edicion> = {};
-      for (const u of datos) {
-        mapa[u.id_investigador] = {
-          nombre: u.nombre,
-          rol_sistema: (u.rol_sistema as RolSistema) || "lectura",
-        };
-      }
-      setEdiciones(mapa);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo cargar los usuarios");
-    } finally {
-      setCargando(false);
+  function aplicarDatos(datos: UsuarioAdmin[]) {
+    setUsuarios(datos);
+    const mapa: Record<string, Edicion> = {};
+    for (const u of datos) {
+      mapa[u.id_investigador] = {
+        nombre: u.nombre,
+        rol_sistema: (u.rol_sistema as RolSistema) || "lectura",
+      };
     }
+    setEdiciones(mapa);
   }
 
   useEffect(() => {
-    void cargar();
+    let activo = true;
+    listarUsuariosAdmin()
+      .then((datos) => {
+        if (activo) aplicarDatos(datos);
+      })
+      .catch((e) => {
+        if (activo) {
+          setError(
+            e instanceof Error ? e.message : "No se pudo cargar los usuarios",
+          );
+        }
+      })
+      .finally(() => {
+        if (activo) setCargando(false);
+      });
+    return () => {
+      activo = false;
+    };
   }, []);
 
   const totalAdmins = useMemo(

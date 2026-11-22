@@ -50,8 +50,8 @@ export function useAnalisisTira() {
     recorte.current = { crop, imagen };
   }
 
-  async function analizar() {
-    if (!archivo) return;
+  async function analizar(): Promise<boolean> {
+    if (!archivo) return false;
     setCargando(true);
     setError(null);
     try {
@@ -69,8 +69,10 @@ export function useAnalisisTira() {
       }
       setResultado(nuevo);
       setVersion((v) => v + 1);
+      return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error desconocido");
+      return false;
     } finally {
       setCargando(false);
     }
@@ -112,6 +114,19 @@ export function useAnalisisTira() {
     setUrlVista(URL.createObjectURL(nuevoArchivo));
   }
 
+  // Vuelve todo a cero: se usa después de guardar para cargar otra tira.
+  function reiniciar() {
+    if (urlVista) URL.revokeObjectURL(urlVista);
+    recorte.current = SIN_RECORTE;
+    setArchivo(null);
+    setUrlVista(null);
+    setResultado(null);
+    setParametros(PARAMETROS_INICIALES);
+    setCargando(false);
+    setPreparando(false);
+    setError(null);
+  }
+
   return {
     archivo,
     urlVista,
@@ -126,5 +141,6 @@ export function useAnalisisTira() {
     fijarRecorte,
     analizar,
     transformarImagen,
+    reiniciar,
   };
 }
