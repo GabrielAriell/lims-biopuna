@@ -8,12 +8,23 @@ from pydantic import BaseModel, Field
 MetodoLectura = Literal["digital_opencv", "espectrofotometro"]
 
 
+class FraccionIn(BaseModel):
+    """Fracción validada/editada por el investigador."""
+
+    nombre_fraccion: str = Field(min_length=1, max_length=80)
+    area_integrada: float = Field(ge=0)
+    porcentaje_relativo: float = Field(ge=0, le=100)
+    concentracion_g_dl: float = Field(ge=0, le=20)
+
+
 class CarrilIn(BaseModel):
-    """Perfil de un carril y los límites que confirmó el investigador."""
+    """Perfil de un carril, límites confirmados y, opcionalmente, fracciones editadas."""
 
     perfil: list[float] = Field(min_length=2, max_length=20_000)
     # Zonas (inicio, fin) inclusivas, en columnas del perfil.
     zonas: list[tuple[int, int]] = Field(min_length=1, max_length=20)
+    # Si el investigador editó nombres/valores, se envían para guardarlos tal cual.
+    fracciones: list[FraccionIn] | None = None
 
 
 class EnsayoIn(BaseModel):
@@ -26,7 +37,9 @@ class EnsayoIn(BaseModel):
     proteinas_totales: float = Field(gt=0, le=20)
     fecha_corrida: datetime | None = None
     metodo_lectura: MetodoLectura = "digital_opencv"
-    carriles: list[CarrilIn] = Field(min_length=1, max_length=20)
+    # Un ensayo equivale a una sola tira: la base guarda un único juego de
+    # fracciones por ensayo (unique id_ensayo, nombre_fraccion).
+    carriles: list[CarrilIn] = Field(min_length=1, max_length=1)
 
 
 class FraccionGuardadaOut(BaseModel):

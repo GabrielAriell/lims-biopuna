@@ -37,9 +37,9 @@ export type Parametros = {
   proteinasTotales: string;
   prominencia: number;
   modo: Modo;
-  nCarriles: string;
   vertical: boolean;
   invertir: boolean;
+  cantidadFracciones: 4 | 5 | 6 | null; // <--- Esto agregué por si quieren borrar.
 };
 
 // (inicio, fin) inclusivos, en columnas del perfil.

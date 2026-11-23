@@ -1,42 +1,45 @@
 import type { AnalisisTira } from "./tipos";
 import type { CarrilParaGuardar } from "./tipos-ensayos";
 
-// Convierte el análisis (ya con los ajustes aplicados) al formato que espera
-// el backend. El backend vuelve a calcular las fracciones con estos perfiles y
-// zonas, así que acá solo se eligen los datos, no los resultados.
+// Convierte el análisis (ya con ajustes/ediciones aplicados) al formato que
+// espera el backend. Un ensayo equivale a una sola tira, así que se envía un
+// único carril con perfil, zonas y las fracciones validadas por el investigador.
 export function prepararCarriles(analisis: AnalisisTira): {
   carriles: CarrilParaGuardar[];
   problemas: string[];
 } {
-  const carriles: CarrilParaGuardar[] = [];
-  const problemas: string[] = [];
-
-  for (const carril of analisis.carriles) {
-    if (carril.error) {
-      problemas.push(`Carril ${carril.indice}: ${carril.error}`);
-      continue;
-    }
-    if (!carril.nombres_asignados) {
-      problemas.push(
-        `Carril ${carril.indice}: tiene ${carril.fracciones.length} fracciones. ` +
-          "Ajustá los límites para obtener 5 o 6 antes de guardar.",
-      );
-      continue;
-    }
-    if (carril.fracciones.length === 0) {
-      problemas.push(`Carril ${carril.indice}: no tiene fracciones.`);
-      continue;
-    }
-
-    carriles.push({
-      perfil: carril.perfil,
-      zonas: carril.fracciones.map(
-        (fraccion) => [fraccion.inicio, fraccion.fin] as [number, number],
-      ),
-    });
+  if (analisis.carriles.length !== 1) {
+    return {
+      carriles: [],
+      problemas: ["El análisis debe tener una sola tira."],
+    };
   }
 
-  return { carriles, problemas };
+  const carril = analisis.carriles[0];
+  if (carril.error) {
+    return { carriles: [], problemas: [carril.error] };
+  }
+  if (carril.fracciones.length === 0) {
+    return { carriles: [], problemas: ["La tira no tiene fracciones."] };
+  }
+
+  return {
+    carriles: [
+      {
+        perfil: carril.perfil,
+        zonas: carril.fracciones.map(
+          (fraccion) => [fraccion.inicio, fraccion.fin] as [number, number],
+        ),
+        fracciones: carril.fracciones.map((fraccion) => ({
+          nombre_fraccion: fraccion.nombre,
+          area_integrada: fraccion.area,
+          porcentaje_relativo: fraccion.porcentaje,
+          concentracion_g_dl: fraccion.concentracion_g_dl ?? 0,
+        })),
+      },
+    ],
+    problemas: [],
+  };
 }
 
 // Acepta coma o punto decimal y valida el mismo rango que la base (0 a 20).

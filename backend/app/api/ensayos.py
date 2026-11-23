@@ -1,10 +1,10 @@
 """Endpoints para guardar y consultar ensayos electroforéticos."""
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile
 from pydantic import ValidationError
 
-from app.api.deps import UsuarioActual, exigir_escritura, usuario_actual
+from app.api.deps import UsuarioActual, exigir_admin, exigir_escritura, usuario_actual
 from app.schemas.ensayos import EnsayoIn, EnsayoOut
 from app.services import cloudinary, ensayos, supabase_rest
 
@@ -72,6 +72,11 @@ async def crear_ensayo(
             raise HTTPException(
                 422, "Algún valor del ensayo no cumple las reglas de la base"
             ) from error
+        if error.codigo == "P0001" and "fecha de corrida" in str(error).lower():
+            raise HTTPException(
+                422,
+                "La fecha de corrida no puede ser anterior a la fecha de extracción de la muestra",
+            ) from error
         raise HTTPException(error.status, str(error)) from error
 
 
@@ -87,3 +92,24 @@ def listar_ensayos(
         raise HTTPException(503, str(error)) from error
     except supabase_rest.SupabaseError as error:
         raise HTTPException(error.status, str(error)) from error
+
+
+@router.delete("/{id_ensayo}", status_code=204)
+def eliminar_ensayo(
+    id_ensayo: int,
+    _admin: Annotated[UsuarioActual, Depends(exigir_admin)],
+) -> Response:
+    """Elimina un ensayo y sus fracciones. Solo administradores.
+
+    Borra primero en la base (fracciones por cascade) y luego intenta limpiar la
+    imagen asociada en Cloudinary (best effort).
+    """
+    try:
+        ensayos.eliminar(id_ensayo)
+    except ensayos.EnsayoNoEncontrado as error:
+        raise HTTPException(404, str(error)) from error
+    except supabase_rest.SupabaseNoConfigurado as error:
+        raise HTTPException(503, str(error)) from error
+    except supabase_rest.SupabaseError as error:
+        raise HTTPException(error.status, str(error)) from error
+    return Response(status_code=204)

@@ -10,9 +10,9 @@ export const PARAMETROS_INICIALES: Parametros = {
   proteinasTotales: "",
   prominencia: 0.05,
   modo: "gris_invertido",
-  nCarriles: "",
   vertical: false,
   invertir: false,
+  cantidadFracciones: null, // <--- Esto agregué por si quieren borrar.
 };
 
 export const SENSIBILIDAD = { min: 0.02, max: 0.3, paso: 0.01 };

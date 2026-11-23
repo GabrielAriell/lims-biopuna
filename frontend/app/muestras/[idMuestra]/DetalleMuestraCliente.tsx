@@ -4,11 +4,12 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import MarcoDashboard from "@/components/MarcoDashboard";
+import { useSesion } from "@/components/ProveedorSesion";
 import Semaforo from "@/components/Semaforo";
-import { listarEnsayos } from "@/lib/api-ensayos";
+import { eliminarEnsayo, listarEnsayos } from "@/lib/api-ensayos";
 import { obtenerMuestra } from "@/lib/api-muestras";
 import { exportarMuestraExcel, exportarMuestraPdf } from "@/lib/api-reportes";
-import { calcularRelacionAG, evaluarValor } from "@/lib/rangos-referencia";
+import { calcularRelacionAG, esNombreAlbumina, evaluarValor } from "@/lib/rangos-referencia";
 import type { EnsayoGuardado } from "@/lib/tipos-ensayos";
 import type { Muestra } from "@/lib/tipos-muestras";
 
@@ -36,11 +37,36 @@ export default function DetalleMuestraCliente({
 }: {
   idMuestra: number;
 }) {
+  const { usuario } = useSesion();
   const [muestra, setMuestra] = useState<Muestra | null>(null);
   const [ensayos, setEnsayos] = useState<EnsayoGuardado[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [exportando, setExportando] = useState<string | null>(null);
+  const [eliminando, setEliminando] = useState<number | null>(null);
+
+  async function recargarDetalle() {
+    const [m, e] = await Promise.all([obtenerMuestra(idMuestra), listarEnsayos(idMuestra)]);
+    setMuestra(m);
+    setEnsayos(e);
+  }
+
+  async function onEliminarEnsayo(idEnsayo: number) {
+    const confirmar = window.confirm(
+      `¿Eliminar el ensayo #${idEnsayo}? Esta acción elimina el ensayo y sus fracciones, y no se puede deshacer.`,
+    );
+    if (!confirmar) return;
+    setEliminando(idEnsayo);
+    setError(null);
+    try {
+      await eliminarEnsayo(idEnsayo);
+      await recargarDetalle();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo eliminar el ensayo");
+    } finally {
+      setEliminando(null);
+    }
+  }
 
   async function exportar(formato: "xlsx" | "pdf") {
     setExportando(formato);
@@ -207,52 +233,101 @@ export default function DetalleMuestraCliente({
                         </span>
                       </p>
                     </div>
-                    {ensayo.url_imagen_tira && (
-                      <a
-                        href={ensayo.url_imagen_tira}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-sm font-medium text-blue-700 underline"
-                      >
-                        Ver imagen de tira
-                      </a>
-                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {ensayo.url_imagen_tira && (
+                        <a
+                          href={ensayo.url_imagen_tira}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sm font-medium text-blue-700 underline"
+                        >
+                          Ver imagen de tira
+                        </a>
+                      )}
+                      {usuario?.rol_sistema === "admin" && (
+                        <button
+                          type="button"
+                          onClick={() => void onEliminarEnsayo(ensayo.id_ensayo)}
+                          disabled={eliminando === ensayo.id_ensayo}
+                          className="rounded border border-red-300 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+                        >
+                          {eliminando === ensayo.id_ensayo ? "Eliminando..." : "Eliminar ensayo"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div className="mt-3 overflow-x-auto">
-                    <table className="min-w-max w-full text-sm">
-                      <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
-                        <tr>
-                          <th className="whitespace-nowrap px-3 py-2">Fracción</th>
-                          <th className="whitespace-nowrap px-3 py-2">%</th>
-                          <th className="whitespace-nowrap px-3 py-2">g/dL</th>
-                          <th className="whitespace-nowrap px-3 py-2">Área</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {ensayo.fracciones.map((f) => {
-                          const ev = evaluarValor(muestra.especie, f.nombre_fraccion, f.concentracion_g_dl);
-                          const clase =
-                            ev?.nivel === "critico"
-                              ? "bg-red-100 text-red-900 font-medium"
-                              : ev?.nivel === "alerta"
-                                ? "bg-yellow-100 text-yellow-900 font-medium"
-                                : "";
-                          return (
-                            <tr key={f.nombre_fraccion} className="border-t border-gray-100">
-                              <td className="whitespace-nowrap px-3 py-2 font-medium">{f.nombre_fraccion}</td>
-                              <td className="whitespace-nowrap px-3 py-2">{num(f.porcentaje_relativo)}</td>
-                              <td
-                                className={`whitespace-nowrap px-3 py-2 ${clase}`}
-                                title={ev && ev.nivel !== "normal" ? ev.etiqueta : undefined}
-                              >
-                                {num(f.concentracion_g_dl)}
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-2">{num(f.area_integrada, 4)}</td>
+                    {(() => {
+                      const idxNombrada = ensayo.fracciones.findIndex((f) =>
+                        esNombreAlbumina(f.nombre_fraccion),
+                      );
+                      let idxAlbumina = idxNombrada >= 0 ? idxNombrada : -1;
+                      if (idxAlbumina < 0) {
+                        let mejor = -1;
+                        ensayo.fracciones.forEach((f, i) => {
+                          const v = f.concentracion_g_dl ?? f.porcentaje_relativo ?? f.area_integrada;
+                          if (v != null && Number.isFinite(v) && v > mejor) {
+                            mejor = v;
+                            idxAlbumina = i;
+                          }
+                        });
+                      }
+                      return (
+                        <table className="min-w-max w-full text-sm">
+                          <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
+                            <tr>
+                              <th className="whitespace-nowrap px-3 py-2">Fracción</th>
+                              <th className="whitespace-nowrap px-3 py-2">%</th>
+                              <th className="whitespace-nowrap px-3 py-2">g/dL</th>
+                              <th className="whitespace-nowrap px-3 py-2">Área</th>
                             </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                          </thead>
+                          <tbody>
+                            {ensayo.fracciones.map((f, i) => {
+                              const ev = evaluarValor(
+                                muestra.especie,
+                                f.nombre_fraccion,
+                                f.concentracion_g_dl,
+                              );
+                              const evAlb =
+                                !ev && i === idxAlbumina
+                                  ? evaluarValor(muestra.especie, "Albúmina", f.concentracion_g_dl)
+                                  : null;
+                              const evFinal = ev ?? evAlb;
+                              const clase =
+                                evFinal?.nivel === "critico"
+                                  ? "bg-red-100 text-red-900 font-medium"
+                                  : evFinal?.nivel === "alerta"
+                                    ? "bg-yellow-100 text-yellow-900 font-medium"
+                                    : "";
+                              return (
+                                <tr key={`${f.nombre_fraccion}-${i}`} className="border-t border-gray-100">
+                                  <td className="whitespace-nowrap px-3 py-2 font-medium">
+                                    {f.nombre_fraccion}
+                                  </td>
+                                  <td className="whitespace-nowrap px-3 py-2">
+                                    {num(f.porcentaje_relativo)}
+                                  </td>
+                                  <td
+                                    className={`whitespace-nowrap px-3 py-2 ${clase}`}
+                                    title={
+                                      evFinal && evFinal.nivel !== "normal"
+                                        ? evFinal.etiqueta
+                                        : undefined
+                                    }
+                                  >
+                                    {num(f.concentracion_g_dl)}
+                                  </td>
+                                  <td className="whitespace-nowrap px-3 py-2">
+                                    {num(f.area_integrada, 4)}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      );
+                    })()}
                     {(() => {
                       const ag = ensayo.relacion_ag ?? calcularRelacionAG(ensayo.fracciones, ensayo.proteinas_totales_g_dl);
                       const evAg = evaluarValor(muestra.especie, "A/G", ag);
@@ -262,14 +337,34 @@ export default function DetalleMuestraCliente({
                           : evAg?.nivel === "alerta"
                             ? "bg-yellow-100 text-yellow-900"
                             : "";
+                      const idxNombrada = ensayo.fracciones.findIndex((f) =>
+                        esNombreAlbumina(f.nombre_fraccion),
+                      );
+                      let idxAlbumina = idxNombrada >= 0 ? idxNombrada : -1;
+                      if (idxAlbumina < 0) {
+                        let mejor = -1;
+                        ensayo.fracciones.forEach((f, i) => {
+                          const v = f.concentracion_g_dl ?? f.porcentaje_relativo ?? f.area_integrada;
+                          if (v != null && Number.isFinite(v) && v > mejor) {
+                            mejor = v;
+                            idxAlbumina = i;
+                          }
+                        });
+                      }
                       const etiquetas = Array.from(
                         new Set(
                           [
                             ...ensayo.fracciones
-                              .map((f) => {
+                              .map((f, i) => {
                                 const ev = evaluarValor(muestra.especie, f.nombre_fraccion, f.concentracion_g_dl);
-                                return ev && ev.nivel !== "normal" && ev.etiqueta
-                                  ? `${f.nombre_fraccion}: ${ev.etiqueta}`
+                                const evAlb =
+                                  !ev && i === idxAlbumina
+                                    ? evaluarValor(muestra.especie, "Albúmina", f.concentracion_g_dl)
+                                    : null;
+                                const evFinal = ev ?? evAlb;
+                                const etiquetaParam = ev ? f.nombre_fraccion : evAlb ? "Albúmina" : f.nombre_fraccion;
+                                return evFinal && evFinal.nivel !== "normal" && evFinal.etiqueta
+                                  ? `${etiquetaParam}: ${evFinal.etiqueta}`
                                   : null;
                               })
                               .filter((x): x is string => Boolean(x)),

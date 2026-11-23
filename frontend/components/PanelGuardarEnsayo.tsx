@@ -81,10 +81,10 @@ export default function PanelGuardarEnsayo({
       <div>
         <h2 className="text-lg font-semibold">Guardar ensayo</h2>
         <p className="max-w-3xl text-sm text-gray-600">
-          Se guarda el análisis de la muestra #{idMuestra}. El backend vuelve a
-          calcular las fracciones con los límites que ajustaste y sube la imagen
-          a Cloudinary. La muestra pasa a &quot;procesada&quot; cuando el
-          guardado termina bien.
+          Se guarda el análisis de la muestra #{idMuestra}. El backend valida los
+          datos y guarda las fracciones confirmadas (incluidos los ajustes y
+          ediciones del investigador) y sube la imagen a Cloudinary. La muestra
+          pasa a &quot;procesada&quot; cuando el guardado termina bien.
         </p>
       </div>
 

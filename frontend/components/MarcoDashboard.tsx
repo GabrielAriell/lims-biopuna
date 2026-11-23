@@ -10,6 +10,7 @@ import {
   ClipboardList,
   BarChart3,
   User,
+  Users,
   LogOut,
   AlertTriangle,
   Menu,
@@ -17,13 +18,29 @@ import {
   Search,
   ChevronRight,
   ShieldCheck,
+  HeartPulse,
+  type LucideIcon,
 } from "lucide-react";
 
 import { useSesion } from "./ProveedorSesion";
 import { useMuestras } from "@/hooks/useMuestras";
 import { construirAlertasCriticas } from "@/lib/alertas";
 
-export type SeccionNav = "inicio" | "muestras" | "ensayos" | "exploracion" | "prioridades";
+export type SeccionNav =
+  | "inicio"
+  | "muestras"
+  | "ensayos"
+  | "exploracion"
+  | "prioridades"
+  | "salud"
+  | "admin";
+
+function etiquetaRol(rol?: string | null): string {
+  if (rol === "admin") return "Administrador";
+  if (rol === "investigador") return "Investigador";
+  if (rol === "lectura") return "Solo lectura";
+  return rol || "Usuario";
+}
 
 type Props = {
   activa?: SeccionNav;
@@ -32,32 +49,45 @@ type Props = {
   children: ReactNode;
 };
 
-const ITEMS_MENU = [
+type ItemMenu = {
+  href: string;
+  seccion: SeccionNav;
+  etiqueta: string;
+  icono: LucideIcon;
+};
+
+const ITEMS_MENU_BASE: ItemMenu[] = [
   {
     href: "/",
-    seccion: "inicio" as SeccionNav,
+    seccion: "inicio",
     etiqueta: "Inicio",
     icono: LayoutDashboard,
   },
   {
     href: "/prioridades",
-    seccion: "prioridades" as SeccionNav,
+    seccion: "prioridades",
     etiqueta: "Prioridades (48h)",
     icono: Clock,
   },
   {
     href: "/muestras",
-    seccion: "muestras" as SeccionNav,
+    seccion: "muestras",
     etiqueta: "Muestras y Campañas",
     icono: ClipboardList,
   },
   {
     href: "/exploracion",
-    seccion: "exploracion" as SeccionNav,
+    seccion: "exploracion",
     etiqueta: "Reportes y Datos",
     icono: BarChart3,
   },
-] as const;
+  {
+    href: "/salud",
+    seccion: "salud" as SeccionNav,
+    etiqueta: "Salud Poblacional",
+    icono: HeartPulse,
+  },
+];
 
 export default function MarcoDashboard({
   activa = "inicio",
@@ -71,6 +101,18 @@ export default function MarcoDashboard({
   const [busqueda, setBusqueda] = useState("");
 
   const criticas = useMemo(() => construirAlertasCriticas(muestras).length, [muestras]);
+  const itemsMenu = useMemo<ItemMenu[]>(() => {
+    const items = [...ITEMS_MENU_BASE];
+    if (usuario?.rol_sistema === "admin") {
+      items.push({
+        href: "/admin/usuarios",
+        seccion: "admin",
+        etiqueta: "Administración",
+        icono: Users,
+      });
+    }
+    return items;
+  }, [usuario?.rol_sistema]);
 
   function ejecutarBusqueda(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter" && busqueda.trim()) {
@@ -136,7 +178,7 @@ export default function MarcoDashboard({
             Menú
           </span>
 
-          {ITEMS_MENU.map((item) => {
+          {itemsMenu.map((item) => {
             const esActiva = activa === item.seccion;
             const Icono = item.icono;
             const tieneAlerta = item.seccion === "prioridades" && criticas > 0;
@@ -192,7 +234,7 @@ export default function MarcoDashboard({
                     {usuario.nombre}
                   </span>
                   <span className="text-[10px] text-slate-500 font-medium truncate">
-                    Investigador
+                    {etiquetaRol(usuario.rol_sistema)}
                   </span>
                 </div>
               </div>
@@ -270,7 +312,7 @@ export default function MarcoDashboard({
               <ChevronRight className="h-4 w-4" />
             </Link>
 
-            {ITEMS_MENU.map((item) => {
+            {itemsMenu.map((item) => {
               const esActiva = activa === item.seccion;
               const Icono = item.icono;
               const tieneAlerta = item.seccion === "prioridades" && criticas > 0;
@@ -335,7 +377,12 @@ export default function MarcoDashboard({
             </Link>
             <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
             <span className="font-bold text-slate-800">
-              {titulo || (activa === "inicio" ? "Inicio" : activa)}
+              {titulo ||
+                (activa === "inicio"
+                  ? "Inicio"
+                  : activa === "admin"
+                    ? "Administración"
+                    : activa)}
             </span>
           </div>
 

@@ -9,6 +9,7 @@ import {
   Clock,
   FlaskConical,
   LogOut,
+  Shield,
   User,
   AlertTriangle,
   Menu,
@@ -19,7 +20,20 @@ import { construirAlertasCriticas } from "@/lib/alertas";
 import { useMuestras } from "@/hooks/useMuestras";
 import { useSesion } from "./ProveedorSesion";
 
-type Seccion = "inicio" | "muestras" | "ensayos" | "exploracion" | "prioridades";
+type Seccion =
+  | "inicio"
+  | "muestras"
+  | "ensayos"
+  | "exploracion"
+  | "prioridades"
+  | "admin";
+
+function etiquetaRol(rol?: string | null): string {
+  if (rol === "admin") return "Administrador";
+  if (rol === "investigador") return "Investigador";
+  if (rol === "lectura") return "Solo lectura";
+  return rol || "Usuario";
+}
 
 type Props = {
   activa?: Seccion;
@@ -108,6 +122,20 @@ export default function Encabezado({ activa }: Props) {
             )}
           </Link>
 
+          {usuario?.rol_sistema === "admin" && (
+            <Link
+              href="/admin/usuarios"
+              className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold transition-all ${
+                activa === "admin"
+                  ? "bg-emerald-50 text-emerald-800 border border-emerald-200/80 shadow-2xs"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            >
+              <Shield className={`h-4 w-4 ${activa === "admin" ? "text-emerald-700" : "text-slate-500"}`} />
+              <span>Administración</span>
+            </Link>
+          )}
+
           <Link
             href="/ensayos/nuevo"
             className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold shadow-xs transition-all ${
@@ -132,7 +160,7 @@ export default function Encabezado({ activa }: Props) {
                 <span className="max-w-[7rem] truncate text-xs font-bold text-slate-800 sm:max-w-[10rem]">
                   {usuario.nombre}
                 </span>
-                <span className="text-[10px] text-slate-500 font-medium">Investigador</span>
+                <span className="text-[10px] text-slate-500 font-medium">{etiquetaRol(usuario.rol_sistema)}</span>
               </div>
               <button
                 type="button"
@@ -220,11 +248,28 @@ export default function Encabezado({ activa }: Props) {
               <span>Exploración y Reportes</span>
             </Link>
 
+            {usuario?.rol_sistema === "admin" && (
+              <Link
+                href="/admin/usuarios"
+                onClick={() => setMenuAbierto(false)}
+                className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-sm font-semibold ${
+                  activa === "admin"
+                    ? "bg-emerald-50 text-emerald-900 border-emerald-300"
+                    : "border-slate-200 text-slate-700 bg-slate-50/50"
+                }`}
+              >
+                <Shield className="h-5 w-5 text-emerald-700" />
+                <span>Administración de usuarios</span>
+              </Link>
+            )}
+
             {usuario && (
               <div className="mt-2 pt-3 border-t border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4 text-slate-500" />
-                  <span className="text-xs font-semibold text-slate-800">{usuario.nombre}</span>
+                  <span className="text-xs font-semibold text-slate-800">
+                    {usuario.nombre} · {etiquetaRol(usuario.rol_sistema)}
+                  </span>
                 </div>
                 <button
                   type="button"

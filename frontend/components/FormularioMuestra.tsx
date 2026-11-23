@@ -6,7 +6,7 @@ import { crearMuestra } from "@/lib/api-muestras";
 import type { Campana, Especie, NuevaMuestra } from "@/lib/tipos-muestras";
 
 const CAMPO = "w-full rounded border border-gray-300 bg-white px-3 py-2 text-gray-900";
-const ESPECIES: Especie[] = ["Llama", "Vicuña", "Ovino"];
+const ESPECIES: Especie[] = ["Llama", "Vicuña", "Oveja", "Caballo"];
 
 type Props = {
   campanas: Campana[];
@@ -26,7 +26,6 @@ export default function FormularioMuestra({
   const [codigo, setCodigo] = useState("");
   const [especie, setEspecie] = useState<Especie>("Llama");
   const [fechaLocal, setFechaLocal] = useState("");
-  const [urlFoto, setUrlFoto] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,12 +49,10 @@ export default function FormularioMuestra({
         // datetime-local no trae zona horaria: el navegador la interpreta
         // como hora local y toISOString() la convierte a UTC.
         fecha_hora_extraccion: new Date(fechaLocal).toISOString(),
-        url_foto_campo: urlFoto.trim() || undefined,
       };
       await crearMuestra(datos);
       setCodigo("");
       setFechaLocal("");
-      setUrlFoto("");
       await onCreada();
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo guardar la muestra");
@@ -143,19 +140,6 @@ export default function FormularioMuestra({
           required
           value={fechaLocal}
           onChange={(e) => setFechaLocal(e.target.value)}
-          className={CAMPO}
-        />
-      </div>
-
-      <div>
-        <label className="mb-1 block text-sm font-medium">
-          URL de la foto de campo (opcional)
-        </label>
-        <input
-          type="url"
-          placeholder="https://..."
-          value={urlFoto}
-          onChange={(e) => setUrlFoto(e.target.value)}
           className={CAMPO}
         />
       </div>

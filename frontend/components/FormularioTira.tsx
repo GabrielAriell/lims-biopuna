@@ -118,24 +118,6 @@ export default function FormularioTira({
           />
         </div>
         <div>
-          <label
-            htmlFor="tira-carriles"
-            className="mb-1 block text-sm font-medium"
-          >
-            Cantidad de carriles
-          </label>
-          <input
-            id="tira-carriles"
-            type="number"
-            min={1}
-            max={20}
-            placeholder="Automático"
-            value={parametros.nCarriles}
-            onChange={(e) => cambiar("nCarriles", e.target.value)}
-            className={CAMPO}
-          />
-        </div>
-        <div>
           <label htmlFor="tira-modo" className="mb-1 block text-sm font-medium">
             Modo de lectura
           </label>
@@ -171,8 +153,34 @@ export default function FormularioTira({
           />
           <p className="text-xs text-gray-500">Más bajo detecta más fracciones; más alto, menos.</p>
         </div>
-      </div>
+        
+        <div>
+          <label
+            htmlFor="tira-fracciones"
+            className="mb-1 block text-sm font-medium"
+          >
+            Cantidad de fracciones
+          </label>
+          <select
+            id="tira-fracciones"
+            value={parametros.cantidadFracciones ?? ""}
+            onChange={(e) =>
+              cambiar(
+                "cantidadFracciones",
+                e.target.value ? (Number(e.target.value) as 4 | 5 | 6) : null,
+              )
+            }
+            className={CAMPO}
+          >
+            <option value="">Automático (según picos)</option>
+            <option value="4">4 fracciones (Alb, α, β, γ)</option>
+            <option value="5">5 fracciones (Alb, α1, α2, β, γ)</option>
+            <option value="6">6 fracciones (Alb, α1, α2, β1, β2, γ)</option>
+          </select>
+        </div>
 
+      </div>
+{/*
       <div className="flex flex-wrap gap-6 text-sm">
         <label className="flex items-center gap-2">
           <input
@@ -190,7 +198,7 @@ export default function FormularioTira({
           />
           La tira está parada (vertical)
         </label>
-      </div>
+      </div> */}
     </section>
   );
 }

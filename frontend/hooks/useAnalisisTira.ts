@@ -76,6 +76,42 @@ export function useAnalisisTira() {
     }
   }
 
+  async function transformarImagen(tipo: "izq" | "der" | "espejo") {
+    if (!archivo || !urlVista) return;
+    const img = new Image();
+    img.src = urlVista;
+    await img.decode();
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    if (tipo === "espejo") {
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+    } else {
+      canvas.width = img.naturalHeight;
+      canvas.height = img.naturalWidth;
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate((tipo === "der" ? 90 : -90) * (Math.PI / 180));
+      ctx.translate(-img.naturalWidth / 2, -img.naturalHeight / 2);
+    }
+    ctx.drawImage(img, 0, 0);
+
+    const blob = await new Promise<Blob | null>((res) =>
+      canvas.toBlob(res, archivo.type || "image/png", 0.95),
+    );
+    if (!blob) return;
+
+    const nuevoArchivo = new File([blob], archivo.name, { type: blob.type });
+    URL.revokeObjectURL(urlVista);
+    recorte.current = SIN_RECORTE;
+    setArchivo(nuevoArchivo);
+    setUrlVista(URL.createObjectURL(nuevoArchivo));
+  }
+
   return {
     archivo,
     urlVista,
@@ -89,5 +125,6 @@ export function useAnalisisTira() {
     elegirArchivo,
     fijarRecorte,
     analizar,
+    transformarImagen,
   };
 }

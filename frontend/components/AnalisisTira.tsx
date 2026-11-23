@@ -43,6 +43,8 @@ export default function AnalisisTira({
 
   // Solo valen los ajustes del análisis actual; al analizar otra tira se ignoran.
   const ajustesActuales = ajustes.version === t.version ? ajustes.porCarril : {};
+  // Un ensayo equivale a una sola tira: el backend siempre devuelve un carril.
+  const carrilAnalizado = t.resultado?.carriles[0] ?? null;
 
   function registrarAjuste(indice: number, calculo: CalculoLimites | null) {
     setAjustes((prev) => {
@@ -82,6 +84,7 @@ export default function AnalisisTira({
             key={t.urlVista}
             src={t.urlVista}
             onRecorte={t.fijarRecorte}
+            onTransformar={t.transformarImagen}
           />
           <button
             onClick={t.analizar}
@@ -103,10 +106,7 @@ export default function AnalisisTira({
         <>
           <section className="space-y-3 rounded-lg border border-gray-200 bg-white p-5">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">
-                Imagen analizada ({t.resultado.carriles.length}{" "}
-                {t.resultado.carriles.length === 1 ? "carril" : "carriles"})
-              </h2>
+              <h2 className="text-lg font-semibold">Imagen analizada</h2>
               <button
                 onClick={exportar}
                 className="rounded border border-gray-300 px-3 py-1 text-sm"
@@ -135,15 +135,17 @@ export default function AnalisisTira({
             ))}
           </section>
 
-          {t.resultado.carriles.map((carril) => (
+          {carrilAnalizado && (
             <ResultadoCarril
-              key={`${t.version}-${carril.indice}`}
-              carril={carril}
+              key={`${t.version}-${carrilAnalizado.indice}`}
+              carril={carrilAnalizado}
               proteinasTotales={t.parametros.proteinasTotales}
               especie={especie}
-              onAjuste={(calculo) => registrarAjuste(carril.indice, calculo)}
+              onAjuste={(calculo) =>
+                registrarAjuste(carrilAnalizado.indice, calculo)
+              }
             />
-          ))}
+          )}
 
           {idMuestra !== undefined && (
             <PanelGuardarEnsayo
