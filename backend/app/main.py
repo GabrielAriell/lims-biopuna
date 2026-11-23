@@ -3,7 +3,17 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, ensayos, geografia, health, investigadores, muestras, reportes, tiras
+from app.api import (
+    auth,
+    cabina,
+    ensayos,
+    geografia,
+    health,
+    investigadores,
+    muestras,
+    reportes,
+    tiras,
+)
 
 app = FastAPI(title="Camelia Biotech API")
 
@@ -32,6 +42,7 @@ app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(geografia.router)
 app.include_router(tiras.router)
+app.include_router(cabina.router)
 app.include_router(ensayos.router)
 app.include_router(investigadores.router)
 app.include_router(muestras.router)

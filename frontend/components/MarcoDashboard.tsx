@@ -115,11 +115,10 @@ export default function MarcoDashboard({
         <div className="p-3 border-b border-slate-100">
           <Link
             href="/ensayos/nuevo"
-            className={`flex items-center justify-between w-full px-3.5 py-2.5 rounded-xl text-sm font-bold shadow-xs transition-all ${
-              activa === "ensayos"
+            className={`flex items-center justify-between w-full px-3.5 py-2.5 rounded-xl text-sm font-bold shadow-xs transition-all ${activa === "ensayos"
                 ? "bg-emerald-700 text-white shadow-md ring-2 ring-emerald-600/30"
                 : "bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-sm"
-            }`}
+              }`}
           >
             <div className="flex items-center gap-2.5">
               <FlaskConical className="h-4 w-4 text-emerald-100" />
@@ -146,17 +145,15 @@ export default function MarcoDashboard({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                  esActiva
+                className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${esActiva
                     ? "bg-emerald-50 text-emerald-950 font-bold border border-emerald-200/80 shadow-2xs"
                     : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900"
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <Icono
-                    className={`h-4 w-4 ${
-                      esActiva ? "text-emerald-700" : "text-slate-500"
-                    }`}
+                    className={`h-4 w-4 ${esActiva ? "text-emerald-700" : "text-slate-500"
+                      }`}
                   />
                   <span>{item.etiqueta}</span>
                 </div>
@@ -283,11 +280,10 @@ export default function MarcoDashboard({
                   key={item.href}
                   href={item.href}
                   onClick={() => setMenuMovil(false)}
-                  className={`flex items-center justify-between rounded-xl border px-4 py-2.5 text-sm font-semibold ${
-                    esActiva
+                  className={`flex items-center justify-between rounded-xl border px-4 py-2.5 text-sm font-semibold ${esActiva
                       ? "bg-emerald-50 text-emerald-900 border-emerald-300 font-bold"
                       : "border-slate-200 text-slate-700 bg-slate-50/50"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-2.5">
                     <Icono className="h-4 w-4 text-slate-500" />

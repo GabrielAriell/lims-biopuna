@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import { useState, type DragEvent } from "react";
 
 import CamaraTira from "./CamaraTira";
+import ModalCabinaDensitometro from "./ModalCabinaDensitometro";
 import { MODOS, SENSIBILIDAD, TIPOS_IMAGEN } from "@/lib/config";
 import type { Modo, Parametros } from "@/lib/tipos";
 
@@ -22,7 +23,8 @@ export default function FormularioTira({
   onParametros,
   nombreArchivo,
 }: Props) {
-  const [camaraAbierta, setCamaraAbierta] = useState(false);
+  const [modalCabinaAbierto, setModalCabinaAbierto] = useState(false);
+  const [camaraWebAbierta, setCamaraWebAbierta] = useState(false);
 
   const cambiar = <K extends keyof Parametros>(clave: K, valor: Parametros[K]) =>
     onParametros({ ...parametros, [clave]: valor });
@@ -44,19 +46,20 @@ export default function FormularioTira({
         >
           <span className="min-w-0">
             <span className="block text-sm font-medium">
-              Elegí una imagen, arrastrala acá o usá la cámara integrada
+              Elegí una imagen, arrastrala acá o usá la cámara / densitómetro de cabina
             </span>
             <span className="block text-xs text-blue-700">
-              JPG, PNG, TIFF o BMP. “Abrir cámara” muestra la vista en vivo con guías.
+              JPG, PNG, TIFF o BMP. Permite captura desde la cabina física o cámara web.
             </span>
           </span>
           <span className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => setCamaraAbierta(true)}
-              className="rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700"
+              onClick={() => setModalCabinaAbierto(true)}
+              className="rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 flex items-center gap-1.5"
             >
-              Abrir cámara
+              <span className="inline-block h-2 w-2 rounded-full bg-emerald-200 animate-pulse" />
+              Usar cámara / Cabina
             </button>
             <label
               htmlFor="tira-archivo"
@@ -76,9 +79,17 @@ export default function FormularioTira({
             className="sr-only"
           />
         </div>
+
+        <ModalCabinaDensitometro
+          abierto={modalCabinaAbierto}
+          onCerrar={() => setModalCabinaAbierto(false)}
+          onCapturaExitosa={(archivo) => onArchivo(archivo)}
+          onUsarCamaraWeb={() => setCamaraWebAbierta(true)}
+        />
+
         <CamaraTira
-          abierta={camaraAbierta}
-          onCerrar={() => setCamaraAbierta(false)}
+          abierta={camaraWebAbierta}
+          onCerrar={() => setCamaraWebAbierta(false)}
           onCapturar={(archivo) => onArchivo(archivo)}
         />
         <p className="mt-2 text-sm text-gray-600">

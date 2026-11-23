@@ -1,0 +1,7 @@
+# Dependencias para la Cabina Densitométrica de Celogel (Hardware local)
+# Si vas a usar la cabina en tu equipo con la cámara USB y el Arduino:
+opencv-python>=4.8.0
+pyfirmata2>=2.0.0
+pyserial>=3.5
+scipy>=1.10.0
+numpy>=1.24.0
