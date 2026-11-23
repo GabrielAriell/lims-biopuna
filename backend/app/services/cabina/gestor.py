@@ -25,10 +25,12 @@ def detectar_camaras_con_nombre() -> list[dict]:
     if nombres_dshow:
         for idx, nombre_base in enumerate(nombres_dshow):
             # Identificar la cámara USB física de la cabina
-            es_cabina = any(
-                k in nombre_base.upper()
-                for k in ["USB", "CABINA", "UVC", "MICROSCOPE", "CAM"]
-            ) and "IVCAM" not in nombre_base.upper()
+            nombre_up = nombre_base.upper()
+            es_virtual = any(v in nombre_up for v in ["IVCAM", "OBS", "VIRTUAL"])
+            es_cabina = (
+                any(k in nombre_up for k in ["USB", "CABINA", "UVC", "MICROSCOPE", "CAM"])
+                and not es_virtual
+            )
 
             nombre_final = nombre_base
             if es_cabina and "Cabina" not in nombre_base:

@@ -25,7 +25,7 @@ def obtener_estado_cabina():
     """Consulta el estado del hardware, cámaras reales detectadas y color de luces."""
     camaras = gestor_cabina.camaras_disponibles
     if not camaras:
-        camaras = detectar_camaras_con_nombre(gestor_cabina.camara_idx)
+        camaras = detectar_camaras_con_nombre()
         gestor_cabina.camaras_disponibles = camaras
 
     cam_actual_ok = gestor_cabina.cam is not None and gestor_cabina.cam.esta_abierta()

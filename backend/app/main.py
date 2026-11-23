@@ -47,6 +47,7 @@ app.add_middleware(
     allow_origin_regex=_ORIGENES_RED_LOCAL,
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_private_network=True,
     expose_headers=["Content-Disposition"],
 )
 

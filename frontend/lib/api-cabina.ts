@@ -11,6 +11,26 @@ export function obtenerUrlCabina(): string {
   return "http://127.0.0.1:8000";
 }
 
+/**
+ * Indica si conviene intentar primero el bridge Python local (entorno localhost
+ * o variable NEXT_PUBLIC_CABINA_URL apuntando a un servidor remoto dedicado).
+ * En producción HTTPS sin servidor dedicado, se prioriza WebRTC + Web Serial
+ * directamente desde el navegador para evitar bloqueos PNA/Mixed Content.
+ */
+export function debeIntentarBridgeLocal(): boolean {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname;
+  if (host === "localhost" || host === "127.0.0.1") {
+    return true;
+  }
+  const urlCabina = obtenerUrlCabina();
+  return (
+    urlCabina.startsWith("https://") &&
+    !urlCabina.includes("127.0.0.1") &&
+    !urlCabina.includes("localhost")
+  );
+}
+
 export type CamaraInfo = {
   idx: number;
   nombre: string;
@@ -51,12 +71,18 @@ export function urlStreamVideo(): string {
   return `${obtenerUrlCabina()}/cabina/video_feed?t=${Date.now()}`;
 }
 
-export async function consultarEstadoCabina(): Promise<EstadoCabina | null> {
+export async function consultarEstadoCabina(
+  timeoutMs = 1500,
+): Promise<EstadoCabina | null> {
   const baseUrl = obtenerUrlCabina();
   try {
+    const signal =
+      typeof AbortSignal !== "undefined" && "timeout" in AbortSignal
+        ? AbortSignal.timeout(timeoutMs)
+        : undefined;
     return await pedirJson<EstadoCabina>(
       `${baseUrl}/cabina/estado`,
-      { method: "GET" },
+      { method: "GET", signal },
       { conSesion: false },
     );
   } catch {
