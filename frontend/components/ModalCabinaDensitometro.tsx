@@ -207,6 +207,13 @@ function ContenidoModalCabina({
     startRoi: [number, number, number, number];
   } | null>(null);
 
+  const obtenerControladorArduino = useCallback((): ControladorArduinoWeb => {
+    if (!arduinoRef.current) {
+      arduinoRef.current = new ControladorArduinoWeb();
+    }
+    return arduinoRef.current;
+  }, []);
+
   const detenerStreams = useCallback(() => {
     if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current);
@@ -368,10 +375,7 @@ function ContenidoModalCabina({
 
     const iniciarArduinoWeb = async () => {
       if (!soportaWebSerial()) return;
-      if (!arduinoRef.current) {
-        arduinoRef.current = new ControladorArduinoWeb();
-      }
-      const ctrl = arduinoRef.current;
+      const ctrl = obtenerControladorArduino();
       const ok = await ctrl.intentarAutoconectar(modoTincionRef.current);
       if (!cancelado && ok) {
         setArduinoWebConectado(true);
@@ -386,7 +390,7 @@ function ContenidoModalCabina({
       cancelado = true;
       detenerStreams();
     };
-  }, [modoConexion, abrirStreamCamaraWeb, detenerStreams]);
+  }, [modoConexion, abrirStreamCamaraWeb, detenerStreams, obtenerControladorArduino]);
 
   // Bucle de renderizado en vivo (corrección óptica + curva densitométrica + HUD)
   useEffect(() => {
@@ -675,15 +679,11 @@ function ContenidoModalCabina({
     setAvisoArduino(null);
     setArduinoConectando(true);
     try {
-      if (!arduinoRef.current) {
-        arduinoRef.current = new ControladorArduinoWeb();
-      }
-      const ok = await arduinoRef.current.conectarConSelector(
-        modoTincionRef.current,
-      );
+      const ctrl = obtenerControladorArduino();
+      const ok = await ctrl.conectarConSelector(modoTincionRef.current);
       setArduinoWebConectado(ok);
       if (ok) {
-        setArduinoWebColor(arduinoRef.current.colorActivo);
+        setArduinoWebColor(ctrl.colorActivo);
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === "NotFoundError") {
@@ -894,7 +894,7 @@ function ContenidoModalCabina({
             onPointerDown={(e) => iniciarArrastre("mover", e)}
             className="absolute z-20 cursor-move border-2 border-emerald-400 bg-emerald-400/10 transition-colors hover:bg-emerald-400/20 shadow-[0_0_15px_rgba(52,211,153,0.3)]"
           >
-            <div className="absolute -top-5 left-0 rounded bg-emerald-700/90 px-1.5 py-0.2 text-[9px] font-semibold text-white pointer-events-none">
+            <div className="absolute top-1 left-1 rounded bg-emerald-700/85 px-1.5 py-0.2 text-[9px] font-semibold text-white pointer-events-none">
               Alineación de Tira
             </div>
 

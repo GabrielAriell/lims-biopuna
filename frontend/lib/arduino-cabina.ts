@@ -254,8 +254,14 @@ export class ControladorArduinoWeb {
     if (!this.conectado || !this.writer) return;
     try {
       const cr = clampByte(r);
-      const cg = clampByte(g);
+      let cg = clampByte(g);
       const cb = clampByte(b);
+
+      // En este controlador/tira LED, si pines 10 y 11 quedan ambos en 255 (HIGH),
+      // el canal rojo (pin 9) deja de conducir; un mínimo PWM (253) en pin 10 lo mantiene activo.
+      if (cr > 0 && cg === 0 && cb === 0) {
+        cg = 2;
+      }
 
       // Lógica invertida para tira LED RGB de ánodo común (+12V)
       const pr = 255 - cr;

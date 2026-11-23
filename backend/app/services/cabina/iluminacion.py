@@ -94,6 +94,10 @@ class ControladorIluminacion:
             r = max(0, min(255, int(r)))
             g = max(0, min(255, int(g)))
             b = max(0, min(255, int(b)))
+            # Si pines 10 y 11 quedan ambos en 255 (HIGH), el canal rojo (pin 9)
+            # deja de conducir en este hardware; un mínimo PWM (253) en pin 10 lo mantiene activo.
+            if r > 0 and g == 0 and b == 0:
+                g = 2
             # Lógica invertida para tira LED RGB de ánodo común (+12V)
             pr = 1.0 - (r / 255.0)
             pg = 1.0 - (g / 255.0)
