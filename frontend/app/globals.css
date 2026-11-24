@@ -213,8 +213,19 @@ body {
 .dark .bg-rose-50 {
   background-color: #4c0519;
 }
+.dark .bg-purple-50,
+.dark .bg-purple-100 {
+  background-color: #3b0764;
+}
+.dark .bg-blue-50,
 .dark .bg-blue-100 {
   background-color: #172554;
+}
+.dark .bg-teal-50 {
+  background-color: #042f2e;
+}
+.dark .bg-indigo-50 {
+  background-color: #1e1b4b;
 }
 
 /* ---- Bordes claros → bordes de noche ---- */
@@ -258,6 +269,11 @@ body {
 .dark .border-rose-200\/70 {
   border-color: #9f1239;
 }
+.dark .border-purple-100,
+.dark .border-purple-200,
+.dark .border-purple-300 {
+  border-color: #6b21a8;
+}
 .dark .border-yellow-200,
 .dark .border-yellow-300 {
   border-color: #854d0e;
@@ -273,6 +289,12 @@ body {
 }
 .dark .border-blue-300 {
   border-color: #1e40af;
+}
+.dark .border-teal-300 {
+  border-color: #115e59;
+}
+.dark .border-indigo-300 {
+  border-color: #3730a3;
 }
 
 /* ---- Textos ---- */
@@ -331,8 +353,20 @@ body {
 .dark .text-rose-800 {
   color: #fda4af;
 }
-.dark .text-blue-700 {
+.dark .text-purple-700,
+.dark .text-purple-800,
+.dark .text-purple-900 {
+  color: #d8b4fe;
+}
+.dark .text-blue-700,
+.dark .text-blue-900 {
   color: #93c5fd;
+}
+.dark .text-teal-900 {
+  color: #5eead4;
+}
+.dark .text-indigo-900 {
+  color: #a5b4fc;
 }
 
 /* ---- Estados interactivos ---- */
@@ -344,7 +378,8 @@ body {
 .dark .hover\:bg-gray-100:hover {
   background-color: #1e293b;
 }
-.dark .hover\:bg-slate-200:hover {
+.dark .hover\:bg-slate-200:hover,
+.dark .hover\:bg-gray-200:hover {
   background-color: #334155;
 }
 .dark .hover\:bg-slate-50\/80:hover {

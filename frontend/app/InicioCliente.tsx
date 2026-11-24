@@ -8,6 +8,7 @@ import {
   ClipboardPlus,
   ArrowRight,
   CheckCircle2,
+  XCircle,
   AlertTriangle,
   type LucideIcon,
 } from "lucide-react";
@@ -18,6 +19,7 @@ import {
   construirAlertasCriticas,
   construirAlertas,
   textoAlerta,
+  LIMITE_HORAS,
   type NivelAlerta,
 } from "@/lib/alertas";
 import { useMuestras } from "@/hooks/useMuestras";
@@ -97,14 +99,21 @@ export default function InicioCliente() {
 
   // Conteos por estado del semáforo biológico
   const conteos = useMemo(() => {
-    const contar = (estado: string) =>
-      muestras.filter((m) => m.estado_48h === estado).length;
-    return {
-      verde: contar("verde"),
-      amarillo: contar("amarillo"),
-      rojo: contar("rojo"),
-      procesada: contar("procesada"),
+    const cuenta = {
+      verde: 0,
+      amarillo: 0,
+      rojo: 0,
+      fuera_de_termino: 0,
+      procesada: 0,
     };
+    for (const m of muestras) {
+      if (m.estado_48h !== "procesada" && m.horas_transcurridas > LIMITE_HORAS) {
+        cuenta.fuera_de_termino += 1;
+      } else {
+        cuenta[m.estado_48h] += 1;
+      }
+    }
+    return cuenta;
   }, [muestras]);
 
   const nombre = usuario?.nombre?.trim().split(/\s+/)[0];
@@ -126,41 +135,36 @@ export default function InicioCliente() {
                 <Link
                   key={tarea.href}
                   href={tarea.href}
-                  className={`group flex items-center gap-4 rounded-xl border p-4 shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/40 sm:p-5 ${
-                    tarea.destacada
-                      ? "border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800"
-                      : "border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/40"
-                  }`}
+                  className={`group flex items-center gap-4 rounded-xl border p-4 shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/40 sm:p-5 ${tarea.destacada
+                    ? "border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800"
+                    : "border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/40"
+                    }`}
                 >
                   <span
-                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg ${
-                      tarea.destacada
-                        ? "bg-white/15 text-white"
-                        : "bg-emerald-100 text-emerald-800"
-                    }`}
+                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg ${tarea.destacada
+                      ? "bg-white/15 text-white"
+                      : "bg-emerald-100 text-emerald-800"
+                      }`}
                   >
                     <Icono className="h-6 w-6" />
                   </span>
                   <span className="min-w-0 flex-1">
                     <span
-                      className={`block text-lg font-semibold ${
-                        tarea.destacada ? "text-white" : "text-slate-900"
-                      }`}
+                      className={`block text-lg font-semibold ${tarea.destacada ? "text-white" : "text-slate-900"
+                        }`}
                     >
                       {tarea.titulo}
                     </span>
                     <span
-                      className={`mt-0.5 block text-sm leading-snug ${
-                        tarea.destacada ? "text-emerald-50" : "text-slate-600"
-                      }`}
+                      className={`mt-0.5 block text-sm leading-snug ${tarea.destacada ? "text-emerald-50" : "text-slate-600"
+                        }`}
                     >
                       {tarea.descripcion}
                     </span>
                   </span>
                   <ArrowRight
-                    className={`h-5 w-5 shrink-0 transition-transform group-hover:translate-x-1 ${
-                      tarea.destacada ? "text-white" : "text-emerald-700"
-                    }`}
+                    className={`h-5 w-5 shrink-0 transition-transform group-hover:translate-x-1 ${tarea.destacada ? "text-white" : "text-emerald-700"
+                      }`}
                   />
                 </Link>
               );
@@ -220,7 +224,7 @@ export default function InicioCliente() {
             <CardContent>
               <ul className="space-y-2.5">
                 <Contador
-                  etiqueta="A tiempo (menos de 24 h)"
+                  etiqueta="Recientes (menos de 24 h)"
                   valor={conteos.verde}
                   clase="border-emerald-100 bg-emerald-50 text-emerald-800"
                   icono={
@@ -236,12 +240,18 @@ export default function InicioCliente() {
                   }
                 />
                 <Contador
-                  etiqueta="Urgentes (más de 40 h)"
+                  etiqueta="Urgentes (40 a 48 h)"
                   valor={conteos.rojo}
                   clase="border-red-100 bg-red-50 text-red-800"
                   icono={
                     <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-red-500" />
                   }
+                />
+                <Contador
+                  etiqueta="Fuera de término (más de 48 h)"
+                  valor={conteos.fuera_de_termino}
+                  clase="border-purple-200 bg-purple-50 text-purple-800"
+                  icono={<XCircle className="h-4 w-4 shrink-0 text-purple-500" />}
                 />
                 <Contador
                   etiqueta="Completadas"

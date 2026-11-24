@@ -256,7 +256,7 @@ export default function ExploracionCliente() {
       titulo="Reportes y Datos"
       subtitulo="Buscá y filtrá por animal, especie o localidad. Revisá resultados y descargá planillas Excel o PDF."
     >
-      <div className="space-y-6 max-w-7xl">
+      <div className="space-y-6">
 
         {error && (
           <div className="rounded border border-red-300 bg-red-50 p-3 text-red-800">
@@ -269,100 +269,150 @@ export default function ExploracionCliente() {
 
         {!cargando && (
           <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
-            <Tarjeta titulo="Muestras" valor={resumen.muestras} />
-            <Tarjeta titulo="Ensayos" valor={resumen.ensayos} />
-            <Tarjeta titulo="Fracciones" valor={resumen.fracciones} />
-            <Tarjeta titulo="Especies" valor={resumen.especies} />
-            <Tarjeta titulo="Investigadores" valor={resumen.investigadores} />
+            <Tarjeta
+              titulo="Muestras"
+              valor={resumen.muestras}
+              clase="border-blue-300 bg-blue-50 text-blue-900"
+            />
+            <Tarjeta
+              titulo="Ensayos"
+              valor={resumen.ensayos}
+              clase="border-emerald-300 bg-emerald-50 text-emerald-900"
+            />
+            <Tarjeta
+              titulo="Fracciones"
+              valor={resumen.fracciones}
+              clase="border-purple-300 bg-purple-50 text-purple-900"
+            />
+            <Tarjeta
+              titulo="Especies"
+              valor={resumen.especies}
+              clase="border-teal-300 bg-teal-50 text-teal-900"
+            />
+            <Tarjeta
+              titulo="Investigadores"
+              valor={resumen.investigadores}
+              clase="border-indigo-300 bg-indigo-50 text-indigo-900"
+            />
             <Tarjeta
               titulo="Pendientes de atención"
-              valor={resumen.estados.amarillo + resumen.estados.rojo}
+              valor={resumen.estados.amarillo}
               detalle={`A:${resumen.estados.amarillo} R:${resumen.estados.rojo} V:${resumen.estados.verde}`}
+              clase="border-yellow-300 bg-yellow-50 text-yellow-900"
             />
           </section>
         )}
 
         <section className="rounded-lg border border-gray-200 bg-white p-4">
           <div className="flex flex-wrap items-end gap-2">
-            <input
-              type="search"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              placeholder="Buscar: código, especie, localidad, investigador..."
-              className="min-w-[280px] flex-1 rounded border border-gray-300 px-3 py-1.5 text-sm"
-            />
-            <select
-              value={filtroEspecie}
-              onChange={(e) => setFiltroEspecie(e.target.value)}
-              className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm"
-            >
-              <option value="">Todas las especies</option>
-              {especies.map((esp) => (
-                <option key={esp} value={esp}>
-                  {esp}
-                </option>
-              ))}
-            </select>
-            <select
-              value={filtroInvestigador}
-              onChange={(e) => setFiltroInvestigador(e.target.value)}
-              className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm"
-            >
-              <option value="">Todos los investigadores</option>
-              {investigadores.map((inv) => (
-                <option key={inv} value={inv}>
-                  {inv}
-                </option>
-              ))}
-            </select>
-            <select
-              value={filtroCampana}
-              onChange={(e) => setFiltroCampana(e.target.value)}
-              className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm"
-            >
-              <option value="">Todas las campañas</option>
-              {campanas.map((c) => (
-                <option key={c.id_campana} value={c.id_campana}>
-                  {c.localidad_puna} · {c.fecha_salida}
-                </option>
-              ))}
-            </select>
-            <select
-              value={filtroEstado}
-              onChange={(e) => setFiltroEstado(e.target.value as "" | EstadoMuestra)}
-              className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm"
-            >
-              {ESTADOS.map((e) => (
-                <option key={e.valor} value={e.valor}>
-                  {e.texto}
-                </option>
-              ))}
-            </select>
-            <label className="flex items-center gap-1 text-sm text-gray-600">
-              Desde
+            <div className="min-w-[280px] flex-1">
+              <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
+                Búsqueda
+              </label>
+              <input
+                type="search"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                placeholder="Buscar: código, especie, localidad, investigador..."
+                className="w-full rounded border border-gray-300 bg-white px-3 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
+                Especie
+              </label>
+              <select
+                value={filtroEspecie}
+                onChange={(e) => setFiltroEspecie(e.target.value)}
+                className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+              >
+                <option value="">Todas las especies</option>
+                {especies.map((esp) => (
+                  <option key={esp} value={esp}>
+                    {esp}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
+                Investigador
+              </label>
+              <select
+                value={filtroInvestigador}
+                onChange={(e) => setFiltroInvestigador(e.target.value)}
+                className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+              >
+                <option value="">Todos los investigadores</option>
+                {investigadores.map((inv) => (
+                  <option key={inv} value={inv}>
+                    {inv}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
+                Campaña / Productor
+              </label>
+              <select
+                value={filtroCampana}
+                onChange={(e) => setFiltroCampana(e.target.value)}
+                className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+              >
+                <option value="">Todas las campañas</option>
+                {campanas.map((c) => (
+                  <option key={c.id_campana} value={c.id_campana}>
+                    {c.localidad_puna} · {c.fecha_salida}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
+                Estado (48h)
+              </label>
+              <select
+                value={filtroEstado}
+                onChange={(e) => setFiltroEstado(e.target.value as "" | EstadoMuestra)}
+                className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+              >
+                {ESTADOS.map((e) => (
+                  <option key={e.valor} value={e.valor}>
+                    {e.texto}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
+                Desde
+              </label>
               <input
                 type="date"
                 value={fechaDesde}
                 onChange={(e) => setFechaDesde(e.target.value)}
-                className="rounded border border-gray-300 px-2 py-1.5 text-sm"
+                className="rounded border border-gray-300 bg-white px-2 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
               />
-            </label>
-            <label className="flex items-center gap-1 text-sm text-gray-600">
-              Hasta
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
+                Hasta
+              </label>
               <input
                 type="date"
                 value={fechaHasta}
                 onChange={(e) => setFechaHasta(e.target.value)}
-                className="rounded border border-gray-300 px-2 py-1.5 text-sm"
+                className="rounded border border-gray-300 bg-white px-2 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
               />
-            </label>
+            </div>
           </div>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
             <div className="flex gap-1 rounded border border-gray-200 bg-gray-50 p-0.5">
               <button
                 type="button"
                 onClick={() => setVista("muestras")}
-                className={`rounded px-3 py-1 text-sm ${vista === "muestras" ? "bg-white font-medium shadow-sm" : "text-gray-600"
+                className={`rounded px-3 py-1 text-sm transition-colors hover:bg-gray-200 ${vista === "muestras" ? "bg-white font-medium shadow-sm" : "text-gray-600"
                   }`}
               >
                 Muestras ({muestrasFiltradas.length})
@@ -370,7 +420,7 @@ export default function ExploracionCliente() {
               <button
                 type="button"
                 onClick={() => setVista("resultados")}
-                className={`rounded px-3 py-1 text-sm ${vista === "resultados" ? "bg-white font-medium shadow-sm" : "text-gray-600"
+                className={`rounded px-3 py-1 text-sm transition-colors hover:bg-gray-200 ${vista === "resultados" ? "bg-white font-medium shadow-sm" : "text-gray-600"
                   }`}
               >
                 Resultados/fracciones ({resultadosFiltrados.length})
@@ -380,7 +430,7 @@ export default function ExploracionCliente() {
               <button
                 type="button"
                 onClick={() => void cargar()}
-                className="rounded border border-gray-300 px-3 py-1.5 text-sm"
+                className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
               >
                 Actualizar
               </button>
@@ -388,13 +438,21 @@ export default function ExploracionCliente() {
                 type="button"
                 onClick={() => void descargar("ensayos")}
                 disabled={Boolean(exportando)}
-                className="rounded border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-50"
+                className="cursor-pointer rounded border border-green-300 bg-green-50 px-3 py-1.5 text-sm font-medium text-green-800 transition-colors hover:bg-green-100 disabled:opacity-50"
               >
-                {exportando === "ensayos" ? "..." : "Excel ensayos"}
+                {exportando === "ensayos" ? "..." : "Exportar Excel Ensayos"}
               </button>
             </div>
           </div>
         </section>
+
+        {cargando ? (
+          <Cargando texto="Cargando datos..." />
+        ) : vista === "muestras" ? (
+          <TablaExploracionMuestras filas={muestrasFiltradas} />
+        ) : (
+          <TablaExploracionResultados filas={resultadosFiltrados} />
+        )}
 
         {!cargando && (
           <GraficosTerritoriales
@@ -413,14 +471,6 @@ export default function ExploracionCliente() {
             }
           />
         )}
-
-        {cargando ? (
-          <Cargando texto="Cargando datos..." />
-        ) : vista === "muestras" ? (
-          <TablaExploracionMuestras filas={muestrasFiltradas} />
-        ) : (
-          <TablaExploracionResultados filas={resultadosFiltrados} />
-        )}
       </div>
     </MarcoDashboard>
   );
@@ -430,16 +480,18 @@ function Tarjeta({
   titulo,
   valor,
   detalle,
+  clase = "border-gray-200 bg-white text-gray-900",
 }: {
   titulo: string;
   valor: number;
   detalle?: string;
+  clase?: string;
 }) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-3">
-      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{titulo}</p>
-      <p className="text-2xl font-bold text-gray-900">{valor}</p>
-      {detalle && <p className="text-xs text-gray-500">{detalle}</p>}
+    <div className={`flex flex-col items-center justify-center rounded-lg border p-3 text-center ${clase}`}>
+      <p className="text-xs font-medium uppercase tracking-wide opacity-80">{titulo}</p>
+      <p className="text-2xl font-bold">{valor}</p>
+      {detalle && <p className="text-xs opacity-75">{detalle}</p>}
     </div>
   );
 }
@@ -455,7 +507,7 @@ function TablaExploracionMuestras({ filas }: { filas: FilaMuestra[] }) {
   return (
     <div className="w-full overflow-x-auto rounded-lg border border-gray-200 bg-white">
       <table className="min-w-max w-full text-sm">
-        <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
+        <thead className="border-b border-emerald-200 bg-emerald-50 text-left text-xs uppercase tracking-wide text-emerald-900">
           <tr>
             <th className="whitespace-nowrap px-3 py-2">ID</th>
             <th className="whitespace-nowrap px-3 py-2">Código/animal</th>
@@ -494,9 +546,9 @@ function TablaExploracionMuestras({ filas }: { filas: FilaMuestra[] }) {
               <td className="whitespace-nowrap px-3 py-2">
                 <Link
                   href={`/muestras/${m.id_muestra}`}
-                  className="inline-flex whitespace-nowrap rounded border border-blue-300 px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50"
+                  className="inline-flex whitespace-nowrap rounded border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 transition-colors hover:bg-emerald-100"
                 >
-                  Ver detalle
+                  Ver
                 </Link>
               </td>
             </tr>
@@ -526,7 +578,7 @@ function TablaExploracionResultados({
   return (
     <div className="w-full overflow-x-auto rounded-lg border border-gray-200 bg-white">
       <table className="min-w-max w-full text-sm">
-        <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
+        <thead className="border-b border-emerald-200 bg-emerald-50 text-left text-xs uppercase tracking-wide text-emerald-900">
           <tr>
             <th className="whitespace-nowrap px-3 py-2">Muestra</th>
             <th className="whitespace-nowrap px-3 py-2">Código</th>
@@ -594,36 +646,36 @@ function TablaExploracionResultados({
                 const ev =
                   fila.fraccion && fila.muestra
                     ? (() => {
-                        const base = evaluarValor(
+                      const base = evaluarValor(
+                        fila.muestra.especie,
+                        fila.fraccion.nombre_fraccion,
+                        fila.fraccion.concentracion_g_dl,
+                      );
+                      if (base) return base;
+                      const frs = fila.ensayo.fracciones;
+                      const idxNombrada = frs.findIndex((f) =>
+                        esNombreAlbumina(f.nombre_fraccion),
+                      );
+                      let idxAlbumina = idxNombrada >= 0 ? idxNombrada : -1;
+                      if (idxAlbumina < 0) {
+                        let mejor = -1;
+                        frs.forEach((f, i) => {
+                          const v = f.concentracion_g_dl ?? f.porcentaje_relativo ?? f.area_integrada;
+                          if (v != null && Number.isFinite(v) && v > mejor) {
+                            mejor = v;
+                            idxAlbumina = i;
+                          }
+                        });
+                      }
+                      const idxFila = frs.findIndex((f) => f === fila.fraccion);
+                      return idxFila === idxAlbumina
+                        ? evaluarValor(
                           fila.muestra.especie,
-                          fila.fraccion.nombre_fraccion,
+                          "Albúmina",
                           fila.fraccion.concentracion_g_dl,
-                        );
-                        if (base) return base;
-                        const frs = fila.ensayo.fracciones;
-                        const idxNombrada = frs.findIndex((f) =>
-                          esNombreAlbumina(f.nombre_fraccion),
-                        );
-                        let idxAlbumina = idxNombrada >= 0 ? idxNombrada : -1;
-                        if (idxAlbumina < 0) {
-                          let mejor = -1;
-                          frs.forEach((f, i) => {
-                            const v = f.concentracion_g_dl ?? f.porcentaje_relativo ?? f.area_integrada;
-                            if (v != null && Number.isFinite(v) && v > mejor) {
-                              mejor = v;
-                              idxAlbumina = i;
-                            }
-                          });
-                        }
-                        const idxFila = frs.findIndex((f) => f === fila.fraccion);
-                        return idxFila === idxAlbumina
-                          ? evaluarValor(
-                              fila.muestra.especie,
-                              "Albúmina",
-                              fila.fraccion.concentracion_g_dl,
-                            )
-                          : null;
-                      })()
+                        )
+                        : null;
+                    })()
                     : null;
                 const clase =
                   ev?.nivel === "critico"
@@ -646,7 +698,7 @@ function TablaExploracionResultados({
               <td className="whitespace-nowrap px-3 py-2">
                 <Link
                   href={`/muestras/${fila.ensayo.id_muestra}`}
-                  className="inline-flex whitespace-nowrap rounded border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                  className="inline-flex whitespace-nowrap rounded border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 transition-colors hover:bg-emerald-100"
                 >
                   Ver
                 </Link>

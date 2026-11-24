@@ -94,9 +94,8 @@ function VariacionBadge({ actual, base }: { actual: number | null; base: number 
   const sube = diff > 0;
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold ${
-        sube ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-900"
-      }`}
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold ${sube ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-900"
+        }`}
     >
       {sube ? <ArrowUpRight className="h-3.5 w-3.5" /> : <ArrowDownRight className="h-3.5 w-3.5" />}
       {sube ? "+" : ""}
@@ -175,7 +174,7 @@ function LineaTiempoEstacional({ puntos }: { puntos: PuntoTiempo[] }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1 text-xs font-bold">
+          <div className="inline-flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 text-xs font-bold">
             {(
               [
                 { id: "relacion_ag", label: "Relación A/G" },
@@ -187,11 +186,10 @@ function LineaTiempoEstacional({ puntos }: { puntos: PuntoTiempo[] }) {
                 key={m.id}
                 type="button"
                 onClick={() => setMetrica(m.id)}
-                className={`rounded-md px-2.5 py-1 transition ${
-                  metrica === m.id
-                    ? "bg-white text-emerald-800 shadow-2xs"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
+                className={`cursor-pointer rounded-md px-3 py-1.5 transition-all duration-150 ${metrica === m.id
+                  ? "bg-emerald-600 text-white shadow-xs hover:bg-emerald-700"
+                  : "text-slate-600 hover:bg-emerald-50 hover:text-emerald-800"
+                  }`}
               >
                 {m.label}
               </button>
@@ -202,7 +200,7 @@ function LineaTiempoEstacional({ puntos }: { puntos: PuntoTiempo[] }) {
             <button
               type="button"
               onClick={() => desplazar(-280)}
-              className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-700 hover:bg-slate-100"
+              className="cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-bold text-slate-700 transition-all duration-150 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800 active:scale-95"
               title="Desplazar a la izquierda"
             >
               ◀
@@ -210,7 +208,7 @@ function LineaTiempoEstacional({ puntos }: { puntos: PuntoTiempo[] }) {
             <button
               type="button"
               onClick={() => desplazar(280)}
-              className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-700 hover:bg-slate-100"
+              className="cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-bold text-slate-700 transition-all duration-150 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800 active:scale-95"
               title="Desplazar a la derecha"
             >
               ▶
@@ -227,17 +225,17 @@ function LineaTiempoEstacional({ puntos }: { puntos: PuntoTiempo[] }) {
         <>
           <div
             ref={scrollRef}
-            className="overflow-x-auto rounded-xl border border-emerald-950/15 bg-gradient-to-b from-slate-900 via-emerald-950 to-slate-950 p-3"
+            className="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 p-3"
           >
             <svg width={anchoSvg} height={altoSvg} className="block select-none">
               <defs>
                 <linearGradient id="areaEsmeralda" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.35" />
+                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.28" />
                   <stop offset="100%" stopColor="#10b981" stopOpacity="0.02" />
                 </linearGradient>
                 <linearGradient id="barraColumna" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#34d399" stopOpacity="0.28" />
-                  <stop offset="100%" stopColor="#34d399" stopOpacity="0.03" />
+                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.22" />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity="0.03" />
                 </linearGradient>
               </defs>
 
@@ -248,15 +246,15 @@ function LineaTiempoEstacional({ puntos }: { puntos: PuntoTiempo[] }) {
                     y1={t.y}
                     x2={anchoSvg - padDer + 12}
                     y2={t.y}
-                    stroke="#34d399"
-                    strokeOpacity="0.16"
+                    stroke="#059669"
+                    strokeOpacity="0.2"
                     strokeDasharray="3 3"
                   />
                   <text
                     x={padIzq - 14}
                     y={t.y + 4}
                     textAnchor="end"
-                    fill="#a7f3d0"
+                    className="fill-slate-600"
                     fontSize="10"
                     fontWeight="600"
                   >
@@ -275,8 +273,8 @@ function LineaTiempoEstacional({ puntos }: { puntos: PuntoTiempo[] }) {
                       y1={padTop}
                       x2={c.x}
                       y2={padTop + altoUtil}
-                      stroke="#34d399"
-                      strokeOpacity={esSel ? "0.45" : "0.14"}
+                      stroke="#059669"
+                      strokeOpacity={esSel ? "0.45" : "0.15"}
                     />
                     <rect
                       x={c.x - 14}
@@ -290,7 +288,7 @@ function LineaTiempoEstacional({ puntos }: { puntos: PuntoTiempo[] }) {
                       x={c.x}
                       y={padTop + altoUtil + 18}
                       textAnchor="middle"
-                      fill={esSel ? "#6ee7b7" : "#d1fae5"}
+                      className={esSel ? "fill-emerald-800" : "fill-slate-700"}
                       fontSize="11"
                       fontWeight={esSel ? "800" : "600"}
                     >
@@ -300,8 +298,7 @@ function LineaTiempoEstacional({ puntos }: { puntos: PuntoTiempo[] }) {
                       x={c.x}
                       y={padTop + altoUtil + 33}
                       textAnchor="middle"
-                      fill="#6ee7b7"
-                      fillOpacity="0.75"
+                      className="fill-slate-500"
                       fontSize="10"
                     >
                       n = {c.punto.animales}
@@ -310,7 +307,7 @@ function LineaTiempoEstacional({ puntos }: { puntos: PuntoTiempo[] }) {
                       x={c.x}
                       y={c.y - 11}
                       textAnchor="middle"
-                      fill="#ffffff"
+                      className="fill-slate-900"
                       fontSize="11"
                       fontWeight="800"
                     >
@@ -335,7 +332,7 @@ function LineaTiempoEstacional({ puntos }: { puntos: PuntoTiempo[] }) {
               {coords.length > 1 && (
                 <polyline
                   fill="none"
-                  stroke="#34d399"
+                  stroke="#059669"
                   strokeWidth="3"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -357,17 +354,17 @@ function LineaTiempoEstacional({ puntos }: { puntos: PuntoTiempo[] }) {
                         cx={c.x}
                         cy={c.y}
                         r={10}
-                        fill="#34d399"
-                        fillOpacity="0.28"
+                        fill="#10b981"
+                        fillOpacity="0.25"
                       />
                     )}
                     <circle
                       cx={c.x}
                       cy={c.y}
                       r={esSel ? 6 : 4.5}
-                      fill={esSel ? "#ffffff" : "#34d399"}
-                      stroke="#064e3b"
-                      strokeWidth="2"
+                      fill={esSel ? "#059669" : "#ffffff"}
+                      stroke="#059669"
+                      strokeWidth="2.5"
                     />
                   </g>
                 );
@@ -493,7 +490,7 @@ export default function SaludPoblacionalPage() {
       titulo="Salud Poblacional (Relación A/G y Proteinograma)"
       subtitulo="Medias poblacionales por especie, localidad y campaña para evaluar estado nutricional y comparar temporadas."
     >
-      <div className="space-y-6 max-w-7xl">
+      <div className="space-y-6">
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">
             {error}
@@ -512,11 +509,10 @@ export default function SaludPoblacionalPage() {
               <button
                 type="button"
                 onClick={() => setCompararActivo((v) => !v)}
-                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition ${
-                  compararActivo
-                    ? "border-emerald-600 bg-emerald-50 text-emerald-900"
-                    : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-                }`}
+                className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition-colors ${compararActivo
+                  ? "border-emerald-600 bg-emerald-50 text-emerald-900 hover:bg-emerald-100"
+                  : "border-slate-300 bg-white text-slate-700 hover:border-emerald-300 hover:bg-emerald-50"
+                  }`}
               >
                 <GitCompare className="h-3.5 w-3.5" />
                 {compararActivo ? "Comparando 2 temporadas" : "Comparar con otra temporada"}
@@ -526,7 +522,7 @@ export default function SaludPoblacionalPage() {
                 type="button"
                 onClick={() => void recargar()}
                 disabled={actualizando || cargando}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${actualizando ? "animate-spin" : ""}`} />
                 {actualizando ? "Actualizando..." : "Actualizar"}
@@ -542,7 +538,7 @@ export default function SaludPoblacionalPage() {
               <select
                 value={especie}
                 onChange={(e) => setEspecie(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm"
+                className="w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
               >
                 <option value="">Todas las especies</option>
                 {(datos?.opciones_filtro.especies || []).map((esp) => (
@@ -560,7 +556,7 @@ export default function SaludPoblacionalPage() {
               <select
                 value={departamento}
                 onChange={(e) => setDepartamento(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm"
+                className="w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
               >
                 <option value="">Todos los departamentos</option>
                 {(datos?.opciones_filtro.departamentos || []).map((dep) => (
@@ -578,7 +574,7 @@ export default function SaludPoblacionalPage() {
               <select
                 value={localidad}
                 onChange={(e) => setLocalidad(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm"
+                className="w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
               >
                 <option value="">Todas las localidades</option>
                 {(datos?.opciones_filtro.localidades || []).map((loc) => (
@@ -596,7 +592,7 @@ export default function SaludPoblacionalPage() {
               <select
                 value={idCampana}
                 onChange={(e) => setIdCampana(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm"
+                className="w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
               >
                 <option value="">Todas las campañas</option>
                 {(datos?.opciones_filtro.campanas || []).map((c) => (
@@ -614,7 +610,7 @@ export default function SaludPoblacionalPage() {
               <select
                 value={convenio}
                 onChange={(e) => setConvenio(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm"
+                className="w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
               >
                 <option value="">Todos</option>
                 <option value="con">Con convenio INTA</option>
@@ -636,7 +632,7 @@ export default function SaludPoblacionalPage() {
                     type="date"
                     value={fechaDesde}
                     onChange={(e) => setFechaDesde(e.target.value)}
-                    className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-xs"
+                    className="w-full cursor-pointer rounded border border-slate-300 bg-white px-2 py-1.5 text-xs transition-colors hover:border-emerald-300 hover:bg-emerald-50"
                   />
                 </div>
                 <div>
@@ -645,7 +641,7 @@ export default function SaludPoblacionalPage() {
                     type="date"
                     value={fechaHasta}
                     onChange={(e) => setFechaHasta(e.target.value)}
-                    className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-xs"
+                    className="w-full cursor-pointer rounded border border-slate-300 bg-white px-2 py-1.5 text-xs transition-colors hover:border-emerald-300 hover:bg-emerald-50"
                   />
                 </div>
               </div>
@@ -663,7 +659,7 @@ export default function SaludPoblacionalPage() {
                       type="date"
                       value={compDesde}
                       onChange={(e) => setCompDesde(e.target.value)}
-                      className="w-full rounded border border-emerald-300 bg-white px-2 py-1.5 text-xs"
+                      className="w-full cursor-pointer rounded border border-emerald-300 bg-white px-2 py-1.5 text-xs transition-colors hover:border-emerald-400 hover:bg-emerald-50"
                     />
                   </div>
                   <div>
@@ -672,7 +668,7 @@ export default function SaludPoblacionalPage() {
                       type="date"
                       value={compHasta}
                       onChange={(e) => setCompHasta(e.target.value)}
-                      className="w-full rounded border border-emerald-300 bg-white px-2 py-1.5 text-xs"
+                      className="w-full cursor-pointer rounded border border-emerald-300 bg-white px-2 py-1.5 text-xs transition-colors hover:border-emerald-400 hover:bg-emerald-50"
                     />
                   </div>
                 </div>
@@ -683,8 +679,8 @@ export default function SaludPoblacionalPage() {
 
         {/* 2. TARJETAS KPI PRINCIPALES (RELACIÓN A/G Y PROTEÍNAS TOTALES) */}
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-5">
-            <div className="flex items-center justify-between">
+          <div className="flex flex-col items-center justify-center text-center rounded-xl border border-emerald-200 bg-emerald-50/70 p-5">
+            <div className="flex items-center justify-center gap-1.5">
               <p className="text-xs font-bold uppercase tracking-wider text-emerald-900">
                 Media Relación A/G
               </p>
@@ -697,7 +693,7 @@ export default function SaludPoblacionalPage() {
               DE: ±{fmt(principal?.relacion_ag.desvio, 2)} · Rango: {fmt(principal?.relacion_ag.min, 2)}–{fmt(principal?.relacion_ag.max, 2)}
             </p>
             {comp && (
-              <div className="mt-2 pt-2 border-t border-emerald-200/80 flex items-center justify-between text-xs">
+              <div className="mt-2 w-full pt-2 border-t border-emerald-200/80 flex items-center justify-center gap-2 text-xs">
                 <span className="text-emerald-900 font-medium">
                   Temp. 2: <strong>{fmt(comp.relacion_ag.media, 2)}</strong>
                 </span>
@@ -706,7 +702,7 @@ export default function SaludPoblacionalPage() {
             )}
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <div className="flex flex-col items-center justify-center text-center rounded-xl border border-slate-200 bg-white p-5">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Proteínas Totales (Media)
             </p>
@@ -718,7 +714,7 @@ export default function SaludPoblacionalPage() {
               DE: ±{fmt(principal?.proteinas_totales.desvio, 2)} · Rango: {fmt(principal?.proteinas_totales.min, 2)}–{fmt(principal?.proteinas_totales.max, 2)}
             </p>
             {comp && (
-              <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+              <div className="mt-2 w-full pt-2 border-t border-slate-100 flex items-center justify-center gap-2 text-xs">
                 <span>
                   Temp. 2: <strong>{fmt(comp.proteinas_totales.media, 2)} g/dL</strong>
                 </span>
@@ -730,7 +726,7 @@ export default function SaludPoblacionalPage() {
             )}
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <div className="flex flex-col items-center justify-center text-center rounded-xl border border-slate-200 bg-white p-5">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Animales Muestreados (n)
             </p>
@@ -741,13 +737,13 @@ export default function SaludPoblacionalPage() {
               En {principal?.total_ensayos ?? 0} corridas electroforéticas
             </p>
             {comp && (
-              <p className="mt-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
+              <p className="mt-2 w-full pt-2 border-t border-slate-100 text-xs text-slate-700">
                 Temp. 2: <strong>{comp.total_animales}</strong> animales ({comp.total_ensayos} ensayos)
               </p>
             )}
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <div className="flex flex-col items-center justify-center text-center rounded-xl border border-slate-200 bg-white p-5">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Albúmina Media (%)
             </p>
@@ -763,7 +759,7 @@ export default function SaludPoblacionalPage() {
                     Concentración: {fmt(alb?.g_dl.media, 2)} g/dL (±{fmt(alb?.g_dl.desvio, 2)})
                   </p>
                   {comp && (
-                    <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <div className="mt-2 w-full pt-2 border-t border-slate-100 flex items-center justify-center gap-2 text-xs">
                       <span>
                         Temp. 2: <strong>{fmt(albComp?.porcentaje.media, 1)}%</strong>
                       </span>
@@ -794,7 +790,7 @@ export default function SaludPoblacionalPage() {
               </p>
             </div>
 
-            <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1 text-xs font-bold">
+            <div className="inline-flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 text-xs font-bold">
               {(
                 [
                   { id: "localidad", label: "Por Localidad" },
@@ -807,11 +803,10 @@ export default function SaludPoblacionalPage() {
                   key={tab.id}
                   type="button"
                   onClick={() => setAgrupacion(tab.id)}
-                  className={`rounded-md px-3 py-1.5 transition ${
-                    agrupacion === tab.id
-                      ? "bg-white text-emerald-800 shadow-2xs"
-                      : "text-slate-600 hover:text-slate-900"
-                  }`}
+                  className={`cursor-pointer rounded-md px-3 py-1.5 transition-all duration-150 ${agrupacion === tab.id
+                    ? "bg-emerald-600 text-white shadow-xs hover:bg-emerald-700"
+                    : "text-slate-600 hover:bg-emerald-50 hover:text-emerald-800"
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -829,7 +824,7 @@ export default function SaludPoblacionalPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-600">
+                  <tr className="border-b border-emerald-200 bg-emerald-50 text-xs uppercase text-emerald-900">
                     <th className="py-2.5 px-3 font-bold">Grupo</th>
                     <th className="py-2.5 px-3 font-bold text-right">Animales (n)</th>
                     <th className="py-2.5 px-3 font-bold text-right">Media A/G</th>
@@ -880,7 +875,7 @@ export default function SaludPoblacionalPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-600">
+                  <tr className="border-b border-emerald-200 bg-emerald-50 text-xs uppercase text-emerald-900">
                     <th className="py-2.5 px-3 font-bold">Fracción</th>
                     <th className="py-2.5 px-3 font-bold text-right">Media (%)</th>
                     <th className="py-2.5 px-3 font-bold text-right">DE (%)</th>
