@@ -34,6 +34,7 @@ def _ejecutar_analisis(
     region: str | None,
     vertical: bool,
     invertir: bool,
+    cantidad_fracciones: int | None = None,
 ) -> AnalisisTiraOut:
     if imagen.content_type not in TIPOS_PERMITIDOS:
         raise HTTPException(415, "Subí una imagen JPG, PNG, TIFF o BMP")
@@ -52,6 +53,7 @@ def _ejecutar_analisis(
             region=_leer_region(region),
             vertical=vertical,
             invertir=invertir,
+            cantidad_fracciones=cantidad_fracciones,
         )
         return AnalisisTiraOut.desde_analisis(analisis)
     except ValueError as error:
@@ -68,12 +70,19 @@ def analizar_tira(
     region: str | None = Form(None, description="Recorte 'x,y,ancho,alto'"),
     vertical: bool = Form(False),
     invertir: bool = Form(False),
+    cantidad_fracciones: int | None = Form(None, ge=5, le=6, description="5 o 6 fracciones"),
 ):
     """Analiza la tira y propone picos y fracciones. No guarda nada."""
     return _ejecutar_analisis(
-        imagen, proteinas_totales, prominencia, modo, region, vertical, invertir
+        imagen,
+        proteinas_totales,
+        prominencia,
+        modo,
+        region,
+        vertical,
+        invertir,
+        cantidad_fracciones,
     )
-
 
 @router.post("/recalcular", response_model=RecalculoOut)
 def recalcular_tira(

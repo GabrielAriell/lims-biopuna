@@ -9,7 +9,7 @@ from .picos import Zona
 # La propuesta automática usa nombres genéricos: el investigador puede renombrar.
 ESQUEMAS_FRACCIONES = {
     5: ("Albumina", "Alfa1", "Alfa2", "Beta", "Gamma"),
-    6: ("Albumina", "Alfa1", "Alfa2", "Beta1", "Beta2", "Gamma"),
+    6: ("Albumina", "Alfa1", "Alfa2", "Beta", "Gamma1", "Gamma2"),
 }
 PT_MAX_G_DL = 20.0  # mismo rango que valida la base de datos
 
@@ -52,11 +52,10 @@ def calcular_fracciones(
     if total <= 0:
         raise ValueError("El perfil no tiene señal para cuantificar")
 
-    esquema_conocido = len(zonas) in ESQUEMAS_FRACCIONES
-    if esquema_conocido:
-        nombres = list(ESQUEMAS_FRACCIONES[len(zonas)])
-    else:
-        nombres = [f"Fracción {k}" for k in range(1, len(zonas) + 1)]
+    if len(zonas) not in ESQUEMAS_FRACCIONES:
+        raise ValueError("Solo se permiten 5 o 6 franjas")
+    esquema_conocido = True
+    nombres = list(ESQUEMAS_FRACCIONES[len(zonas)])
 
     fracciones = []
     for nombre, (inicio, fin), area in zip(nombres, zonas, areas):

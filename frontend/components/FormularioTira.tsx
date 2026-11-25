@@ -47,7 +47,7 @@ export default function FormularioTira({
               Elegí una imagen, arrastrala acá o usá la cámara integrada
             </span>
             <span className="block text-xs text-blue-700">
-              JPG, PNG, TIFF o BMP. “Abrir cámara” muestra la vista en vivo con guías.
+              JPG, PNG. Permite captura desde la cámara integrada.
             </span>
           </span>
           <span className="flex flex-wrap gap-2">
@@ -100,7 +100,7 @@ export default function FormularioTira({
             id="tira-proteinas"
             type="text"
             inputMode="decimal"
-            placeholder="Ej: 6,5 (opcional)"
+            placeholder="Ej: 6,5"
             value={parametros.proteinasTotales}
             onChange={(e) => cambiar("proteinasTotales", e.target.value)}
             className={CAMPO}
@@ -141,6 +141,30 @@ export default function FormularioTira({
             className="w-full"
           />
           <p className="text-xs text-gray-500">Más bajo detecta más fracciones; más alto, menos.</p>
+        </div>
+
+        <div>
+          <label
+            htmlFor="tira-fracciones"
+            className="mb-1 block text-sm font-medium"
+          >
+            Cantidad de fracciones
+          </label>
+          <select
+            id="tira-fracciones"
+            value={parametros.cantidadFracciones ?? ""}
+            onChange={(e) =>
+              cambiar(
+                "cantidadFracciones",
+                e.target.value ? (Number(e.target.value) as 5 | 6) : null,
+              )
+            }
+            className={CAMPO}
+          >
+            <option value="">Automatico </option>
+            <option value="5">5 fracciones (Alb, Alfa1, Alfa2, Beta, Gamma)</option>
+            <option value="6">6 fracciones (Alb, Alfa1, Alfa2, Beta, Gamma1, Gamma2)</option>
+          </select>
         </div>
       </div>
 
