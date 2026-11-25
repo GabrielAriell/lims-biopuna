@@ -12,6 +12,14 @@ export type Usuario = {
   rol_sistema: RolSistema | string;
 };
 
+export function puedeEscribir(
+  usuario?: Pick<Usuario, "rol_sistema"> | null,
+): boolean {
+  return (
+    usuario?.rol_sistema === "admin" || usuario?.rol_sistema === "investigador"
+  );
+}
+
 export type Sesion = {
   access_token: string;
   refresh_token: string;

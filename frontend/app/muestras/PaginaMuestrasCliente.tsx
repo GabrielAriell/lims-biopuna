@@ -6,11 +6,15 @@ import { useMemo, useState } from "react";
 import MarcoDashboard from "@/components/MarcoDashboard";
 import FormularioCampana from "@/components/FormularioCampana";
 import FormularioMuestra from "@/components/FormularioMuestra";
+import { useSesion } from "@/components/ProveedorSesion";
 import { useMuestras } from "@/hooks/useMuestras";
+import { puedeEscribir } from "@/lib/sesion";
 
 export default function PaginaMuestrasCliente() {
+  const { usuario } = useSesion();
   const { campanas, error, recargar } = useMuestras();
   const [campanaReciente, setCampanaReciente] = useState<number | null>(null);
+  const habilitadoEscribir = puedeEscribir(usuario);
 
   const sugerenciasLocalidad = useMemo(() => {
     const valores = campanas
@@ -29,6 +33,14 @@ export default function PaginaMuestrasCliente() {
         {error && (
           <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800 shadow-xs">
             {error}
+          </div>
+        )}
+
+        {!habilitadoEscribir && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 shadow-xs">
+            <strong>Modo solo lectura:</strong> podés consultar campañas,
+            muestras, reportes y probar el analizador de tiras, pero tu cuenta
+            no tiene permiso para crear campañas ni registrar muestras.
           </div>
         )}
 
