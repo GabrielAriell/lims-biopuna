@@ -1,11 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import { Eye } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import { useSesion } from "@/components/ProveedorSesion";
-import { iniciarSesion } from "@/lib/auth";
+import { iniciarSesion, iniciarSesionInvitado } from "@/lib/auth";
 
 const CAMPO =
   "w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-gray-900 shadow-sm outline-none placeholder:text-gray-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/40";
@@ -15,7 +16,9 @@ export default function PaginaLogin() {
   const { usuario, cargando, iniciar } = useSesion();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [enviando, setEnviando] = useState(false);
+  const [enviando, setEnviando] = useState<"credenciales" | "invitado" | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
 
   // Si ya hay una sesión válida, no tiene sentido mostrar el login.
@@ -25,7 +28,7 @@ export default function PaginaLogin() {
 
   async function enviar(evento: FormEvent) {
     evento.preventDefault();
-    setEnviando(true);
+    setEnviando("credenciales");
     setError(null);
     try {
       const sesion = await iniciarSesion(email, password);
@@ -34,7 +37,25 @@ export default function PaginaLogin() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo iniciar sesión");
     } finally {
-      setEnviando(false);
+      setEnviando(null);
+    }
+  }
+
+  async function entrarComoInvitado() {
+    setEnviando("invitado");
+    setError(null);
+    try {
+      const sesion = await iniciarSesionInvitado();
+      iniciar(sesion);
+      router.replace("/");
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "No se pudo iniciar sesión como invitado",
+      );
+    } finally {
+      setEnviando(null);
     }
   }
 
@@ -144,12 +165,37 @@ export default function PaginaLogin() {
 
             <button
               type="submit"
-              disabled={enviando}
+              disabled={enviando !== null}
               className="mt-2 w-full rounded-full bg-emerald-600 px-4 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {enviando ? "Ingresando..." : "Ingresar"}
+              {enviando === "credenciales" ? "Ingresando..." : "Ingresar"}
             </button>
           </form>
+
+          <div className="my-5 flex items-center gap-3">
+            <div className="h-px flex-1 bg-white/20" />
+            <span className="text-xs font-medium uppercase tracking-wider text-white/60">
+              o
+            </span>
+            <div className="h-px flex-1 bg-white/20" />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => void entrarComoInvitado()}
+            disabled={enviando !== null}
+            className="flex w-full items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-3 font-semibold text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Eye className="h-4 w-4 text-emerald-300" />
+            <span>
+              {enviando === "invitado"
+                ? "Ingresando como invitado..."
+                : "Entrar como invitado"}
+            </span>
+          </button>
+          <p className="mt-2 text-center text-xs text-white/75">
+            Acceso rápido en modo solo lectura.
+          </p>
         </div>
       </div>
     </main>

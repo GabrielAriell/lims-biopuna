@@ -10,6 +10,7 @@ import {
   prepararCarriles,
   proteinasTotalesNumero,
 } from "@/lib/ensayos";
+import { puedeEscribir } from "@/lib/sesion";
 import type { AnalisisTira } from "@/lib/tipos";
 import type { EnsayoGuardado } from "@/lib/tipos-ensayos";
 
@@ -41,13 +42,12 @@ export default function PanelGuardarEnsayo({
     [analisis],
   );
   const proteinas = proteinasTotalesNumero(proteinasTotales);
-  // Cualquier usuario autenticado puede guardar (el backend valida la sesión).
-  const puedeEscribir = Boolean(usuario);
+  const tienePermisoEscritura = puedeEscribir(usuario);
   const listo =
     carriles.length > 0 &&
     problemas.length === 0 &&
     proteinas !== null &&
-    puedeEscribir;
+    tienePermisoEscritura;
 
   async function enviar() {
     if (!listo || proteinas === null) return;
@@ -199,6 +199,14 @@ export default function PanelGuardarEnsayo({
           {!usuario && (
             <p className="rounded border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-900">
               Iniciá sesión para guardar el ensayo.
+            </p>
+          )}
+
+          {usuario && !tienePermisoEscritura && (
+            <p className="rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+              <strong>Modo solo lectura:</strong> podés analizar tiras y ajustar
+              fracciones para probar el sistema, pero tu cuenta no tiene permiso
+              para guardar ensayos.
             </p>
           )}
 
