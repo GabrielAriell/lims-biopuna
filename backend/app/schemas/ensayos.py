@@ -22,7 +22,7 @@ class CarrilIn(BaseModel):
 
     perfil: list[float] = Field(min_length=2, max_length=20_000)
     # Zonas (inicio, fin) inclusivas, en columnas del perfil.
-    zonas: list[tuple[int, int]] = Field(min_length=1, max_length=20)
+    zonas: list[tuple[int, int]] = Field(min_length=5, max_length=6)
     # Si el investigador editó nombres/valores, se envían para guardarlos tal cual.
     fracciones: list[FraccionIn] | None = None
 

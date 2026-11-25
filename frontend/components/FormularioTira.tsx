@@ -111,7 +111,7 @@ export default function FormularioTira({
             id="tira-proteinas"
             type="text"
             inputMode="decimal"
-            placeholder="Ej: 6,5 (opcional)"
+            placeholder="Ej: 6,5"
             value={parametros.proteinasTotales}
             onChange={(e) => cambiar("proteinasTotales", e.target.value)}
             className={CAMPO}
@@ -167,19 +167,18 @@ export default function FormularioTira({
             onChange={(e) =>
               cambiar(
                 "cantidadFracciones",
-                e.target.value ? (Number(e.target.value) as 4 | 5 | 6) : null,
+                e.target.value ? (Number(e.target.value) as 5 | 6) : null,
               )
             }
             className={CAMPO}
           >
-            <option value="">Automático (según picos)</option>
-            <option value="4">4 fracciones (Alb, α, β, γ)</option>
-            <option value="5">5 fracciones (Alb, α1, α2, β, γ)</option>
-            <option value="6">6 fracciones (Alb, α1, α2, β1, β2, γ)</option>
+            <option value="">Automatico </option>
+            <option value="5">5 fracciones (Alb, Alfa1, Alfa2, Beta, Gamma)</option>
+            <option value="6">6 fracciones (Alb, Alfa1, Alfa2, Beta, Gamma1, Gamma2)</option>
           </select>
         </div>
-
       </div>
+
 {/*
       <div className="flex flex-wrap gap-6 text-sm">
         <label className="flex items-center gap-2">
