@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ChevronDown, Eye, SlidersHorizontal } from "lucide-react";
 
 import MarcoDashboard from "@/components/MarcoDashboard";
 import GraficosTerritoriales from "@/components/GraficosTerritoriales";
@@ -11,6 +12,13 @@ import type {
 } from "@/components/GraficosTerritoriales";
 import Cargando from "@/components/Cargando";
 import Semaforo from "@/components/Semaforo";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { listarEnsayos } from "@/lib/api-ensayos";
 import { listarCampanas, listarMuestras } from "@/lib/api-muestras";
 import {
@@ -50,6 +58,14 @@ function investigadorEnsayo(e: EnsayoGuardado): string {
   return e.investigador_nombre || e.id_investigador;
 }
 
+const TODOS = "__todos__";
+
+const ITEM_SELECT =
+  "cursor-pointer text-sm dark:data-[highlighted]:bg-emerald-950 dark:data-[highlighted]:text-emerald-200";
+
+const TRIGGER_SELECT =
+  "cursor-pointer rounded border-gray-300 px-3 py-1.5 text-sm hover:border-emerald-300 hover:bg-emerald-50";
+
 const ESTADOS: { valor: "" | EstadoMuestra; texto: string }[] = [
   { valor: "", texto: "Todos los estados" },
   { valor: "verde", texto: "Verde · en plazo" },
@@ -73,6 +89,7 @@ export default function ExploracionCliente() {
   const [filtroInvestigador, setFiltroInvestigador] = useState("");
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
+  const [mostrarAvanzados, setMostrarAvanzados] = useState(false);
   const [filtroConvenio, setFiltroConvenio] = useState<FiltroConvenio>("todos");
   const [exportando, setExportando] = useState<string | null>(null);
 
@@ -304,9 +321,9 @@ export default function ExploracionCliente() {
         )}
 
         <section className="rounded-lg border border-gray-200 bg-white p-4">
-          <div className="flex flex-wrap items-end gap-2">
-            <div className="min-w-[280px] flex-1">
-              <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div className="min-w-[240px] flex-1">
+              <label className="mb-1 block text-[11px] font-bold uppercase text-slate-500">
                 Búsqueda
               </label>
               <input
@@ -317,116 +334,29 @@ export default function ExploracionCliente() {
                 className="w-full rounded border border-gray-300 bg-white px-3 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
               />
             </div>
-            <div>
-              <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
-                Especie
-              </label>
-              <select
-                value={filtroEspecie}
-                onChange={(e) => setFiltroEspecie(e.target.value)}
-                className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
-              >
-                <option value="">Todas las especies</option>
-                {especies.map((esp) => (
-                  <option key={esp} value={esp}>
-                    {esp}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
-                Investigador
-              </label>
-              <select
-                value={filtroInvestigador}
-                onChange={(e) => setFiltroInvestigador(e.target.value)}
-                className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
-              >
-                <option value="">Todos los investigadores</option>
-                {investigadores.map((inv) => (
-                  <option key={inv} value={inv}>
-                    {inv}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
-                Campaña / Productor
-              </label>
-              <select
-                value={filtroCampana}
-                onChange={(e) => setFiltroCampana(e.target.value)}
-                className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
-              >
-                <option value="">Todas las campañas</option>
-                {campanas.map((c) => (
-                  <option key={c.id_campana} value={c.id_campana}>
-                    {c.localidad_puna} · {c.fecha_salida}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
-                Estado (48h)
-              </label>
-              <select
-                value={filtroEstado}
-                onChange={(e) => setFiltroEstado(e.target.value as "" | EstadoMuestra)}
-                className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
-              >
-                {ESTADOS.map((e) => (
-                  <option key={e.valor} value={e.valor}>
-                    {e.texto}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
-                Desde
-              </label>
-              <input
-                type="date"
-                value={fechaDesde}
-                onChange={(e) => setFechaDesde(e.target.value)}
-                className="rounded border border-gray-300 bg-white px-2 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
-                Hasta
-              </label>
-              <input
-                type="date"
-                value={fechaHasta}
-                onChange={(e) => setFechaHasta(e.target.value)}
-                className="rounded border border-gray-300 bg-white px-2 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
-              />
-            </div>
-          </div>
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+
             <div className="flex gap-1 rounded border border-gray-200 bg-gray-50 p-0.5">
               <button
                 type="button"
                 onClick={() => setVista("muestras")}
-                className={`rounded px-3 py-1 text-sm transition-colors hover:bg-gray-200 ${vista === "muestras" ? "bg-white font-medium shadow-sm" : "text-gray-600"
-                  }`}
+                className={`rounded px-3 py-1 text-sm transition-colors hover:bg-gray-200 ${
+                  vista === "muestras" ? "bg-white font-medium shadow-sm" : "text-gray-600"
+                }`}
               >
                 Muestras ({muestrasFiltradas.length})
               </button>
               <button
                 type="button"
                 onClick={() => setVista("resultados")}
-                className={`rounded px-3 py-1 text-sm transition-colors hover:bg-gray-200 ${vista === "resultados" ? "bg-white font-medium shadow-sm" : "text-gray-600"
-                  }`}
+                className={`rounded px-3 py-1 text-sm transition-colors hover:bg-gray-200 ${
+                  vista === "resultados" ? "bg-white font-medium shadow-sm" : "text-gray-600"
+                }`}
               >
                 Resultados/fracciones ({resultadosFiltrados.length})
               </button>
             </div>
-            <div className="flex flex-wrap gap-2">
+
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={() => void cargar()}
@@ -444,6 +374,188 @@ export default function ExploracionCliente() {
               </button>
             </div>
           </div>
+
+          {(() => {
+            const activos = [
+              filtroEspecie,
+              filtroInvestigador,
+              filtroCampana,
+              filtroEstado,
+              fechaDesde,
+              fechaHasta,
+            ].filter(Boolean).length;
+
+            return (
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setMostrarAvanzados((prev) => !prev)}
+                  aria-expanded={mostrarAvanzados}
+                  className={`inline-flex cursor-pointer items-center gap-1.5 rounded border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    mostrarAvanzados || activos > 0
+                      ? "border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+                      : "border-gray-300 bg-gray-50 text-slate-700 hover:border-emerald-300 hover:bg-emerald-50"
+                  }`}
+                >
+                  <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
+                  Opciones avanzadas
+                  {activos > 0 && (
+                    <span className="rounded-full bg-emerald-600 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
+                      {activos}
+                    </span>
+                  )}
+                  <ChevronDown
+                    className={`h-3.5 w-3.5 transition-transform ${
+                      mostrarAvanzados ? "rotate-180" : ""
+                    }`}
+                    aria-hidden="true"
+                  />
+                </button>
+
+                {activos > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFiltroEspecie("");
+                      setFiltroInvestigador("");
+                      setFiltroCampana("");
+                      setFiltroEstado("");
+                      setFechaDesde("");
+                      setFechaHasta("");
+                    }}
+                    className="cursor-pointer text-xs font-medium text-slate-500 underline hover:text-emerald-800"
+                  >
+                    Limpiar filtros avanzados
+                  </button>
+                )}
+              </div>
+            );
+          })()}
+
+          {mostrarAvanzados && (
+            <div className="mt-3 flex flex-wrap items-end gap-3 border-t border-gray-100 pt-3">
+              <div className="min-w-[160px] flex-1">
+                <label className="mb-1 block text-[11px] font-bold uppercase text-slate-500">
+                  Especie
+                </label>
+                <Select
+                  value={filtroEspecie || TODOS}
+                  onValueChange={(v) => setFiltroEspecie(v === TODOS ? "" : v)}
+                >
+                  <SelectTrigger className={TRIGGER_SELECT}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={TODOS} className={ITEM_SELECT}>
+                      Todas las especies
+                    </SelectItem>
+                    {especies.map((esp) => (
+                      <SelectItem key={esp} value={esp} className={ITEM_SELECT}>
+                        {esp}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="min-w-[170px] flex-1">
+                <label className="mb-1 block text-[11px] font-bold uppercase text-slate-500">
+                  Investigador
+                </label>
+                <Select
+                  value={filtroInvestigador || TODOS}
+                  onValueChange={(v) => setFiltroInvestigador(v === TODOS ? "" : v)}
+                >
+                  <SelectTrigger className={TRIGGER_SELECT}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={TODOS} className={ITEM_SELECT}>
+                      Todos los investigadores
+                    </SelectItem>
+                    {investigadores.filter(Boolean).map((inv) => (
+                      <SelectItem key={inv} value={inv} className={ITEM_SELECT}>
+                        {inv}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="min-w-[200px] flex-1">
+                <label className="mb-1 block text-[11px] font-bold uppercase text-slate-500">
+                  Campaña / Productor
+                </label>
+                <Select
+                  value={filtroCampana || TODOS}
+                  onValueChange={(v) => setFiltroCampana(v === TODOS ? "" : v)}
+                >
+                  <SelectTrigger className={TRIGGER_SELECT}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={TODOS} className={ITEM_SELECT}>
+                      Todas las campañas
+                    </SelectItem>
+                    {campanas.map((c) => (
+                      <SelectItem
+                        key={c.id_campana}
+                        value={String(c.id_campana)}
+                        className={ITEM_SELECT}
+                      >
+                        {c.localidad_puna} · {c.fecha_salida}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="min-w-[170px] flex-1">
+                <label className="mb-1 block text-[11px] font-bold uppercase text-slate-500">
+                  Estado (48h)
+                </label>
+                <Select
+                  value={filtroEstado || TODOS}
+                  onValueChange={(v) =>
+                    setFiltroEstado(v === TODOS ? "" : (v as EstadoMuestra))
+                  }
+                >
+                  <SelectTrigger className={TRIGGER_SELECT}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ESTADOS.map((e) => {
+                      const val = e.valor || TODOS;
+                      return (
+                        <SelectItem key={val} value={val} className={ITEM_SELECT}>
+                          {e.texto}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="min-w-[145px]">
+                <label className="mb-1 block text-[11px] font-bold uppercase text-slate-500">
+                  Desde
+                </label>
+                <input
+                  type="date"
+                  value={fechaDesde}
+                  onChange={(e) => setFechaDesde(e.target.value)}
+                  className="w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+                />
+              </div>
+              <div className="min-w-[145px]">
+                <label className="mb-1 block text-[11px] font-bold uppercase text-slate-500">
+                  Hasta
+                </label>
+                <input
+                  type="date"
+                  value={fechaHasta}
+                  onChange={(e) => setFechaHasta(e.target.value)}
+                  className="w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+                />
+              </div>
+            </div>
+          )}
         </section>
 
         {cargando ? (
@@ -505,9 +617,9 @@ function TablaExploracionMuestras({ filas }: { filas: FilaMuestra[] }) {
     );
   }
   return (
-    <div className="w-full overflow-x-auto rounded-lg border border-gray-200 bg-white">
+    <div className="max-h-[465px] w-full overflow-auto rounded-lg border border-gray-200 bg-white">
       <table className="min-w-max w-full text-sm">
-        <thead className="border-b border-emerald-200 bg-emerald-50 text-left text-xs uppercase tracking-wide text-emerald-900">
+        <thead className="sticky top-0 z-10 border-b border-slate-300 bg-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 shadow-2xs">
           <tr>
             <th className="whitespace-nowrap px-3 py-2">ID</th>
             <th className="whitespace-nowrap px-3 py-2">Código/animal</th>
@@ -546,8 +658,9 @@ function TablaExploracionMuestras({ filas }: { filas: FilaMuestra[] }) {
               <td className="whitespace-nowrap px-3 py-2">
                 <Link
                   href={`/muestras/${m.id_muestra}`}
-                  className="inline-flex whitespace-nowrap rounded border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 transition-colors hover:bg-emerald-100"
+                  className="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 transition-colors hover:bg-emerald-100"
                 >
+                  <Eye className="h-3.5 w-3.5" aria-hidden="true" />
                   Ver
                 </Link>
               </td>
@@ -576,9 +689,9 @@ function TablaExploracionResultados({
     );
   }
   return (
-    <div className="w-full overflow-x-auto rounded-lg border border-gray-200 bg-white">
+    <div className="max-h-[465px] w-full overflow-auto rounded-lg border border-gray-200 bg-white">
       <table className="min-w-max w-full text-sm">
-        <thead className="border-b border-emerald-200 bg-emerald-50 text-left text-xs uppercase tracking-wide text-emerald-900">
+        <thead className="sticky top-0 z-10 border-b border-slate-300 bg-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 shadow-2xs">
           <tr>
             <th className="whitespace-nowrap px-3 py-2">Muestra</th>
             <th className="whitespace-nowrap px-3 py-2">Código</th>
@@ -698,8 +811,9 @@ function TablaExploracionResultados({
               <td className="whitespace-nowrap px-3 py-2">
                 <Link
                   href={`/muestras/${fila.ensayo.id_muestra}`}
-                  className="inline-flex whitespace-nowrap rounded border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 transition-colors hover:bg-emerald-100"
+                  className="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 transition-colors hover:bg-emerald-100"
                 >
+                  <Eye className="h-3.5 w-3.5" aria-hidden="true" />
                   Ver
                 </Link>
               </td>

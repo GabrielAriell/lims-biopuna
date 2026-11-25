@@ -121,7 +121,7 @@ export default function PrioridadesCliente() {
                 ⚠ {criticas.length}{" "}
                 {criticas.length === 1 ? "muestra urgente" : "muestras urgentes"}
               </p>
-              <ul className="mt-2 space-y-3">
+              <ul className="mt-2 max-h-[21.25rem] space-y-3 overflow-y-auto pr-1">
                 {criticas.map((alerta) => {
                   const m = alerta.muestra;
                   return (
@@ -185,7 +185,7 @@ export default function PrioridadesCliente() {
                 ⚠ {enAtencion.length}{" "}
                 {enAtencion.length === 1 ? "muestra en atención" : "muestras en atención"}
               </p>
-              <ul className="mt-2 space-y-3">
+              <ul className="mt-2 max-h-[21.25rem] space-y-3 overflow-y-auto pr-1">
                 {enAtencion.map((m) => (
                   <li
                     key={m.id_muestra}
@@ -246,7 +246,7 @@ export default function PrioridadesCliente() {
                 ● {recientes.length}{" "}
                 {recientes.length === 1 ? "muestra reciente" : "muestras recientes"}
               </p>
-              <ul className="mt-2 space-y-3">
+              <ul className="mt-2 max-h-[21.25rem] space-y-3 overflow-y-auto pr-1">
                 {recientes.map((m) => (
                   <li
                     key={m.id_muestra}

@@ -13,8 +13,23 @@ import {
 
 import Cargando from "@/components/Cargando";
 import MarcoDashboard from "@/components/MarcoDashboard";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { pedirJson } from "@/lib/api";
 import { API_URL } from "@/lib/config";
+
+const TODOS = "__todos__";
+
+const ITEM_SELECT =
+  "cursor-pointer text-sm dark:data-[highlighted]:bg-emerald-950 dark:data-[highlighted]:text-emerald-200";
+
+const TRIGGER_SELECT =
+  "cursor-pointer rounded-lg border-slate-300 px-2.5 py-2 text-sm hover:border-emerald-300 hover:bg-emerald-50";
 
 interface Estadistica {
   n: number;
@@ -531,91 +546,129 @@ export default function SaludPoblacionalPage() {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <div>
+            <div className="min-w-0">
               <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
                 Especie
               </label>
-              <select
-                value={especie}
-                onChange={(e) => setEspecie(e.target.value)}
-                className="w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+              <Select
+                value={especie || TODOS}
+                onValueChange={(v) => setEspecie(v === TODOS ? "" : v)}
               >
-                <option value="">Todas las especies</option>
-                {(datos?.opciones_filtro.especies || []).map((esp) => (
-                  <option key={esp} value={esp}>
-                    {esp}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className={TRIGGER_SELECT}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={TODOS} className={ITEM_SELECT}>
+                    Todas las especies
+                  </SelectItem>
+                  {(datos?.opciones_filtro.especies || []).filter(Boolean).map((esp) => (
+                    <SelectItem key={esp} value={esp} className={ITEM_SELECT}>
+                      {esp}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            <div>
+            <div className="min-w-0">
               <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
                 Departamento / Región
               </label>
-              <select
-                value={departamento}
-                onChange={(e) => setDepartamento(e.target.value)}
-                className="w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+              <Select
+                value={departamento || TODOS}
+                onValueChange={(v) => setDepartamento(v === TODOS ? "" : v)}
               >
-                <option value="">Todos los departamentos</option>
-                {(datos?.opciones_filtro.departamentos || []).map((dep) => (
-                  <option key={dep} value={dep}>
-                    {dep}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className={TRIGGER_SELECT}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={TODOS} className={ITEM_SELECT}>
+                    Todos los departamentos
+                  </SelectItem>
+                  {(datos?.opciones_filtro.departamentos || []).filter(Boolean).map((dep) => (
+                    <SelectItem key={dep} value={dep} className={ITEM_SELECT}>
+                      {dep}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            <div>
+            <div className="min-w-0">
               <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
                 Localidad / Paraje
               </label>
-              <select
-                value={localidad}
-                onChange={(e) => setLocalidad(e.target.value)}
-                className="w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+              <Select
+                value={localidad || TODOS}
+                onValueChange={(v) => setLocalidad(v === TODOS ? "" : v)}
               >
-                <option value="">Todas las localidades</option>
-                {(datos?.opciones_filtro.localidades || []).map((loc) => (
-                  <option key={loc} value={loc}>
-                    {loc}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className={TRIGGER_SELECT}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={TODOS} className={ITEM_SELECT}>
+                    Todas las localidades
+                  </SelectItem>
+                  {(datos?.opciones_filtro.localidades || []).filter(Boolean).map((loc) => (
+                    <SelectItem key={loc} value={loc} className={ITEM_SELECT}>
+                      {loc}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            <div>
+            <div className="min-w-0">
               <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
                 Campaña / Productor
               </label>
-              <select
-                value={idCampana}
-                onChange={(e) => setIdCampana(e.target.value)}
-                className="w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+              <Select
+                value={idCampana || TODOS}
+                onValueChange={(v) => setIdCampana(v === TODOS ? "" : v)}
               >
-                <option value="">Todas las campañas</option>
-                {(datos?.opciones_filtro.campanas || []).map((c) => (
-                  <option key={c.id_campana} value={c.id_campana}>
-                    {c.nombre}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className={TRIGGER_SELECT}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={TODOS} className={ITEM_SELECT}>
+                    Todas las campañas
+                  </SelectItem>
+                  {(datos?.opciones_filtro.campanas || []).map((c) => (
+                    <SelectItem
+                      key={c.id_campana}
+                      value={String(c.id_campana)}
+                      className={ITEM_SELECT}
+                    >
+                      {c.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            <div>
+            <div className="min-w-0">
               <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
                 Convenio INTA
               </label>
-              <select
-                value={convenio}
-                onChange={(e) => setConvenio(e.target.value)}
-                className="w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+              <Select
+                value={convenio || TODOS}
+                onValueChange={(v) => setConvenio(v === TODOS ? "" : v)}
               >
-                <option value="">Todos</option>
-                <option value="con">Con convenio INTA</option>
-                <option value="sin">Sin convenio INTA</option>
-              </select>
+                <SelectTrigger className={TRIGGER_SELECT}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={TODOS} className={ITEM_SELECT}>
+                    Todos
+                  </SelectItem>
+                  <SelectItem value="con" className={ITEM_SELECT}>
+                    Con convenio INTA
+                  </SelectItem>
+                  <SelectItem value="sin" className={ITEM_SELECT}>
+                    Sin convenio INTA
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -824,13 +877,13 @@ export default function SaludPoblacionalPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
-                  <tr className="border-b border-emerald-200 bg-emerald-50 text-xs uppercase text-emerald-900">
-                    <th className="py-2.5 px-3 font-bold">Grupo</th>
-                    <th className="py-2.5 px-3 font-bold text-right">Animales (n)</th>
-                    <th className="py-2.5 px-3 font-bold text-right">Media A/G</th>
-                    <th className="py-2.5 px-3 font-bold text-right">DE A/G</th>
-                    <th className="py-2.5 px-3 font-bold text-right">Prot. Totales (g/dL)</th>
-                    <th className="py-2.5 px-3 font-bold text-right">Albúmina (%)</th>
+                  <tr className="border-b border-slate-300 bg-slate-100 text-xs uppercase tracking-wide text-slate-700">
+                    <th className="py-2.5 px-3 font-semibold">Grupo</th>
+                    <th className="py-2.5 px-3 font-semibold text-right">Animales (n)</th>
+                    <th className="py-2.5 px-3 font-semibold text-right">Media A/G</th>
+                    <th className="py-2.5 px-3 font-semibold text-right">DE A/G</th>
+                    <th className="py-2.5 px-3 font-semibold text-right">Prot. Totales (g/dL)</th>
+                    <th className="py-2.5 px-3 font-semibold text-right">Albúmina (%)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -875,18 +928,18 @@ export default function SaludPoblacionalPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
-                  <tr className="border-b border-emerald-200 bg-emerald-50 text-xs uppercase text-emerald-900">
-                    <th className="py-2.5 px-3 font-bold">Fracción</th>
-                    <th className="py-2.5 px-3 font-bold text-right">Media (%)</th>
-                    <th className="py-2.5 px-3 font-bold text-right">DE (%)</th>
-                    <th className="py-2.5 px-3 font-bold text-right">Media (g/dL)</th>
-                    <th className="py-2.5 px-3 font-bold text-right">DE (g/dL)</th>
+                  <tr className="border-b border-slate-300 bg-slate-100 text-xs uppercase tracking-wide text-slate-700">
+                    <th className="py-2.5 px-3 font-semibold">Fracción</th>
+                    <th className="py-2.5 px-3 font-semibold text-right">Media (%)</th>
+                    <th className="py-2.5 px-3 font-semibold text-right">DE (%)</th>
+                    <th className="py-2.5 px-3 font-semibold text-right">Media (g/dL)</th>
+                    <th className="py-2.5 px-3 font-semibold text-right">DE (g/dL)</th>
                     {comp && (
                       <>
-                        <th className="py-2.5 px-3 font-bold text-right text-emerald-800">
+                        <th className="py-2.5 px-3 font-semibold text-right">
                           Temp. 2 (%)
                         </th>
-                        <th className="py-2.5 px-3 font-bold text-right text-emerald-800">
+                        <th className="py-2.5 px-3 font-semibold text-right">
                           Temp. 2 (g/dL)
                         </th>
                       </>
