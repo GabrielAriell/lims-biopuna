@@ -27,14 +27,30 @@ class EnsayoNoEncontrado(LookupError):
     """El ensayo solicitado no existe."""
 
 
+# _NOMBRES_CLASICOS = {
+#     "Albumina",
+#     "Alfa1",
+#     "Alfa2",
+#     "Beta",
+#     "Beta1",
+#     "Beta2",
+#     "Gamma",
+# }
 _NOMBRES_CLASICOS = {
     "Albumina",
+    "Albúmina",
     "Alfa1",
+    "Alfa 1",
+    "Alfa I",
     "Alfa2",
+    "Alfa 2",
+    "Alfa II",
     "Beta",
     "Beta1",
     "Beta2",
     "Gamma",
+    "Gamma I",
+    "Gamma II",
 }
 _RE_FRACCION_GENERICA = re.compile(r"^Fracción (?:[1-9]|1[0-9]|20)$")
 

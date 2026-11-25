@@ -167,15 +167,14 @@ export default function FormularioTira({
             onChange={(e) =>
               cambiar(
                 "cantidadFracciones",
-                e.target.value ? (Number(e.target.value) as 4 | 5 | 6) : null,
+                e.target.value ? (Number(e.target.value) as 5 | 6) : null,
               )
             }
             className={CAMPO}
           >
             <option value="">Automático (según picos)</option>
-            <option value="4">4 fracciones (Alb, α, β, γ)</option>
             <option value="5">5 fracciones (Alb, α1, α2, β, γ)</option>
-            <option value="6">6 fracciones (Alb, α1, α2, β1, β2, γ)</option>
+            <option value="6">6 fracciones (Alb, α I, α II, β, γ I, γ II)</option>
           </select>
         </div>
 
