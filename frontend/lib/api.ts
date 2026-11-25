@@ -77,6 +77,9 @@ export async function analizarTira(
   datos.append("modo", p.modo);
   datos.append("vertical", String(p.vertical));
   datos.append("invertir", String(p.invertir));
+  if (p.cantidadFracciones) {
+    datos.append("cantidad_fracciones", String(p.cantidadFracciones));
+  }
   if (region) datos.append("region", region);
 
   return pedirJson<AnalisisTira>(`${API_URL}/ensayos/analizar-tira`, {

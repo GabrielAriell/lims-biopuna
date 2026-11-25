@@ -39,6 +39,7 @@ export type Parametros = {
   modo: Modo;
   vertical: boolean;
   invertir: boolean;
+  cantidadFracciones: 5 | 6 | null;
 };
 
 // (inicio, fin) inclusivos, en columnas del perfil.
