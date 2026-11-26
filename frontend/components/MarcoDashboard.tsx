@@ -402,7 +402,7 @@ export default function MarcoDashboard({
           >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-emerald-100 bg-white transition-all group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:rounded-lg">
               <Image
-                src="/logo-sistema.jpeg"
+                src="/logo-sistema-solo.png"
                 alt="LIMS-BioPuna"
                 width={40}
                 height={40}
