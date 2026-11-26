@@ -143,19 +143,12 @@ export default function GraficosTerritoriales({
   return (
     <section className="rounded-lg border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="space-y-3">
-          <div>
-            <h2 className="text-lg font-semibold">Análisis territorial (Convenio INTA)</h2>
-            <p className="text-sm text-gray-600">
-              Distribución de las {muestrasConvenio.length} muestras que coinciden con
-              los filtros actuales{descripcionConvenio}.
-            </p>
-          </div>
-          <FiltroConvenioUI
-            valor={filtroConvenio}
-            onChange={onCambiarConvenio}
-            totales={totalesConvenio}
-          />
+        <div>
+          <h2 className="text-lg font-semibold">Análisis territorial (Convenio INTA)</h2>
+          <p className="text-sm text-gray-600">
+            Distribución de las {muestrasConvenio.length} muestras que coinciden con
+            los filtros actuales{descripcionConvenio}.
+          </p>
         </div>
         <div className="flex flex-col items-stretch justify-center gap-1.5">
           <div className="grid grid-cols-2 gap-2">
@@ -185,17 +178,18 @@ export default function GraficosTerritoriales({
         </div>
       </div>
 
-      {muestrasConvenio.length === 0 ? (
-        <p className="mt-4 rounded border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500">
-          No hay muestras que coincidan con los filtros y el convenio elegido.
-        </p>
-      ) : (
-        <>
-          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-gray-100 pt-3">
+        <FiltroConvenioUI
+          valor={filtroConvenio}
+          onChange={onCambiarConvenio}
+          totales={totalesConvenio}
+        />
+        {muestrasConvenio.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
               Agrupar territorio por
             </span>
-            <div className="flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+            <div className="flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
               <Button
                 type="button"
                 size="sm"
@@ -216,7 +210,15 @@ export default function GraficosTerritoriales({
               </Button>
             </div>
           </div>
+        )}
+      </div>
 
+      {muestrasConvenio.length === 0 ? (
+        <p className="mt-4 rounded border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500">
+          No hay muestras que coincidan con los filtros y el convenio elegido.
+        </p>
+      ) : (
+        <>
           <div className="mt-4 grid gap-6 lg:grid-cols-2">
             <div>
               <h3 className="text-center text-sm font-medium text-gray-700">
@@ -321,7 +323,7 @@ function FiltroConvenioUI({
       <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
         Convenio INTA
       </span>
-      <div className="flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+      <div className="flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
         {opciones.map((opcion) => (
           <Button
             key={opcion.valor}

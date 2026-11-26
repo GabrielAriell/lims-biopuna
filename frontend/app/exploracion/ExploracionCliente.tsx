@@ -328,7 +328,7 @@ export default function ExploracionCliente() {
         )}
 
         <section className="rounded-lg border border-gray-200 bg-white p-4">
-          <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="flex flex-wrap items-end gap-3">
             <div className="min-w-[240px] flex-1">
               <label className="mb-1 block text-[11px] font-bold uppercase text-slate-500">
                 Búsqueda
@@ -338,32 +338,31 @@ export default function ExploracionCliente() {
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
                 placeholder="Buscar: código, especie, localidad, investigador..."
-                className="w-full rounded border border-gray-300 bg-white px-3 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+                className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
               />
             </div>
 
-            <div className="flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
-              <Button
-                type="button"
-                size="sm"
-                variant={vista === "muestras" ? "default" : "ghost"}
-                onClick={() => setVista("muestras")}
-                className={vista === "muestras" ? "" : "text-slate-600"}
-              >
-                Muestras ({muestrasFiltradas.length})
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant={vista === "resultados" ? "default" : "ghost"}
-                onClick={() => setVista("resultados")}
-                className={vista === "resultados" ? "" : "text-slate-600"}
-              >
-                Resultados/fracciones ({resultadosFiltrados.length})
-              </Button>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+              <div className="flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={vista === "muestras" ? "default" : "ghost"}
+                  onClick={() => setVista("muestras")}
+                  className={vista === "muestras" ? "" : "text-slate-600"}
+                >
+                  Muestras ({muestrasFiltradas.length})
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={vista === "resultados" ? "default" : "ghost"}
+                  onClick={() => setVista("resultados")}
+                  className={vista === "resultados" ? "" : "text-slate-600"}
+                >
+                  Resultados/fracciones ({resultadosFiltrados.length})
+                </Button>
+              </div>
               <Button
                 type="button"
                 variant="outline"
@@ -551,7 +550,7 @@ export default function ExploracionCliente() {
                   type="date"
                   value={fechaDesde}
                   onChange={(e) => setFechaDesde(e.target.value)}
-                  className="w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+                  className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
                 />
               </div>
               <div className="min-w-[145px]">
@@ -562,7 +561,7 @@ export default function ExploracionCliente() {
                   type="date"
                   value={fechaHasta}
                   onChange={(e) => setFechaHasta(e.target.value)}
-                  className="w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+                  className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
                 />
               </div>
             </div>
