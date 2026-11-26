@@ -30,10 +30,17 @@ class EnsayoNoEncontrado(LookupError):
 # Nombres canonicos aceptados (5 o 6 franjas): una sola Beta; Gamma se subdivide.
 _NOMBRES_CANONICOS = {
     "Albumina",
+    "Albúmina",
     "Alfa1",
+    "Alfa 1",
+    "Alfa I",
     "Alfa2",
+    "Alfa 2",
+    "Alfa II",
     "Beta",
     "Gamma",
+    "Gamma I",
+    "Gamma II",
     "Gamma1",
     "Gamma2",
 }
