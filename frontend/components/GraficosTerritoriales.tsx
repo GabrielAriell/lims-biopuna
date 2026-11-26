@@ -16,6 +16,7 @@ import {
 } from "recharts";
 import type { PieLabelRenderProps } from "recharts";
 
+import { Button } from "@/components/ui/button";
 import type { Campana, Muestra } from "@/lib/tipos-muestras";
 
 // Colores editables del gráfico de especies.
@@ -158,22 +159,25 @@ export default function GraficosTerritoriales({
         </div>
         <div className="flex flex-col items-stretch justify-center gap-1.5">
           <div className="grid grid-cols-2 gap-2">
-            <button
+            <Button
               type="button"
+              size="sm"
               onClick={onExportarExcel}
               disabled={exportando !== null}
-              className="w-full rounded border border-green-300 bg-green-50 px-4 py-1.5 text-center text-sm font-medium text-green-800 transition-colors hover:bg-green-100 disabled:opacity-50"
+              className="w-full"
             >
               {exportando === "excel" ? "Generando..." : "Exportar Excel"}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={onExportarPdf}
               disabled={exportando !== null}
-              className="w-full rounded border border-red-300 bg-red-50 px-4 py-1.5 text-center text-sm font-medium text-red-800 transition-colors hover:bg-red-100 disabled:opacity-50"
+              className="w-full"
             >
               {exportando === "pdf" ? "Generando..." : "Descargar PDF"}
-            </button>
+            </Button>
           </div>
           <p className="text-center text-xs text-gray-500">
             El Excel y el PDF incluyen solo las muestras filtradas y sus gráficos.
@@ -191,29 +195,25 @@ export default function GraficosTerritoriales({
             <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
               Agrupar territorio por
             </span>
-            <div className="flex gap-1 rounded border border-gray-200 bg-gray-50 p-0.5">
-              <button
+            <div className="flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+              <Button
                 type="button"
+                size="sm"
+                variant={agrupacion === "departamento" ? "default" : "ghost"}
                 onClick={() => setAgrupacion("departamento")}
-                className={`rounded px-3 py-1 text-sm transition-colors hover:bg-gray-200 ${
-                  agrupacion === "departamento"
-                    ? "bg-white font-medium shadow-sm"
-                    : "text-gray-600"
-                }`}
+                className={agrupacion === "departamento" ? "" : "text-slate-600"}
               >
                 Departamento
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                size="sm"
+                variant={agrupacion === "localidad" ? "default" : "ghost"}
                 onClick={() => setAgrupacion("localidad")}
-                className={`rounded px-3 py-1 text-sm transition-colors hover:bg-gray-200 ${
-                  agrupacion === "localidad"
-                    ? "bg-white font-medium shadow-sm"
-                    : "text-gray-600"
-                }`}
+                className={agrupacion === "localidad" ? "" : "text-slate-600"}
               >
                 Localidad/paraje
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -321,20 +321,18 @@ function FiltroConvenioUI({
       <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
         Convenio INTA
       </span>
-      <div className="flex gap-1 rounded border border-gray-200 bg-gray-50 p-0.5">
+      <div className="flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
         {opciones.map((opcion) => (
-          <button
+          <Button
             key={opcion.valor}
             type="button"
+            size="sm"
+            variant={valor === opcion.valor ? "default" : "ghost"}
             onClick={() => onChange(opcion.valor)}
-            className={`rounded px-3 py-1 text-sm transition-colors hover:bg-gray-200 ${
-              valor === opcion.valor
-                ? "bg-white font-medium shadow-sm"
-                : "text-gray-600"
-            }`}
+            className={valor === opcion.valor ? "" : "text-slate-600"}
           >
             {opcion.texto}
-          </button>
+          </Button>
         ))}
       </div>
     </div>

@@ -12,6 +12,7 @@ import type {
 } from "@/components/GraficosTerritoriales";
 import Cargando from "@/components/Cargando";
 import Semaforo from "@/components/Semaforo";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -64,7 +65,7 @@ const ITEM_SELECT =
   "cursor-pointer text-sm dark:data-[highlighted]:bg-emerald-950 dark:data-[highlighted]:text-emerald-200";
 
 const TRIGGER_SELECT =
-  "cursor-pointer rounded border-gray-300 px-3 py-1.5 text-sm hover:border-emerald-300 hover:bg-emerald-50";
+  "cursor-pointer rounded-lg border-slate-300 px-3 py-2 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50";
 
 const ESTADOS: { valor: "" | EstadoMuestra; texto: string }[] = [
   { valor: "", texto: "Todos los estados" },
@@ -278,9 +279,15 @@ export default function ExploracionCliente() {
         {error && (
           <div className="rounded border border-red-300 bg-red-50 p-3 text-red-800">
             {error}
-            <button type="button" onClick={() => void cargar()} className="ml-3 underline">
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              onClick={() => void cargar()}
+              className="ml-3"
+            >
               Reintentar
-            </button>
+            </Button>
           </div>
         )}
 
@@ -335,43 +342,44 @@ export default function ExploracionCliente() {
               />
             </div>
 
-            <div className="flex gap-1 rounded border border-gray-200 bg-gray-50 p-0.5">
-              <button
+            <div className="flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+              <Button
                 type="button"
+                size="sm"
+                variant={vista === "muestras" ? "default" : "ghost"}
                 onClick={() => setVista("muestras")}
-                className={`rounded px-3 py-1 text-sm transition-colors hover:bg-gray-200 ${
-                  vista === "muestras" ? "bg-white font-medium shadow-sm" : "text-gray-600"
-                }`}
+                className={vista === "muestras" ? "" : "text-slate-600"}
               >
                 Muestras ({muestrasFiltradas.length})
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                size="sm"
+                variant={vista === "resultados" ? "default" : "ghost"}
                 onClick={() => setVista("resultados")}
-                className={`rounded px-3 py-1 text-sm transition-colors hover:bg-gray-200 ${
-                  vista === "resultados" ? "bg-white font-medium shadow-sm" : "text-gray-600"
-                }`}
+                className={vista === "resultados" ? "" : "text-slate-600"}
               >
                 Resultados/fracciones ({resultadosFiltrados.length})
-              </button>
+              </Button>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => void cargar()}
-                className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
               >
                 Actualizar
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                size="sm"
                 onClick={() => void descargar("ensayos")}
                 disabled={Boolean(exportando)}
-                className="cursor-pointer rounded border border-green-300 bg-green-50 px-3 py-1.5 text-sm font-medium text-green-800 transition-colors hover:bg-green-100 disabled:opacity-50"
               >
                 {exportando === "ensayos" ? "..." : "Exportar Excel Ensayos"}
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -387,15 +395,17 @@ export default function ExploracionCliente() {
 
             return (
               <div className="mt-3 flex flex-wrap items-center gap-3">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => setMostrarAvanzados((prev) => !prev)}
                   aria-expanded={mostrarAvanzados}
-                  className={`inline-flex cursor-pointer items-center gap-1.5 rounded border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  className={
                     mostrarAvanzados || activos > 0
-                      ? "border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
-                      : "border-gray-300 bg-gray-50 text-slate-700 hover:border-emerald-300 hover:bg-emerald-50"
-                  }`}
+                      ? "border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 hover:text-emerald-800"
+                      : "text-slate-700"
+                  }
                 >
                   <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
                   Opciones avanzadas
@@ -410,11 +420,13 @@ export default function ExploracionCliente() {
                     }`}
                     aria-hidden="true"
                   />
-                </button>
+                </Button>
 
                 {activos > 0 && (
-                  <button
+                  <Button
                     type="button"
+                    variant="link"
+                    size="sm"
                     onClick={() => {
                       setFiltroEspecie("");
                       setFiltroInvestigador("");
@@ -423,10 +435,9 @@ export default function ExploracionCliente() {
                       setFechaDesde("");
                       setFechaHasta("");
                     }}
-                    className="cursor-pointer text-xs font-medium text-slate-500 underline hover:text-emerald-800"
                   >
                     Limpiar filtros avanzados
-                  </button>
+                  </Button>
                 )}
               </div>
             );
@@ -656,13 +667,17 @@ function TablaExploracionMuestras({ filas }: { filas: FilaMuestra[] }) {
                 {m.ultimaCorrida ? fechaHora(m.ultimaCorrida) : "—"}
               </td>
               <td className="whitespace-nowrap px-3 py-2">
-                <Link
-                  href={`/muestras/${m.id_muestra}`}
-                  className="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 transition-colors hover:bg-emerald-100"
+                <Button
+                  asChild
+                  variant="outline"
+                  size="xs"
+                  className="border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 hover:text-emerald-800"
                 >
-                  <Eye className="h-3.5 w-3.5" aria-hidden="true" />
-                  Ver
-                </Link>
+                  <Link href={`/muestras/${m.id_muestra}`}>
+                    <Eye aria-hidden="true" />
+                    Ver
+                  </Link>
+                </Button>
               </td>
             </tr>
           ))}
@@ -809,13 +824,17 @@ function TablaExploracionResultados({
                 {fila.fraccion ? num(fila.fraccion.area_integrada, 4) : "—"}
               </td>
               <td className="whitespace-nowrap px-3 py-2">
-                <Link
-                  href={`/muestras/${fila.ensayo.id_muestra}`}
-                  className="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 transition-colors hover:bg-emerald-100"
+                <Button
+                  asChild
+                  variant="outline"
+                  size="xs"
+                  className="border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 hover:text-emerald-800"
                 >
-                  <Eye className="h-3.5 w-3.5" aria-hidden="true" />
-                  Ver
-                </Link>
+                  <Link href={`/muestras/${fila.ensayo.id_muestra}`}>
+                    <Eye aria-hidden="true" />
+                    Ver
+                  </Link>
+                </Button>
               </td>
             </tr>
           ))}

@@ -13,6 +13,7 @@ import {
 
 import Cargando from "@/components/Cargando";
 import MarcoDashboard from "@/components/MarcoDashboard";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -29,7 +30,7 @@ const ITEM_SELECT =
   "cursor-pointer text-sm dark:data-[highlighted]:bg-emerald-950 dark:data-[highlighted]:text-emerald-200";
 
 const TRIGGER_SELECT =
-  "cursor-pointer rounded-lg border-slate-300 px-2.5 py-2 text-sm hover:border-emerald-300 hover:bg-emerald-50";
+  "cursor-pointer rounded-lg border-slate-300 px-3 py-2 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50";
 
 interface Estadistica {
   n: number;
@@ -189,7 +190,7 @@ function LineaTiempoEstacional({ puntos }: { puntos: PuntoTiempo[] }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 text-xs font-bold">
+          <div className="inline-flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
             {(
               [
                 { id: "relacion_ag", label: "Relación A/G" },
@@ -197,37 +198,38 @@ function LineaTiempoEstacional({ puntos }: { puntos: PuntoTiempo[] }) {
                 { id: "albumina_pct", label: "Albúmina %" },
               ] as const
             ).map((m) => (
-              <button
+              <Button
                 key={m.id}
                 type="button"
+                size="sm"
+                variant={metrica === m.id ? "default" : "ghost"}
                 onClick={() => setMetrica(m.id)}
-                className={`cursor-pointer rounded-md px-3 py-1.5 transition-all duration-150 ${metrica === m.id
-                  ? "bg-emerald-600 text-white shadow-xs hover:bg-emerald-700"
-                  : "text-slate-600 hover:bg-emerald-50 hover:text-emerald-800"
-                  }`}
+                className={`text-xs font-bold ${metrica === m.id ? "" : "text-slate-600"}`}
               >
                 {m.label}
-              </button>
+              </Button>
             ))}
           </div>
 
           <div className="inline-flex items-center gap-1">
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="icon-sm"
               onClick={() => desplazar(-280)}
-              className="cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-bold text-slate-700 transition-all duration-150 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800 active:scale-95"
               title="Desplazar a la izquierda"
             >
               ◀
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="outline"
+              size="icon-sm"
               onClick={() => desplazar(280)}
-              className="cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-bold text-slate-700 transition-all duration-150 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800 active:scale-95"
               title="Desplazar a la derecha"
             >
               ▶
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -521,27 +523,30 @@ export default function SaludPoblacionalPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => setCompararActivo((v) => !v)}
-                className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition-colors ${compararActivo
-                  ? "border-emerald-600 bg-emerald-50 text-emerald-900 hover:bg-emerald-100"
-                  : "border-slate-300 bg-white text-slate-700 hover:border-emerald-300 hover:bg-emerald-50"
+                className={`text-xs font-bold ${compararActivo
+                  ? "border-emerald-600 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 hover:text-emerald-900"
+                  : "text-slate-700"
                   }`}
               >
                 <GitCompare className="h-3.5 w-3.5" />
                 {compararActivo ? "Comparando 2 temporadas" : "Comparar con otra temporada"}
-              </button>
+              </Button>
 
-              <button
+              <Button
                 type="button"
+                size="sm"
                 onClick={() => void recargar()}
                 disabled={actualizando || cargando}
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="text-xs font-bold"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${actualizando ? "animate-spin" : ""}`} />
                 {actualizando ? "Actualizando..." : "Actualizar"}
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -843,7 +848,7 @@ export default function SaludPoblacionalPage() {
               </p>
             </div>
 
-            <div className="inline-flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 text-xs font-bold">
+            <div className="inline-flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
               {(
                 [
                   { id: "localidad", label: "Por Localidad" },
@@ -852,17 +857,16 @@ export default function SaludPoblacionalPage() {
                   { id: "especie", label: "Por Especie" },
                 ] as const
               ).map((tab) => (
-                <button
+                <Button
                   key={tab.id}
                   type="button"
+                  size="sm"
+                  variant={agrupacion === tab.id ? "default" : "ghost"}
                   onClick={() => setAgrupacion(tab.id)}
-                  className={`cursor-pointer rounded-md px-3 py-1.5 transition-all duration-150 ${agrupacion === tab.id
-                    ? "bg-emerald-600 text-white shadow-xs hover:bg-emerald-700"
-                    : "text-slate-600 hover:bg-emerald-50 hover:text-emerald-800"
-                    }`}
+                  className={`text-xs font-bold ${agrupacion === tab.id ? "" : "text-slate-600"}`}
                 >
                   {tab.label}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
