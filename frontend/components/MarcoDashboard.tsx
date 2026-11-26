@@ -400,13 +400,13 @@ export default function MarcoDashboard({
             href="/"
             className="flex min-w-0 items-center gap-3 px-1 py-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
           >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 border border-emerald-100 p-1.5 transition-all group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:rounded-lg group-data-[collapsible=icon]:p-1">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-emerald-100 bg-white transition-all group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:rounded-lg">
               <Image
-                src="/logo-camelia.png"
+                src="/logo-sistema.jpeg"
                 alt="LIMS-BioPuna"
-                width={36}
-                height={36}
-                className="h-full w-full object-contain"
+                width={40}
+                height={40}
+                className="h-full w-full object-cover"
                 priority
               />
             </div>
@@ -423,8 +423,8 @@ export default function MarcoDashboard({
             </div>
           </Link>
           <SidebarTrigger
+            tooltip="Mostrar u ocultar el menú"
             className="size-8 shrink-0 text-slate-500 hover:text-slate-900 [&_svg]:size-[18px]"
-            title="Mostrar u ocultar el menú"
           />
         </SidebarHeader>
 

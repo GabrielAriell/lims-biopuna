@@ -256,11 +256,14 @@ function Sidebar({
 function SidebarTrigger({
   className,
   onClick,
+  tooltip,
   ...props
-}: React.ComponentProps<typeof Button>) {
-  const { toggleSidebar } = useSidebar()
+}: React.ComponentProps<typeof Button> & {
+  tooltip?: string | React.ComponentProps<typeof TooltipContent>
+}) {
+  const { toggleSidebar, isMobile } = useSidebar()
 
-  return (
+  const button = (
     <Button
       data-sidebar="trigger"
       data-slot="sidebar-trigger"
@@ -276,6 +279,28 @@ function SidebarTrigger({
       <PanelLeftIcon />
       <span className="sr-only">Mostrar u ocultar el menú</span>
     </Button>
+  )
+
+  if (!tooltip) {
+    return button
+  }
+
+  if (typeof tooltip === "string") {
+    tooltip = {
+      children: tooltip,
+    }
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{button}</TooltipTrigger>
+      <TooltipContent
+        side="right"
+        align="center"
+        hidden={isMobile}
+        {...tooltip}
+      />
+    </Tooltip>
   )
 }
 
