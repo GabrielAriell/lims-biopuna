@@ -127,16 +127,7 @@ export default function PaginaLogin() {
         {/* Panel del formulario */}
         <section className="flex flex-1 items-center justify-center px-5 py-10 sm:px-8">
           <div className="w-full max-w-md">
-            <Image
-              src="/logo-sistema.jpeg"
-              alt="LIMS-BioPuna"
-              width={216}
-              height={144}
-              className="mx-auto h-auto w-44 sm:w-52"
-              priority
-            />
-
-            <div className="mt-6 sm:mt-8">
+            <div>
               <h2 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
                 Iniciá sesión
               </h2>
