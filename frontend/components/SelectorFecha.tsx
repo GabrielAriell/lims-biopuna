@@ -17,6 +17,7 @@ type Props = {
   conHora?: boolean;
   placeholder?: string;
   disabled?: boolean;
+  limpiar?: boolean;
 };
 
 // "YYYY-MM-DD" / "YYYY-MM-DDTHH:mm" → Date local (sin corrimiento UTC).
@@ -45,6 +46,7 @@ export default function SelectorFecha({
   conHora = false,
   placeholder,
   disabled = false,
+  limpiar = false,
 }: Props) {
   const [abierto, setAbierto] = useState(false);
   const fecha = parsear(value);
@@ -108,6 +110,20 @@ export default function SelectorFecha({
               onChange={(e) => elegirHora(e.target.value)}
               className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-[15px] text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 disabled:opacity-50"
             />
+          </div>
+        )}
+        {limpiar && fecha && (
+          <div className="border-t border-slate-200 px-3 py-2">
+            <button
+              type="button"
+              onClick={() => {
+                onChange("");
+                setAbierto(false);
+              }}
+              className="text-xs font-medium text-slate-500 transition-colors hover:text-red-600"
+            >
+              Limpiar fecha
+            </button>
           </div>
         )}
       </PopoverContent>

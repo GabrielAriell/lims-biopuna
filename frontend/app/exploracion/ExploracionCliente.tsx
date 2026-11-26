@@ -12,6 +12,7 @@ import type {
 } from "@/components/GraficosTerritoriales";
 import Cargando from "@/components/Cargando";
 import Semaforo from "@/components/Semaforo";
+import SelectorFecha from "@/components/SelectorFecha";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -542,26 +543,26 @@ export default function ExploracionCliente() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="min-w-[145px]">
+              <div className="min-w-[145px] flex-1">
                 <label className="mb-1 block text-[11px] font-bold uppercase text-slate-500">
                   Desde
                 </label>
-                <input
-                  type="date"
+                <SelectorFecha
                   value={fechaDesde}
-                  onChange={(e) => setFechaDesde(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+                  onChange={setFechaDesde}
+                  placeholder="dd/mm/aaaa"
+                  limpiar
                 />
               </div>
-              <div className="min-w-[145px]">
+              <div className="min-w-[145px] flex-1">
                 <label className="mb-1 block text-[11px] font-bold uppercase text-slate-500">
                   Hasta
                 </label>
-                <input
-                  type="date"
+                <SelectorFecha
                   value={fechaHasta}
-                  onChange={(e) => setFechaHasta(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+                  onChange={setFechaHasta}
+                  placeholder="dd/mm/aaaa"
+                  limpiar
                 />
               </div>
             </div>

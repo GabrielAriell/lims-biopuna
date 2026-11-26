@@ -13,6 +13,7 @@ import {
 
 import Cargando from "@/components/Cargando";
 import MarcoDashboard from "@/components/MarcoDashboard";
+import SelectorFecha from "@/components/SelectorFecha";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -190,7 +191,7 @@ function LineaTiempoEstacional({ puntos }: { puntos: PuntoTiempo[] }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+          <div className="inline-flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
             {(
               [
                 { id: "relacion_ag", label: "Relación A/G" },
@@ -522,7 +523,7 @@ export default function SaludPoblacionalPage() {
               <span>Filtros de población y período de muestreo</span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -683,23 +684,23 @@ export default function SaludPoblacionalPage() {
               <p className="text-xs font-bold text-slate-700 mb-2">
                 {compararActivo ? "Temporada 1 (Base / Pre-dieta)" : "Rango de fechas de muestreo"}
               </p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid gap-2 sm:grid-cols-2">
                 <div>
                   <label className="block text-[11px] text-slate-500">Desde</label>
-                  <input
-                    type="date"
+                  <SelectorFecha
                     value={fechaDesde}
-                    onChange={(e) => setFechaDesde(e.target.value)}
-                    className="w-full cursor-pointer rounded border border-slate-300 bg-white px-2 py-1.5 text-xs transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+                    onChange={setFechaDesde}
+                    placeholder="dd/mm/aaaa"
+                    limpiar
                   />
                 </div>
                 <div>
                   <label className="block text-[11px] text-slate-500">Hasta</label>
-                  <input
-                    type="date"
+                  <SelectorFecha
                     value={fechaHasta}
-                    onChange={(e) => setFechaHasta(e.target.value)}
-                    className="w-full cursor-pointer rounded border border-slate-300 bg-white px-2 py-1.5 text-xs transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+                    onChange={setFechaHasta}
+                    placeholder="dd/mm/aaaa"
+                    limpiar
                   />
                 </div>
               </div>
@@ -710,23 +711,23 @@ export default function SaludPoblacionalPage() {
                 <p className="text-xs font-bold text-emerald-900 mb-2">
                   Temporada 2 (Seguimiento / Post-dieta)
                 </p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid gap-2 sm:grid-cols-2">
                   <div>
                     <label className="block text-[11px] text-emerald-800">Desde</label>
-                    <input
-                      type="date"
+                    <SelectorFecha
                       value={compDesde}
-                      onChange={(e) => setCompDesde(e.target.value)}
-                      className="w-full cursor-pointer rounded border border-emerald-300 bg-white px-2 py-1.5 text-xs transition-colors hover:border-emerald-400 hover:bg-emerald-50"
+                      onChange={setCompDesde}
+                      placeholder="dd/mm/aaaa"
+                      limpiar
                     />
                   </div>
                   <div>
                     <label className="block text-[11px] text-emerald-800">Hasta</label>
-                    <input
-                      type="date"
+                    <SelectorFecha
                       value={compHasta}
-                      onChange={(e) => setCompHasta(e.target.value)}
-                      className="w-full cursor-pointer rounded border border-emerald-300 bg-white px-2 py-1.5 text-xs transition-colors hover:border-emerald-400 hover:bg-emerald-50"
+                      onChange={setCompHasta}
+                      placeholder="dd/mm/aaaa"
+                      limpiar
                     />
                   </div>
                 </div>
@@ -848,7 +849,7 @@ export default function SaludPoblacionalPage() {
               </p>
             </div>
 
-            <div className="inline-flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+            <div className="inline-flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
               {(
                 [
                   { id: "localidad", label: "Por Localidad" },
