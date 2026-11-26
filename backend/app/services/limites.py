@@ -12,7 +12,8 @@ from app.services.densitometria import ResultadoFracciones, calcular_fracciones
 from app.services.densitometria.picos import Zona
 
 MAX_COLUMNAS = 20_000
-MAX_ZONAS = 20
+MAX_ZONAS = 6
+MIN_ZONAS = 5
 
 
 def recalcular(

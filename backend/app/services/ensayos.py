@@ -27,16 +27,8 @@ class EnsayoNoEncontrado(LookupError):
     """El ensayo solicitado no existe."""
 
 
-# _NOMBRES_CLASICOS = {
-#     "Albumina",
-#     "Alfa1",
-#     "Alfa2",
-#     "Beta",
-#     "Beta1",
-#     "Beta2",
-#     "Gamma",
-# }
-_NOMBRES_CLASICOS = {
+# Nombres canonicos aceptados (5 o 6 franjas): una sola Beta; Gamma se subdivide.
+_NOMBRES_CANONICOS = {
     "Albumina",
     "Albúmina",
     "Alfa1",
@@ -46,17 +38,57 @@ _NOMBRES_CLASICOS = {
     "Alfa 2",
     "Alfa II",
     "Beta",
-    "Beta1",
-    "Beta2",
     "Gamma",
     "Gamma I",
     "Gamma II",
+    "Gamma1",
+    "Gamma2",
 }
-_RE_FRACCION_GENERICA = re.compile(r"^Fracción (?:[1-9]|1[0-9]|20)$")
+
+# Aliases tolerados -> nombre can?nico (acepta acentos, espacios, I/II, 1/2).
+_ALIASES_FRACCION = {
+    "albumina": "Albumina",
+    "albumina": "Albumina",
+    "alfa1": "Alfa1",
+    "alfa 1": "Alfa1",
+    "alfai": "Alfa1",
+    "alfa i": "Alfa1",
+    "alfa2": "Alfa2",
+    "alfa 2": "Alfa2",
+    "alfaii": "Alfa2",
+    "alfa ii": "Alfa2",
+    "beta": "Beta",
+    "gamma": "Gamma",
+    "gama": "Gamma",
+    "gamma1": "Gamma1",
+    "gamma 1": "Gamma1",
+    "gammai": "Gamma1",
+    "gamma i": "Gamma1",
+    "gama1": "Gamma1",
+    "gama 1": "Gamma1",
+    "gamai": "Gamma1",
+    "gama i": "Gamma1",
+    "gamma2": "Gamma2",
+    "gamma 2": "Gamma2",
+    "gammaii": "Gamma2",
+    "gamma ii": "Gamma2",
+    "gama2": "Gamma2",
+    "gama 2": "Gamma2",
+    "gamaii": "Gamma2",
+    "gama ii": "Gamma2",
+}
+
+
+def _normalizar_nombre_fraccion(nombre: str) -> str | None:
+    limpio = " ".join(nombre.strip().split())
+    canonico = _ALIASES_FRACCION.get(limpio.casefold())
+    if canonico:
+        return canonico
+    return limpio if limpio in _NOMBRES_CANONICOS else None
 
 
 def _nombre_fraccion_valido(nombre: str) -> bool:
-    return nombre in _NOMBRES_CLASICOS or bool(_RE_FRACCION_GENERICA.match(nombre))
+    return _normalizar_nombre_fraccion(nombre) is not None
 
 
 def _fracciones_desde_entrada(
@@ -77,6 +109,9 @@ def _fracciones_desde_entrada(
     except ValueError as error:
         raise EnsayoInvalido(f"Tira: {error}") from error
 
+    if len(carril.zonas) not in (5, 6):
+        raise EnsayoInvalido("El ensayo debe tener 5 o 6 franjas")
+
     if carril.fracciones is not None:
         if len(carril.fracciones) != len(carril.zonas):
             raise EnsayoInvalido(
@@ -84,40 +119,40 @@ def _fracciones_desde_entrada(
             )
         filas = []
         for f in carril.fracciones:
-            nombre = f.nombre_fraccion.strip()
-            if not nombre:
+            canonico = _normalizar_nombre_fraccion(f.nombre_fraccion)
+            if not canonico:
                 raise EnsayoInvalido(
-                    "El nombre de la fracción no puede estar vacío"
-                )
-            if not _nombre_fraccion_valido(nombre):
-                raise EnsayoInvalido(
-                    "Nombre de fracción inválido. Usá 'Fracción 1'..'Fracción 20' "
-                    "o un nombre clásico (Albumina, Alfa1, Alfa2, Beta, Beta1, Beta2, Gamma)"
+                    "Nombre de fraccion invalido. Us?: Albumina, Alfa1, Alfa2, Beta, Gamma "
+                    "y, solo en 6 franjas, Gamma1/Gamma2 (tambi?n se aceptan Alfa I/II, Gamma I/II)"
                 )
             filas.append(
                 {
-                    "nombre_fraccion": nombre,
+                    "nombre_fraccion": canonico,
                     "area_integrada": round(float(f.area_integrada), 6),
                     "porcentaje_relativo": round(float(f.porcentaje_relativo), 2),
                     "concentracion_g_dl": round(float(f.concentracion_g_dl), 2),
                 }
             )
     else:
-        filas = [
-            {
-                "nombre_fraccion": fraccion.nombre,
-                "area_integrada": round(float(fraccion.area), 6),
-                "porcentaje_relativo": round(float(fraccion.porcentaje), 2),
-                "concentracion_g_dl": round(
-                    float(fraccion.concentracion_g_dl or 0), 2
-                ),
-            }
-            for fraccion in calculo.fracciones
-        ]
+        filas = []
+        for fraccion in calculo.fracciones:
+            canonico = _normalizar_nombre_fraccion(fraccion.nombre) or fraccion.nombre
+            filas.append(
+                {
+                    "nombre_fraccion": canonico,
+                    "area_integrada": round(float(fraccion.area), 6),
+                    "porcentaje_relativo": round(float(fraccion.porcentaje), 2),
+                    "concentracion_g_dl": round(
+                        float(fraccion.concentracion_g_dl or 0), 2
+                    ),
+                }
+            )
+
+    if len(filas) not in (5, 6):
+        raise EnsayoInvalido("El ensayo debe tener 5 o 6 franjas")
 
     relacion_ag = _relacion_ag_desde_fracciones(filas, datos.proteinas_totales)
     return filas, relacion_ag
-
 
 def _relacion_ag_desde_fracciones(
     fracciones: list[dict[str, Any]], proteinas_totales_g_dl: float | None = None

@@ -2,7 +2,9 @@
 
 import { useState, type FormEvent } from "react";
 
+import { useSesion } from "./ProveedorSesion";
 import { crearMuestra } from "@/lib/api-muestras";
+import { puedeEscribir } from "@/lib/sesion";
 import type { Campana, Especie, NuevaMuestra } from "@/lib/tipos-muestras";
 
 const CAMPO = "w-full rounded border border-gray-300 bg-white px-3 py-2 text-gray-900";
@@ -20,6 +22,8 @@ export default function FormularioMuestra({
   idCampanaInicial,
   onCreada,
 }: Props) {
+  const { usuario } = useSesion();
+  const bloqueado = !puedeEscribir(usuario);
   const [idCampana, setIdCampana] = useState(
     idCampanaInicial != null ? String(idCampanaInicial) : "",
   );
@@ -31,6 +35,10 @@ export default function FormularioMuestra({
 
   async function enviar(evento: FormEvent) {
     evento.preventDefault();
+    if (bloqueado) {
+      setError("Tu cuenta es de solo lectura: no puede registrar muestras.");
+      return;
+    }
     if (!idCampana) {
       setError("Elegí una campaña antes de guardar la muestra");
       return;
@@ -144,6 +152,12 @@ export default function FormularioMuestra({
         />
       </div>
 
+      {bloqueado && (
+        <p className="rounded border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
+          Tu cuenta es de solo lectura: no puede registrar muestras.
+        </p>
+      )}
+
       {error && (
         <p className="rounded border border-red-300 bg-red-50 p-2 text-sm text-red-800">
           {error}
@@ -152,7 +166,7 @@ export default function FormularioMuestra({
 
       <button
         type="submit"
-        disabled={enviando}
+        disabled={enviando || bloqueado}
         className="rounded bg-blue-600 px-4 py-2 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
       >
         {enviando ? "Guardando..." : "Guardar muestra"}

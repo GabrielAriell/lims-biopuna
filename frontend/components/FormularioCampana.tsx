@@ -2,11 +2,13 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 
+import { useSesion } from "./ProveedorSesion";
 import {
   crearCampana,
   listarDepartamentos,
   listarProvincias,
 } from "@/lib/api-muestras";
+import { puedeEscribir } from "@/lib/sesion";
 import type {
   Campana,
   Departamento,
@@ -29,6 +31,8 @@ export default function FormularioCampana({
   onCreada,
   sugerenciasLocalidad = [],
 }: Props) {
+  const { usuario } = useSesion();
+  const bloqueado = !puedeEscribir(usuario);
   const [provincias, setProvincias] = useState<Provincia[]>([]);
   const [departamentos, setDepartamentos] = useState<Departamento[]>([]);
   const [idProvincia, setIdProvincia] = useState("");
@@ -98,6 +102,10 @@ export default function FormularioCampana({
   async function enviar(evento: FormEvent) {
     evento.preventDefault();
     setError(null);
+    if (bloqueado) {
+      setError("Tu cuenta es de solo lectura: no puede crear campañas.");
+      return;
+    }
     if (!ubicacionValida) {
       setError("Indicá un departamento o, al menos, una localidad de referencia.");
       return;
@@ -262,6 +270,12 @@ export default function FormularioCampana({
         />
       </div>
 
+      {bloqueado && (
+        <p className="rounded border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
+          Tu cuenta es de solo lectura: no puede crear campañas.
+        </p>
+      )}
+
       {error && (
         <p className="rounded border border-red-300 bg-red-50 p-2 text-sm text-red-800">
           {error}
@@ -270,7 +284,7 @@ export default function FormularioCampana({
 
       <button
         type="submit"
-        disabled={enviando}
+        disabled={enviando || bloqueado}
         className="rounded bg-blue-600 px-4 py-2 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
       >
         {enviando ? "Guardando..." : "Guardar campaña"}

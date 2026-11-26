@@ -86,7 +86,7 @@ class RecalculoIn(BaseModel):
     """Perfil de un carril y los límites confirmados por el investigador."""
 
     perfil: list[float] = Field(min_length=2, max_length=20_000)
-    zonas: list[tuple[int, int]] = Field(min_length=1, max_length=20)
+    zonas: list[tuple[int, int]] = Field(min_length=5, max_length=6)
     proteinas_totales: float | None = Field(None, gt=0, le=20)
 
 

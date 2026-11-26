@@ -118,7 +118,7 @@ def analizar_tira(
     region: str | None = Form(None, description="Recorte 'x,y,ancho,alto'"),
     vertical: bool = Form(False),
     invertir: bool = Form(False),
-    cantidad_fracciones: int | None = Form(None, ge=4, le=6, description="4, 5 o 6 fracciones"),
+    cantidad_fracciones: int | None = Form(None, ge=5, le=6, description="5 o 6 fracciones"),
 ):
     """Analiza la tira y propone picos y fracciones. No guarda nada."""
     return _ejecutar_analisis(

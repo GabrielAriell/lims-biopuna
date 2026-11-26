@@ -12,7 +12,7 @@ export const PARAMETROS_INICIALES: Parametros = {
   modo: "gris_invertido",
   vertical: false,
   invertir: false,
-  cantidadFracciones: null, // <--- Esto agregué por si quieren borrar.
+  cantidadFracciones: null,
 };
 
 export const SENSIBILIDAD = { min: 0.02, max: 0.3, paso: 0.01 };
