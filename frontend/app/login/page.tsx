@@ -6,10 +6,17 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import { useSesion } from "@/components/ProveedorSesion";
+import { Button } from "@/components/ui/button";
 import { iniciarSesion, iniciarSesionInvitado } from "@/lib/auth";
 
 const CAMPO =
-  "w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-gray-900 shadow-sm outline-none placeholder:text-gray-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/40";
+  "w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-xs outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30";
+
+const PILARES = [
+  "Trazabilidad de muestras",
+  "Densitometría óptica",
+  "Perfiles metabólicos",
+];
 
 export default function PaginaLogin() {
   const router = useRouter();
@@ -60,143 +67,165 @@ export default function PaginaLogin() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden">
-      {/* Fondo: imagen a pantalla completa */}
-      <Image
-        src="/login-fondo.jpg"
-        alt="Paisaje de la Puna"
-        fill
-        className="object-cover"
-        priority
-        sizes="100vw"
-      />
-      <div className="absolute inset-0 bg-black/45" />
+    <main className="min-h-screen bg-slate-50">
+      <div className="flex min-h-screen">
+        {/* Panel visual: foto de la Puna bajo velo oscuro */}
+        <aside className="relative hidden overflow-hidden lg:flex lg:w-[55%] lg:flex-col lg:justify-between">
+          <Image
+            src="/puna-jujenia.webp"
+            alt="Paisaje de la Puna jujeña"
+            fill
+            className="object-cover"
+            priority
+            sizes="55vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/60 to-slate-950/90" />
 
-      <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-10 sm:px-8 lg:justify-between lg:px-16 xl:px-24">
-        {/* Texto de bienvenida sobre el fondo */}
-        <div className="hidden max-w-xl text-white lg:block">
-          <div className="mb-6 flex items-center gap-3">
-            <Image
-              src="/logo-camelia.png"
-              alt="LIMS-BioPuna"
-              width={56}
-              height={56}
-              className="h-14 w-14 rounded-2xl bg-white/95 object-contain p-1.5 shadow-lg"
-            />
+          {/* Marca institucional */}
+          <div className="relative z-10 flex items-center gap-3 p-8 xl:p-12">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-md">
+              <Image
+                src="/logo-sistema-solo.png"
+                alt=""
+                width={40}
+                height={40}
+                className="h-9 w-9 object-cover"
+              />
+            </div>
             <div className="flex flex-col">
-              <span className="text-2xl font-black tracking-tight">
+              <span className="text-lg font-bold leading-tight tracking-tight text-white">
                 LIMS<span className="text-emerald-400">-BioPuna</span>
               </span>
-              <span className="text-xs font-semibold text-emerald-200">
+              <span className="text-xs font-medium text-white/70">
                 FCA · Universidad Nacional de Jujuy
               </span>
             </div>
           </div>
-          <h1 className="mt-2 text-5xl font-extrabold leading-tight tracking-tight xl:text-6xl">
-            SISTEMA LIMS
-          </h1>
-          <p className="mt-4 max-w-md text-base text-white/90 leading-relaxed">
-            Plataforma digital para la trazabilidad y densitometría óptica de perfiles metabólicos en camélidos y ovinos de la Puna.
-          </p>
-        </div>
 
-        {/* Tarjeta de login */}
-        <div className="w-full max-w-md rounded-3xl border border-white/20 bg-slate-900/60 px-7 py-9 shadow-2xl backdrop-blur-md sm:px-9 sm:py-10">
-          <div className="mb-7 text-center">
-            <div className="mb-4 flex items-center justify-center gap-2 lg:hidden">
-              <Image
-                src="/logo-camelia.png"
-                alt="LIMS-BioPuna"
-                width={40}
-                height={40}
-                className="h-10 w-10 rounded-xl bg-white/95 object-contain p-1 shadow"
-              />
-              <span className="text-xl font-bold text-white">LIMS-BioPuna</span>
-            </div>
-            <h2 className="text-2xl font-extrabold text-white drop-shadow sm:text-[1.7rem]">
-              Iniciá sesión en tu cuenta
-            </h2>
-            <p className="mt-1 text-sm font-medium text-white/90 drop-shadow-sm">
-              Ingresá tus datos para continuar
+          {/* Mensaje principal */}
+          <div className="relative z-10 p-8 xl:p-12">
+            <h1 className="text-5xl font-extrabold tracking-tight text-white xl:text-6xl">
+              Sistema LIMS
+            </h1>
+            <p className="mt-4 max-w-md text-base leading-relaxed text-white/85">
+              Plataforma digital para la trazabilidad y densitometría óptica de
+              perfiles metabólicos en camélidos y ovinos de la Puna.
             </p>
+            <div className="mt-6 flex flex-wrap gap-2">
+              {PILARES.map((texto) => (
+                <span
+                  key={texto}
+                  className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-medium text-white/85 backdrop-blur-sm"
+                >
+                  {texto}
+                </span>
+              ))}
+            </div>
           </div>
+        </aside>
 
-          <form onSubmit={enviar} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="mb-1 block text-sm font-semibold text-white drop-shadow-sm">
-                Correo
-              </label>
-              <input
-                id="email"
-                type="email"
-                autoComplete="username"
-                required
-                placeholder="usuario@ejemplo.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={CAMPO}
-              />
-            </div>
+        {/* Panel del formulario */}
+        <section className="flex flex-1 items-center justify-center px-5 py-10 sm:px-8">
+          <div className="w-full max-w-md">
+            <Image
+              src="/logo-sistema.jpeg"
+              alt="LIMS-BioPuna"
+              width={216}
+              height={144}
+              className="mx-auto h-auto w-44 sm:w-52"
+              priority
+            />
 
-            <div>
-              <label
-                htmlFor="password"
-                className="mb-1 block text-sm font-semibold text-white drop-shadow-sm"
-              >
-                Contraseña
-              </label>
-              <input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={CAMPO}
-              />
-            </div>
-
-            {error && (
-              <p className="rounded border border-red-300 bg-red-50 p-2 text-sm text-red-800">
-                {error}
+            <div className="mt-6 sm:mt-8">
+              <h2 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
+                Iniciá sesión
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Ingresá tus datos para continuar.
               </p>
-            )}
+            </div>
 
-            <button
-              type="submit"
+            <form onSubmit={enviar} className="mt-6 space-y-4">
+              <div>
+                <label
+                  htmlFor="email"
+                  className="mb-1.5 block text-sm font-semibold text-slate-700"
+                >
+                  Correo
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  autoComplete="username"
+                  required
+                  placeholder="usuario@ejemplo.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={CAMPO}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="password"
+                  className="mb-1.5 block text-sm font-semibold text-slate-700"
+                >
+                  Contraseña
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={CAMPO}
+                />
+              </div>
+
+              {error && (
+                <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
+                  {error}
+                </p>
+              )}
+
+              <Button
+                type="submit"
+                size="lg"
+                disabled={enviando !== null}
+                className="w-full rounded-lg font-semibold"
+              >
+                {enviando === "credenciales" ? "Ingresando..." : "Ingresar"}
+              </Button>
+            </form>
+
+            <div className="my-6 flex items-center gap-3">
+              <div className="h-px flex-1 bg-slate-200" />
+              <span className="text-xs font-medium uppercase tracking-wider text-slate-400">
+                o
+              </span>
+              <div className="h-px flex-1 bg-slate-200" />
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              onClick={() => void entrarComoInvitado()}
               disabled={enviando !== null}
-              className="mt-2 w-full rounded-full bg-emerald-600 px-4 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-lg font-semibold text-slate-700"
             >
-              {enviando === "credenciales" ? "Ingresando..." : "Ingresar"}
-            </button>
-          </form>
-
-          <div className="my-5 flex items-center gap-3">
-            <div className="h-px flex-1 bg-white/20" />
-            <span className="text-xs font-medium uppercase tracking-wider text-white/60">
-              o
-            </span>
-            <div className="h-px flex-1 bg-white/20" />
-          </div>
-
-          <button
-            type="button"
-            onClick={() => void entrarComoInvitado()}
-            disabled={enviando !== null}
-            className="flex w-full items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-3 font-semibold text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Eye className="h-4 w-4 text-emerald-300" />
-            <span>
+              <Eye className="h-4 w-4 text-emerald-600" />
               {enviando === "invitado"
                 ? "Ingresando como invitado..."
                 : "Entrar como invitado"}
-            </span>
-          </button>
-          <p className="mt-2 text-center text-xs text-white/75">
-            Acceso rápido en modo solo lectura.
-          </p>
-        </div>
+            </Button>
+            <p className="mt-2.5 text-center text-xs text-slate-500">
+              Acceso rápido en modo solo lectura.
+            </p>
+          </div>
+        </section>
       </div>
     </main>
   );
