@@ -26,8 +26,16 @@ export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
-    setLista(false);
   }, []);
+
+  // Cuando cambia `abierta` se resetea el estado durante el render.
+  const [estabaAbierta, setEstabaAbierta] = useState(abierta);
+  if (estabaAbierta !== abierta) {
+    setEstabaAbierta(abierta);
+    setError(null);
+    setCapturando(false);
+    setLista(false);
+  }
 
   // Cerrar con el botón "atrás" del navegador/celular sin salir de la página.
   useEffect(() => {
@@ -50,8 +58,6 @@ export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
   useEffect(() => {
     if (!abierta) {
       detener();
-      setError(null);
-      setCapturando(false);
       if (pushStateRef.current) {
         pushStateRef.current = false;
         window.history.back();
@@ -60,8 +66,6 @@ export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
     }
 
     let cancelado = false;
-    setError(null);
-    setLista(false);
 
     async function iniciar() {
       if (!navigator.mediaDevices?.getUserMedia) {
@@ -179,15 +183,15 @@ export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
             {error}
           </p>
         )}
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[11px] text-white/70 sm:text-xs">
             Usá “Cerrar” o el botón atrás del celular para volver sin capturar.
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <button
               type="button"
               onClick={cerrar}
-              className="rounded border border-white/30 px-4 py-2 text-sm font-medium hover:bg-white/10"
+              className="w-full rounded border border-white/30 px-4 py-2 text-sm font-medium hover:bg-white/10 sm:w-auto"
             >
               Cancelar
             </button>
@@ -195,7 +199,7 @@ export default function CamaraTira({ abierta, onCerrar, onCapturar }: Props) {
               type="button"
               onClick={() => void capturar()}
               disabled={!lista || !!error || capturando}
-              className="rounded bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               {capturando ? "Capturando..." : "Capturar foto"}
             </button>

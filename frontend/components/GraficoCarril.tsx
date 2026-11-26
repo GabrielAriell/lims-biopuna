@@ -25,7 +25,7 @@ export default function GraficoCarril({ perfil, zonas, nombres = [] }: Props) {
   const datos = perfil.map((y, x) => ({ x, y }));
 
   return (
-    <div className="h-72 w-full">
+    <div className="h-72 w-full text-slate-800 dark:text-slate-50">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={datos} margin={{ top: 16, right: 16, bottom: 8, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" />
@@ -54,7 +54,7 @@ export default function GraficoCarril({ perfil, zonas, nombres = [] }: Props) {
           <Line
             type="monotone"
             dataKey="y"
-            stroke="#111827"
+            stroke="currentColor"
             strokeWidth={1.5}
             dot={false}
             isAnimationActive={false}

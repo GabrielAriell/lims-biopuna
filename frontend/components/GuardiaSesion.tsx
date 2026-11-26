@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 
+import Cargando from "./Cargando";
 import { useSesion } from "./ProveedorSesion";
 
 // Envuelve las pantallas que requieren login. Mientras se valida la sesión
@@ -18,7 +19,7 @@ export default function GuardiaSesion({ children }: { children: ReactNode }) {
   if (cargando) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-gray-50">
-        <p className="text-sm text-gray-500">Verificando sesión...</p>
+        <Cargando texto="Verificando sesión..." tamano={150} />
       </main>
     );
   }

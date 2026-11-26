@@ -141,26 +141,28 @@ export default function GraficosTerritoriales({
 
   return (
     <section className="rounded-lg border border-gray-200 bg-white p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold">Análisis territorial (Convenio INTA)</h2>
-          <p className="text-sm text-gray-600">
-            Distribución de las {muestrasConvenio.length} muestras que coinciden con
-            los filtros actuales{descripcionConvenio}.
-          </p>
-        </div>
-        <div className="flex flex-col items-end gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-lg font-semibold">Análisis territorial (Convenio INTA)</h2>
+            <p className="text-sm text-gray-600">
+              Distribución de las {muestrasConvenio.length} muestras que coinciden con
+              los filtros actuales{descripcionConvenio}.
+            </p>
+          </div>
           <FiltroConvenioUI
             valor={filtroConvenio}
             onChange={onCambiarConvenio}
             totales={totalesConvenio}
           />
-          <div className="flex flex-wrap justify-end gap-2">
+        </div>
+        <div className="flex flex-col items-stretch justify-center gap-1.5">
+          <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={onExportarExcel}
               disabled={exportando !== null}
-              className="rounded border border-green-300 bg-green-50 px-3 py-1.5 text-sm font-medium text-green-800 hover:bg-green-100 disabled:opacity-50"
+              className="w-full rounded border border-green-300 bg-green-50 px-4 py-1.5 text-center text-sm font-medium text-green-800 transition-colors hover:bg-green-100 disabled:opacity-50"
             >
               {exportando === "excel" ? "Generando..." : "Exportar Excel"}
             </button>
@@ -168,12 +170,12 @@ export default function GraficosTerritoriales({
               type="button"
               onClick={onExportarPdf}
               disabled={exportando !== null}
-              className="rounded border border-red-300 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-800 hover:bg-red-100 disabled:opacity-50"
+              className="w-full rounded border border-red-300 bg-red-50 px-4 py-1.5 text-center text-sm font-medium text-red-800 transition-colors hover:bg-red-100 disabled:opacity-50"
             >
               {exportando === "pdf" ? "Generando..." : "Descargar PDF"}
             </button>
           </div>
-          <p className="max-w-xs text-right text-xs text-gray-500">
+          <p className="text-center text-xs text-gray-500">
             El Excel y el PDF incluyen solo las muestras filtradas y sus gráficos.
           </p>
         </div>
@@ -185,7 +187,7 @@ export default function GraficosTerritoriales({
         </p>
       ) : (
         <>
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3">
+          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3">
             <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
               Agrupar territorio por
             </span>
@@ -193,7 +195,7 @@ export default function GraficosTerritoriales({
               <button
                 type="button"
                 onClick={() => setAgrupacion("departamento")}
-                className={`rounded px-3 py-1 text-sm ${
+                className={`rounded px-3 py-1 text-sm transition-colors hover:bg-gray-200 ${
                   agrupacion === "departamento"
                     ? "bg-white font-medium shadow-sm"
                     : "text-gray-600"
@@ -204,7 +206,7 @@ export default function GraficosTerritoriales({
               <button
                 type="button"
                 onClick={() => setAgrupacion("localidad")}
-                className={`rounded px-3 py-1 text-sm ${
+                className={`rounded px-3 py-1 text-sm transition-colors hover:bg-gray-200 ${
                   agrupacion === "localidad"
                     ? "bg-white font-medium shadow-sm"
                     : "text-gray-600"
@@ -217,7 +219,7 @@ export default function GraficosTerritoriales({
 
           <div className="mt-4 grid gap-6 lg:grid-cols-2">
             <div>
-              <h3 className="text-sm font-medium text-gray-700">
+              <h3 className="text-center text-sm font-medium text-gray-700">
                 Muestras por especie
               </h3>
               <div className="h-72 w-full">
@@ -252,7 +254,7 @@ export default function GraficosTerritoriales({
             </div>
 
             <div>
-              <h3 className="text-sm font-medium text-gray-700">
+              <h3 className="text-center text-sm font-medium text-gray-700">
                 Muestras por{" "}
                 {agrupacion === "departamento"
                   ? "departamento"
@@ -325,7 +327,7 @@ function FiltroConvenioUI({
             key={opcion.valor}
             type="button"
             onClick={() => onChange(opcion.valor)}
-            className={`rounded px-3 py-1 text-sm ${
+            className={`rounded px-3 py-1 text-sm transition-colors hover:bg-gray-200 ${
               valor === opcion.valor
                 ? "bg-white font-medium shadow-sm"
                 : "text-gray-600"

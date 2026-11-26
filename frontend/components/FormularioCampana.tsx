@@ -2,6 +2,14 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 
+import SelectorFecha from "@/components/SelectorFecha";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useSesion } from "./ProveedorSesion";
 import {
   crearCampana,
@@ -17,7 +25,7 @@ import type {
 } from "@/lib/tipos-muestras";
 
 const CAMPO =
-  "w-full rounded border border-gray-300 bg-white px-3 py-2 text-gray-900";
+  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-[15px] text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30";
 
 type Props = {
   // Recibe la campaña creada para que el formulario de muestra pueda
@@ -25,11 +33,13 @@ type Props = {
   onCreada: (campana: Campana) => Promise<void> | void;
   // Sugerencias de autocompletado (localidades/parajes ya usados).
   sugerenciasLocalidad?: string[];
+  onCerrar?: () => void;
 };
 
 export default function FormularioCampana({
   onCreada,
   sugerenciasLocalidad = [],
+  onCerrar,
 }: Props) {
   const { usuario } = useSesion();
   const bloqueado = !puedeEscribir(usuario);
@@ -110,6 +120,10 @@ export default function FormularioCampana({
       setError("Indicá un departamento o, al menos, una localidad de referencia.");
       return;
     }
+    if (!fechaSalida) {
+      setError("Elegí la fecha de salida.");
+      return;
+    }
     setEnviando(true);
     try {
       const datos: NuevaCampana = {
@@ -136,13 +150,13 @@ export default function FormularioCampana({
   return (
     <form
       onSubmit={enviar}
-      className="space-y-4 rounded-lg border border-gray-200 bg-white p-5"
+      className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 sm:p-5"
     >
       <div>
-        <h2 className="text-lg font-semibold">Nueva campaña</h2>
-        <p className="text-sm text-gray-500">
-          Agrupa las muestras extraídas en una salida a territorio. Al guardarla,
-          queda elegida automáticamente para cargar sus muestras.
+        <h3 className="text-base font-bold text-slate-900">Nueva campaña</h3>
+        <p className="mt-1 text-sm text-slate-600">
+          Agrupa las muestras extraídas en una salida a territorio. Al
+          guardarla, queda lista para cargar sus muestras.
         </p>
       </div>
 
@@ -150,49 +164,64 @@ export default function FormularioCampana({
         <>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium">Provincia (Puna)</label>
-              <select
+              <label className="mb-1 block text-sm font-medium text-slate-700">Provincia (Puna)</label>
+              <Select
                 value={idProvincia}
-                onChange={(e) => {
-                  setIdProvincia(e.target.value);
+                onValueChange={(v) => {
+                  setIdProvincia(v);
                   setIdDepartamento("");
                   setDepartamentos([]);
                 }}
                 disabled={cargandoGeo}
-                className={CAMPO}
               >
-                <option value="">
-                  {cargandoGeo ? "Cargando..." : "Seleccionar provincia"}
-                </option>
-                {provincias.map((p) => (
-                  <option key={p.id_provincia} value={p.id_provincia}>
-                    {p.nombre}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={
+                      cargandoGeo ? "Cargando..." : "Seleccionar provincia"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {provincias.map((p) => (
+                    <SelectItem key={p.id_provincia} value={String(p.id_provincia)}>
+                      {p.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Departamento</label>
-              <select
+              <label className="mb-1 block text-sm font-medium text-slate-700">Departamento</label>
+              <Select
                 value={idDepartamento}
-                onChange={(e) => setIdDepartamento(e.target.value)}
+                onValueChange={setIdDepartamento}
                 disabled={!idProvincia}
-                className={CAMPO}
               >
-                <option value="">
-                  {idProvincia ? "Seleccionar departamento" : "Elegí una provincia primero"}
-                </option>
-                {departamentos.map((d) => (
-                  <option key={d.id_departamento} value={d.id_departamento}>
-                    {d.nombre}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={
+                      idProvincia
+                        ? "Seleccionar departamento"
+                        : "Elegí una provincia primero"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {departamentos.map((d) => (
+                    <SelectItem
+                      key={d.id_departamento}
+                      value={String(d.id_departamento)}
+                    >
+                      {d.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">
+            <label className="mb-1 block text-sm font-medium text-slate-700">
               Localidad / paraje (texto libre)
             </label>
             <input
@@ -208,7 +237,7 @@ export default function FormularioCampana({
                 <option key={loc} value={loc} />
               ))}
             </datalist>
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-slate-500">
               Opcional, pero recomendado para el punto exacto de muestreo. Podés
               elegir una sugerencia ya cargada.
             </p>
@@ -216,7 +245,7 @@ export default function FormularioCampana({
         </>
       ) : (
         <div>
-          <label className="mb-1 block text-sm font-medium">Localidad / referencia</label>
+          <label className="mb-1 block text-sm font-medium text-slate-700">Localidad / referencia</label>
           <input
             type="text"
             required
@@ -241,14 +270,8 @@ export default function FormularioCampana({
       )}
 
       <div>
-        <label className="mb-1 block text-sm font-medium">Fecha de salida</label>
-        <input
-          type="date"
-          required
-          value={fechaSalida}
-          onChange={(e) => setFechaSalida(e.target.value)}
-          className={CAMPO}
-        />
+        <label className="mb-1 block text-sm font-medium text-slate-700">Fecha de salida</label>
+        <SelectorFecha value={fechaSalida} onChange={setFechaSalida} />
       </div>
 
       <label className="flex items-center gap-2 text-sm">
@@ -261,7 +284,7 @@ export default function FormularioCampana({
       </label>
 
       <div>
-        <label className="mb-1 block text-sm font-medium">Observaciones (opcional)</label>
+        <label className="mb-1 block text-sm font-medium text-slate-700">Observaciones (opcional)</label>
         <textarea
           rows={2}
           value={observaciones}
@@ -277,18 +300,30 @@ export default function FormularioCampana({
       )}
 
       {error && (
-        <p className="rounded border border-red-300 bg-red-50 p-2 text-sm text-red-800">
+        <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
           {error}
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={enviando || bloqueado}
-        className="rounded bg-blue-600 px-4 py-2 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {enviando ? "Guardando..." : "Guardar campaña"}
-      </button>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <button
+          type="submit"
+          disabled={enviando || bloqueado}
+          className="w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-2xs hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+        >
+          {enviando ? "Guardando..." : "Guardar campaña"}
+        </button>
+        {onCerrar && (
+          <button
+            type="button"
+            onClick={onCerrar}
+            disabled={enviando}
+            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 sm:w-auto"
+          >
+            Cancelar
+          </button>
+        )}
+      </div>
     </form>
   );
 }

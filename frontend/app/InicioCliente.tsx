@@ -1,343 +1,360 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import {
+  Activity,
   FlaskConical,
-  ClipboardList,
-  BarChart3,
+  ClipboardPlus,
   ArrowRight,
   CheckCircle2,
-  Activity,
-  ShieldCheck,
+  XCircle,
+  AlertTriangle,
+  type LucideIcon,
 } from "lucide-react";
 
 import MarcoDashboard from "@/components/MarcoDashboard";
-import { construirAlertasCriticas, construirAlertas } from "@/lib/alertas";
+import { useSesion } from "@/components/ProveedorSesion";
+import {
+  construirAlertasCriticas,
+  construirAlertas,
+  textoAlerta,
+  LIMITE_HORAS,
+  type NivelAlerta,
+} from "@/lib/alertas";
 import { useMuestras } from "@/hooks/useMuestras";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+type Tarea = {
+  href: string;
+  titulo: string;
+  descripcion: string;
+  icono: LucideIcon;
+  destacada?: boolean;
+};
+
+const TAREAS: Tarea[] = [
+  {
+    href: "/ensayos/nuevo",
+    titulo: "Analizar una tira",
+    descripcion: "Subí la foto o el escaneo de la tira y obtené el resultado.",
+    icono: FlaskConical,
+    destacada: true,
+  },
+  {
+    href: "/muestras",
+    titulo: "Registrar muestras",
+    descripcion: "Anotá los animales de una salida al campo.",
+    icono: ClipboardPlus,
+  },
+];
+
+const ESTILO_NIVEL: Record<NivelAlerta, { punto: string; texto: string }> = {
+  vencida: { punto: "bg-red-600", texto: "text-red-700" },
+  por_vencer: { punto: "bg-red-600", texto: "text-red-700" },
+  atencion: { punto: "bg-amber-500", texto: "text-amber-700" },
+};
+
+const ENLACE_TARJETA =
+  "shrink-0 rounded text-sm font-semibold text-emerald-700 hover:text-emerald-800 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50";
+
+function Contador({
+  etiqueta,
+  valor,
+  clase,
+  icono,
+}: {
+  etiqueta: string;
+  valor: number;
+  clase: string;
+  icono: ReactNode;
+}) {
+  return (
+    <li
+      className={`flex items-center justify-between rounded-xl border px-3.5 py-3 ${clase}`}
+    >
+      <span className="flex items-center gap-3 text-[15px] font-medium">
+        {icono}
+        {etiqueta}
+      </span>
+      <span className="text-lg font-semibold tabular-nums">{valor}</span>
+    </li>
+  );
+}
 
 export default function InicioCliente() {
   const { muestras } = useMuestras();
+  const { usuario } = useSesion();
 
   const criticas = useMemo(() => construirAlertasCriticas(muestras), [muestras]);
-  const colaUrgentes = useMemo(() => construirAlertas(muestras).slice(0, 4), [muestras]);
+  const pendientes = useMemo(() => construirAlertas(muestras), [muestras]);
 
   // Conteos por estado del semáforo biológico
-  const conteoVerde = useMemo(
-    () => muestras.filter((m) => m.estado_48h === "verde").length,
-    [muestras],
-  );
-  const conteoAmarillo = useMemo(
-    () => muestras.filter((m) => m.estado_48h === "amarillo").length,
-    [muestras],
-  );
-  const conteoRojo = useMemo(
-    () => muestras.filter((m) => m.estado_48h === "rojo").length,
-    [muestras],
-  );
-  const conteoProcesadas = useMemo(
-    () => muestras.filter((m) => m.estado_48h === "procesada").length,
-    [muestras],
-  );
+  const conteos = useMemo(() => {
+    const cuenta = {
+      verde: 0,
+      amarillo: 0,
+      rojo: 0,
+      fuera_de_termino: 0,
+      procesada: 0,
+    };
+    for (const m of muestras) {
+      if (m.estado_48h !== "procesada" && m.horas_transcurridas > LIMITE_HORAS) {
+        cuenta.fuera_de_termino += 1;
+      } else {
+        cuenta[m.estado_48h] += 1;
+      }
+    }
+    return cuenta;
+  }, [muestras]);
+
+  const nombre = usuario?.nombre?.trim().split(/\s+/)[0];
 
   return (
     <MarcoDashboard activa="inicio" titulo="Inicio">
-      <div className="space-y-6 max-w-7xl">
-        {/* Banner de Alerta Crítica (si hay muestras > 40 hs de extracción) */}
-        {criticas.length > 0 && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex items-start sm:items-center gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-600 text-white font-black animate-pulse">
-                ⚠
-              </span>
-              <div>
-                <h2 className="text-sm sm:text-base font-bold text-red-950">
-                  {criticas.length} {criticas.length === 1 ? "muestra urgente" : "muestras urgentes"} (+40 hs)
-                </h2>
-                <p className="text-xs sm:text-sm text-red-800">
-                  Están cerca del límite de 48 horas. Conviene analizarlas cuanto antes.
-                </p>
-              </div>
-            </div>
-            <Link
-              href="/prioridades"
-              className="inline-flex shrink-0 items-center justify-center rounded-xl bg-red-600 px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-red-700 transition"
-            >
-              <span>Ver muestras urgentes</span>
-              <ArrowRight className="ml-1.5 h-4 w-4" />
-            </Link>
-          </div>
-        )}
+      <div className="mx-auto my-auto w-full max-w-6xl space-y-6">
+        {/* Saludo y tareas principales */}
+        <section className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-white to-emerald-50/70 p-5 shadow-xs sm:p-7">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+            {nombre ? `Hola, ${nombre}` : "Hola"}
+          </h1>
+          <p className="mt-1 text-base text-slate-600">¿Qué querés hacer hoy?</p>
 
-        {/* ─────────────────────────────────────────────────────────────
-            TARJETA HERO PRINCIPAL: ESTACIÓN DE DENSITOMETRÍA DIGITAL
-            ───────────────────────────────────────────────────────────── */}
-        <section className="relative overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-white via-emerald-50/20 to-emerald-100/30 p-6 sm:p-8 shadow-xs">
-          <div className="max-w-2xl space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100/80 px-3 py-1 text-xs font-bold text-emerald-800">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-700" />
-              <span>Protocolo seguro: Ácido al 5% (no tóxico)</span>
-            </div>
-
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-900 leading-tight">
-              Análisis digital de tiras
-            </h1>
-
-            <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-              Medición automática de proteínas (*Albúmina, Alfa, Beta, Gamma*) a partir de fotos o escaneos de tiras en segundos.
-            </p>
-
-            <div className="pt-2 flex flex-wrap items-center gap-3">
-              <Link
-                href="/ensayos/nuevo"
-                className="inline-flex items-center gap-2.5 rounded-2xl bg-emerald-600 px-6 py-3.5 text-sm sm:text-base font-bold text-white shadow-sm hover:bg-emerald-700 hover:shadow-md transition-all active:scale-95"
-              >
-                <FlaskConical className="h-5 w-5" />
-                <span>Analizar tira ahora</span>
-                <ArrowRight className="h-4 w-4 ml-1" />
-              </Link>
-
-              <Link
-                href="/muestras"
-                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
-              >
-                <ClipboardList className="h-4 w-4 text-slate-500" />
-                <span>Registrar muestras</span>
-              </Link>
-            </div>
-
-            {/* Guía en 3 Pasos */}
-            <div className="pt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-emerald-100/70 text-xs text-slate-600">
-              <div className="flex items-center gap-2">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-200 text-emerald-800 font-bold text-[10px]">1</span>
-                <span>Foto o escaneo sobre fondo blanco</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-200 text-emerald-800 font-bold text-[10px]">2</span>
-                <span>Ajuste de bandas</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-200 text-emerald-800 font-bold text-[10px]">3</span>
-                <span>Cálculo con Proteínas Totales</span>
-              </div>
-            </div>
+          <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+            {TAREAS.map((tarea) => {
+              const Icono = tarea.icono;
+              return (
+                <Link
+                  key={tarea.href}
+                  href={tarea.href}
+                  className={`group flex items-center gap-4 rounded-xl border p-4 shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/40 sm:p-5 ${tarea.destacada
+                    ? "border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800"
+                    : "border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/40"
+                    }`}
+                >
+                  <span
+                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg ${tarea.destacada
+                      ? "bg-white/15 text-white"
+                      : "bg-emerald-100 text-emerald-800"
+                      }`}
+                  >
+                    <Icono className="h-6 w-6" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span
+                      className={`block text-lg font-semibold ${tarea.destacada ? "text-white" : "text-slate-900"
+                        }`}
+                    >
+                      {tarea.titulo}
+                    </span>
+                    <span
+                      className={`mt-0.5 block text-sm leading-snug ${tarea.destacada ? "text-emerald-50" : "text-slate-600"
+                        }`}
+                    >
+                      {tarea.descripcion}
+                    </span>
+                  </span>
+                  <ArrowRight
+                    className={`h-5 w-5 shrink-0 transition-transform group-hover:translate-x-1 ${tarea.destacada ? "text-white" : "text-emerald-700"
+                      }`}
+                  />
+                </Link>
+              );
+            })}
           </div>
         </section>
 
-        {/* ─────────────────────────────────────────────────────────────
-            CENTRO DE MONITOREO: ESTADO DE MUESTRAS + TRABAJO PENDIENTE
-            ───────────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Tarjeta 1: Estado de muestras (48 Horas) */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-emerald-700" />
-                  <h2 className="text-base font-bold text-slate-900">
-                    Estado de muestras (48h)
-                  </h2>
-                </div>
-                <Link
-                  href="/prioridades"
-                  className="text-xs font-semibold text-emerald-700 hover:underline"
-                >
+        {/* Aviso de muestras cerca del límite de 48 h */}
+        {criticas.length > 0 && (
+          <div
+            role="alert"
+            className="flex flex-col gap-4 rounded-xl border border-red-200 border-l-4 border-l-red-600 bg-red-50 p-4 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 h-6 w-6 shrink-0 text-red-600" />
+              <div>
+                <h2 className="text-base font-semibold text-red-950">
+                  {criticas.length === 1
+                    ? "Hay 1 muestra urgente"
+                    : `Hay ${criticas.length} muestras urgentes`}
+                </h2>
+                <p className="text-sm text-red-900">
+                  Están por cumplir las 48 horas. Conviene analizarlas cuanto
+                  antes.
+                </p>
+              </div>
+            </div>
+            <Button
+              asChild
+              className="h-10 shrink-0 bg-red-600 px-4 text-sm font-semibold hover:bg-red-700"
+            >
+              <Link href="/prioridades">
+                Ver urgentes
+                <ArrowRight />
+              </Link>
+            </Button>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Estado de muestras (48h) */}
+          <Card className="gap-4 shadow-xs">
+            <CardHeader>
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Activity className="h-5 w-5 text-emerald-700" />
+                  Estado de muestras (48h)
+                </CardTitle>
+                <Link href="/prioridades" className={ENLACE_TARJETA}>
                   Ver detalle →
                 </Link>
               </div>
-              <p className="mt-2 text-xs text-slate-500">
-                Tiempo restante desde la extracción para su análisis.
-              </p>
-
-              {/* Métricas */}
-              <div className="mt-4 space-y-3">
-                <div className="flex items-center justify-between rounded-xl bg-emerald-50/70 border border-emerald-100 px-3 py-2 text-xs font-semibold text-emerald-900">
-                  <span className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                    A tiempo (&lt; 24 hs)
-                  </span>
-                  <span className="font-extrabold text-sm">{conteoVerde}</span>
-                </div>
-
-                <div className="flex items-center justify-between rounded-xl bg-amber-50/70 border border-amber-100 px-3 py-2 text-xs font-semibold text-amber-900">
-                  <span className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
-                    Atención (24h - 40h)
-                  </span>
-                  <span className="font-extrabold text-sm">{conteoAmarillo}</span>
-                </div>
-
-                <div className="flex items-center justify-between rounded-xl bg-red-50/70 border border-red-100 px-3 py-2 text-xs font-semibold text-red-900">
-                  <span className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full bg-red-600 animate-pulse" />
-                    Urgente (&gt; 40h)
-                  </span>
-                  <span className="font-extrabold text-sm">{conteoRojo}</span>
-                </div>
-
-                <div className="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">
-                  <span className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-slate-400" />
-                    Completadas
-                  </span>
-                  <span className="font-extrabold text-sm">{conteoProcesadas}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-slate-100">
-              <Link
-                href="/prioridades"
-                className="flex items-center justify-center gap-1.5 w-full rounded-xl bg-slate-100 py-2 text-xs font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition"
+              <CardDescription className="text-sm">
+                Tiempo desde la extracción (límite: 48 horas).
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2.5">
+                <Contador
+                  etiqueta="Recientes (menos de 24 h)"
+                  valor={conteos.verde}
+                  clase="border-emerald-100 bg-emerald-50 text-emerald-800"
+                  icono={
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500" />
+                  }
+                />
+                <Contador
+                  etiqueta="Atención (24 a 40 h)"
+                  valor={conteos.amarillo}
+                  clase="border-amber-100 bg-amber-50 text-amber-800"
+                  icono={
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-amber-500" />
+                  }
+                />
+                <Contador
+                  etiqueta="Urgentes (40 a 48 h)"
+                  valor={conteos.rojo}
+                  clase="border-red-100 bg-red-50 text-red-800"
+                  icono={
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-red-500" />
+                  }
+                />
+                <Contador
+                  etiqueta="Fuera de término (más de 48 h)"
+                  valor={conteos.fuera_de_termino}
+                  clase="border-purple-200 bg-purple-50 text-purple-800"
+                  icono={<XCircle className="h-4 w-4 shrink-0 text-purple-500" />}
+                />
+                <Contador
+                  etiqueta="Completadas"
+                  valor={conteos.procesada}
+                  clase="border-slate-200 bg-slate-50 text-slate-600"
+                  icono={<CheckCircle2 className="h-4 w-4 shrink-0 text-slate-400" />}
+                />
+              </ul>
+            </CardContent>
+            <CardFooter className="mt-auto">
+              <Button
+                asChild
+                className="h-10 w-full bg-slate-100 text-sm font-semibold text-slate-700 hover:bg-slate-200"
               >
-                <span>Ver prioridades</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-          </div>
+                <Link href="/prioridades">
+                  Ver prioridades
+                  <ArrowRight />
+                </Link>
+              </Button>
+            </CardFooter>
+          </Card>
 
-          {/* Tarjeta 2: Trabajo pendiente */}
-          <div className="lg:col-span-2 rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div>
-                  <h2 className="text-base font-bold text-slate-900">
-                    Trabajo pendiente
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    Muestras ordenadas por orden de llegada y urgencia.
-                  </p>
-                </div>
-                <Link
-                  href="/muestras"
-                  className="text-xs font-semibold text-emerald-700 hover:underline"
-                >
+          {/* Trabajo pendiente */}
+          <Card className="gap-4 shadow-xs lg:col-span-2">
+            <CardHeader>
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle className="text-lg">Trabajo pendiente</CardTitle>
+                <Link href="/muestras" className={ENLACE_TARJETA}>
                   Ver todas →
                 </Link>
               </div>
-
-              <div className="mt-4 overflow-x-auto">
-                {colaUrgentes.length > 0 ? (
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                        <th className="pb-2">Animal</th>
-                        <th className="pb-2">Especie</th>
-                        <th className="pb-2">Origen (Puna)</th>
-                        <th className="pb-2">Tiempo</th>
-                        <th className="pb-2 text-right">Acción</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {colaUrgentes.map((alerta) => {
-                        const m = alerta.muestra;
-                        return (
-                          <tr key={alerta.clave} className="hover:bg-slate-50/80 transition">
-                            <td className="py-2.5 font-bold text-slate-900">
-                              {m.codigo_animal}
-                            </td>
-                            <td className="py-2.5 text-slate-600">
-                              {m.especie}
-                            </td>
-                            <td className="py-2.5 text-slate-600 truncate max-w-[8rem]">
-                              {m.localidad_puna || "Puna jujeña"}
-                            </td>
-                            <td className="py-2.5">
-                              <span
-                                className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold ${
-                                  alerta.nivel === "vencida"
-                                    ? "bg-red-100 text-red-900"
-                                    : alerta.nivel === "por_vencer"
-                                      ? "bg-amber-100 text-amber-900"
-                                      : "bg-emerald-100 text-emerald-900"
-                                }`}
-                              >
-                                {m.horas_transcurridas} hs
-                              </span>
-                            </td>
-                            <td className="py-2.5 text-right">
-                              <Link
-                                href={`/ensayos/nuevo?muestra=${m.id_muestra}`}
-                                className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-600 hover:text-white transition"
-                              >
-                                <span>Analizar</span>
-                                <ArrowRight className="h-3 w-3" />
-                              </Link>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                ) : (
-                  <div className="py-8 text-center text-slate-400 space-y-2">
-                    <CheckCircle2 className="mx-auto h-8 w-8 text-emerald-500/80" />
-                    <p className="text-sm font-semibold text-slate-700">
-                      No hay muestras urgentes pendientes
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      Todas las muestras ya fueron analizadas o están a tiempo.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-              <span>Total de muestras: <strong>{muestras.length}</strong></span>
-              <Link
-                href="/ensayos/nuevo"
-                className="font-bold text-emerald-700 hover:underline"
-              >
+              <CardDescription className="text-sm">
+                Las muestras con menos tiempo aparecen primero.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {pendientes.length > 0 ? (
+                <ul className="max-h-[17rem] space-y-3 overflow-y-auto pr-2">
+                  {pendientes.map((alerta) => {
+                    const m = alerta.muestra;
+                    const estilo = ESTILO_NIVEL[alerta.nivel];
+                    return (
+                      <li
+                        key={alerta.clave}
+                        className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-base font-semibold text-slate-900">
+                            {m.codigo_animal}
+                            <span className="font-normal text-slate-600">
+                              {" "}
+                              · {m.especie}
+                            </span>
+                          </p>
+                          <p className="truncate text-sm text-slate-500">
+                            {m.localidad_puna || "Puna jujeña"}
+                          </p>
+                          <p
+                            className={`mt-1.5 flex items-center gap-2 text-sm font-medium ${estilo.texto}`}
+                          >
+                            <span
+                              className={`h-2.5 w-2.5 shrink-0 rounded-full ${estilo.punto}`}
+                            />
+                            {textoAlerta(alerta)}
+                          </p>
+                        </div>
+                        <Button
+                          asChild
+                          className="h-10 shrink-0 bg-emerald-600 px-4 text-sm font-semibold hover:bg-emerald-700"
+                        >
+                          <Link href={`/ensayos/nuevo?muestra=${m.id_muestra}`}>
+                            Analizar
+                            <ArrowRight />
+                          </Link>
+                        </Button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <div className="space-y-1.5 py-8 text-center">
+                  <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600" />
+                  <p className="text-base font-semibold text-slate-800">
+                    No hay muestras apuradas
+                  </p>
+                  <p className="text-sm text-slate-600">
+                    Todas fueron analizadas o todavía tienen tiempo.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+            <CardFooter className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 text-sm text-slate-600 [.border-t]:pt-4">
+              <span>
+                Total de muestras:{" "}
+                <strong className="font-semibold text-slate-900">
+                  {muestras.length}
+                </strong>
+              </span>
+              <Link href="/ensayos/nuevo" className={ENLACE_TARJETA}>
                 + Analizar tira sin muestra
               </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* ─────────────────────────────────────────────────────────────
-            ACCESOS RÁPIDOS (MUESTRAS & EXPLORACIÓN)
-            ───────────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
-          <Link
-            href="/muestras"
-            className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-xs hover:border-emerald-300 hover:shadow-md transition-all flex items-start gap-4"
-          >
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 group-hover:scale-105 transition-transform">
-              <ClipboardList className="h-6 w-6" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-base font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
-                Campañas y Muestras
-              </h3>
-              <p className="mt-1 text-xs sm:text-sm text-slate-600 leading-relaxed">
-                Carga de expediciones en la Puna y registro de animales con fotos de campo y control de tiempos.
-              </p>
-              <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-emerald-700">
-                Ir a muestras <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
-              </span>
-            </div>
-          </Link>
-
-          <Link
-            href="/exploracion"
-            className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-xs hover:border-emerald-300 hover:shadow-md transition-all flex items-start gap-4"
-          >
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 group-hover:scale-105 transition-transform">
-              <BarChart3 className="h-6 w-6" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
-                Reportes y Datos
-              </h3>
-              <p className="mt-1 text-xs sm:text-sm text-slate-600 leading-relaxed">
-                Búsqueda por animal, gráficos de la zona y descarga de planillas Excel para informes.
-              </p>
-              <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">
-                Ver reportes y descargas <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
-              </span>
-            </div>
-          </Link>
+            </CardFooter>
+          </Card>
         </div>
       </div>
     </MarcoDashboard>
