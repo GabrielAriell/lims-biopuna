@@ -72,6 +72,7 @@ class GestorCabina:
         self.roi = list(config.ROI_INICIAL)
         self.cam: CamaraCalibrada | None = None
         self.luz: ControladorIluminacion | None = None
+        self._ultimo_intento_camara = 0.0
         self._lock_luz = threading.Lock()
         self._ultimo_analisis = {
             "tincion": "ROJA",
@@ -81,11 +82,19 @@ class GestorCabina:
 
     def obtener_camara(self, indice: int | None = None) -> CamaraCalibrada:
         target_idx = self.camara_idx if indice is None else indice
-        if self.cam is None or not self.cam.esta_abierta() or self.cam.indice != target_idx:
+        if self.cam is None or self.cam.indice != target_idx:
             if self.cam is not None:
                 self.cam.liberar()
             self.camara_idx = target_idx
             self.cam = CamaraCalibrada(indice=target_idx)
+            self._ultimo_intento_camara = time.time()
+        elif not self.cam.esta_abierta():
+            # Sin cámara conectada, reabrir como máximo cada 4 s: abrir
+            # VideoCapture en loop cerrado tumba el proceso en Windows.
+            if time.time() - self._ultimo_intento_camara >= 4:
+                self.cam.liberar()
+                self.cam = CamaraCalibrada(indice=target_idx)
+                self._ultimo_intento_camara = time.time()
         return self.cam
 
     def obtener_iluminacion(self) -> ControladorIluminacion:
