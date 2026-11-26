@@ -12,12 +12,6 @@ import { iniciarSesion, iniciarSesionInvitado } from "@/lib/auth";
 const CAMPO =
   "w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-xs outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30";
 
-const PILARES = [
-  "Trazabilidad de muestras",
-  "Densitometría óptica",
-  "Perfiles metabólicos",
-];
-
 export default function PaginaLogin() {
   const router = useRouter();
   const { usuario, cargando, iniciar } = useSesion();
@@ -111,16 +105,13 @@ export default function PaginaLogin() {
               Plataforma digital para la trazabilidad y densitometría óptica de
               perfiles metabólicos en camélidos y ovinos de la Puna.
             </p>
-            <div className="mt-6 flex flex-wrap gap-2">
-              {PILARES.map((texto) => (
-                <span
-                  key={texto}
-                  className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-medium text-white/85 backdrop-blur-sm"
-                >
-                  {texto}
-                </span>
-              ))}
-            </div>
+            <p className="mt-8 border-t border-white/15 pt-4 text-xs text-white/60">
+              Creado por{" "}
+              <span className="font-semibold text-white/80">
+                Grupo 1 · TriadTech
+              </span>{" "}
+              — FI-UNJu
+            </p>
           </div>
         </aside>
 
