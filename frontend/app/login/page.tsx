@@ -79,7 +79,7 @@ export default function PaginaLogin() {
           <div className="relative z-10 flex items-center gap-3 p-8 xl:p-12">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-md">
               <Image
-                src="/logo-sistema-solo.png"
+                src="/logo-biopuna-redondo.png"
                 alt=""
                 width={40}
                 height={40}
